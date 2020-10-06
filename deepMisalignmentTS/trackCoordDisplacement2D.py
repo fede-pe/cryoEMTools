@@ -16,7 +16,8 @@ class trackerDisplacement2D:
 
         return distance
 
-    def readCoordinates3D(self, filePath):
+    @staticmethod
+    def readCoordinates3D(filePath):
         coordinates = []
         with open(filePath) as f:
             lines = f.readlines()
