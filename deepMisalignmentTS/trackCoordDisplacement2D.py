@@ -1,8 +1,14 @@
 
 import numpy as np
+import sys
 
 
-class trackerDisplacement2D:
+class TrackerDisplacement:
+    def __init__(self, pathCoordinate3D):
+        coordinates3D = self.readCoordinates3D(pathCoordinate3D)
+        print(coordinates3D)
+
+
     @staticmethod
     def getDisplacedCoordinate(coordinate2D, transformationMatrix):
         return np.dot(transformationMatrix, coordinate2D)
@@ -27,6 +33,15 @@ class trackerDisplacement2D:
                 coordinates.append(coordinate)
 
         return coordinates
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: python prepareDataset.py <pathCoordinate3D>\n"
+              "<pathCoordinate3D>: Path to a file containing the 3D coordinates belonging to the same series.")
+
+    td = TrackerDisplacement(sys.argv[1])
+
 
 
 
