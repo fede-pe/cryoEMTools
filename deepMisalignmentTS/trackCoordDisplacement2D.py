@@ -15,6 +15,7 @@ class TrackerDisplacement:
         return np.dot(transformationMatrix, coordinate2D)
 
     def calculateDisplacement2D(self, coordinate2D, transformationMatrix):
+        """ Method to calculate the distance between s point and it misaligned correspondent """
         homoCoordinate2D = [coordinate2D[0], coordinate2D[1], 1]
         displacedCoordinate2D = self.getDisplacedCoordinate(homoCoordinate2D, transformationMatrix)
         diffVector = homoCoordinate2D - displacedCoordinate2D
@@ -24,6 +25,7 @@ class TrackerDisplacement:
         return distance
 
     def getProjectionMatrix(self, angle):
+        """ Method to calculate the projection matrix of a plane given its tilt angle """
         # plane matrix
         V = np.array([0, 1, 0], [np.cos(angle), 0, np.sin(angle)])
         # projection matrix Vp = V (Vt V)^-1 Vt
@@ -33,6 +35,7 @@ class TrackerDisplacement:
 
     @staticmethod
     def readCoordinates3D(filePath):
+        """ Method to read 3D coordinate files in IMOD format """
         coordinates = []
         with open(filePath) as f:
             lines = f.readlines()
@@ -45,6 +48,7 @@ class TrackerDisplacement:
 
     @staticmethod
     def readAngleFile(filePath):
+        """ Method to read angles in .tlt format """
         angles = []
         with open(filePath) as f:
             lines = f.readlines()
