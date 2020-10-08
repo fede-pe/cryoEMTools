@@ -4,9 +4,12 @@ import sys
 
 
 class TrackerDisplacement:
-    def __init__(self, pathCoordinate3D):
+    def __init__(self, pathCoordinate3D, pathAngles):
         coordinates3D = self.readCoordinates3D(pathCoordinate3D)
         print(coordinates3D)
+        angles = self.readAngleFile(pathAngles)
+        print(angles)
+
 
 
     @staticmethod
@@ -65,6 +68,7 @@ if __name__ == "__main__":
               "<pathCoordinate3D>: Path to file containing the 3D coordinates belonging to the same series in IMOD "
               "format. \n"
               "<pathAngleFile>: Path to file containing the tilt angles of the tilt-series. \n")
+        exit()
 
     td = TrackerDisplacement(sys.argv[1], sys.argv[2])
 
