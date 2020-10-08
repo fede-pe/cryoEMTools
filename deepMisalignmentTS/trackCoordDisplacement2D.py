@@ -60,11 +60,13 @@ class TrackerDisplacement:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python prepareDataset.py <pathCoordinate3D>\n"
-              "<pathCoordinate3D>: Path to a file containing the 3D coordinates belonging to the same series.")
+    if len(sys.argv) != 3:
+        print("Usage: python prepareDataset.py <pathCoordinate3D> <pathAngleFile>\n"
+              "<pathCoordinate3D>: Path to file containing the 3D coordinates belonging to the same series in IMOD "
+              "format. \n"
+              "<pathAngleFile>: Path to file containing the tilt angles of the tilt-series. \n")
 
-    td = TrackerDisplacement(sys.argv[1])
+    td = TrackerDisplacement(sys.argv[1], sys.argv[2])
 
 
 
