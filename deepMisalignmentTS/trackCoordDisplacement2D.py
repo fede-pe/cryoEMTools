@@ -34,6 +34,13 @@ class TrackerDisplacement:
 
         return coordinates
 
+    def getProjectionMatrix(self, angle):
+        # plane matrix
+        V = np.array([0, 1, 0], [np.cos(angle), 0, np.sin(angle)])
+        # projection matrix Vp = V (Vt V)^-1 Vt
+        Vp = np.matmul(V, np.matmul(np.linalg.inv(np.matmul(np.matrix.transpose(V), V)), np.matrix.transpose(V)))
+        return Vp
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
