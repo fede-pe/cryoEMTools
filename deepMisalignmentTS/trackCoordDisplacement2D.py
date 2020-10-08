@@ -29,12 +29,15 @@ class TrackerDisplacement:
         # plane matrix
         v1 = [0, 1, 0]
         v2 = [np.cos(angle), 0, np.sin(angle)]
-        V = np.array([v1, v2])
+        v = np.matrix.transpose(np.array([v1, v2]))
 
-        # projection matrix Vp = V (Vt V)^-1 Vt
-        Vp = np.matmul(V, np.matmul(np.linalg.inv(np.matmul(np.matrix.transpose(V), V)), np.matrix.transpose(V)))
+        # projection matrix vProj = v (vt v)^-1 vt
+        vt = np.matrix.transpose(v)
+        vinv = np.linalg.inv(np.matmul(vt, v))
 
-        return Vp
+        vProj = np.matmul(v, np.matmul(vinv, vt))
+
+        return vProj
 
     @staticmethod
     def getDisplacedCoordinate(coordinate2D, transformationMatrix):
