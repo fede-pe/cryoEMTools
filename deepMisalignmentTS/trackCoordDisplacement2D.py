@@ -8,26 +8,25 @@ class TrackerDisplacement:
         coordinates3D = self.readCoordinates3D(pathCoordinate3D)
         angles = self.readAngleFile(pathAngles)
 
-        for coordinate3D in coordinates3D:
+        coordinates2D = []
+
+        for index, coordinate3D in enumerate(coordinates3D):
             for angle in angles:
-                projMatrix = self.getProjectionMatrix(angle)
-                coordinate3DProj = np.matmul(projMatrix, coordinate3D)
-                
-                print(projMatrix)
-                print(coordinate3D)
-                print(coordinate3DProj)
+                coordinateProj2D = self.getInPlaneCoordinate2D(angle, coordinate3D)
 
-    def calculateDisplacement2D(self, coordinate2D, transformationMatrix):
-        """ Method to calculate the distance between s point and it misaligned correspondent """
-        homoCoordinate2D = [coordinate2D[0], coordinate2D[1], 1]
-        displacedCoordinate2D = self.getDisplacedCoordinate(homoCoordinate2D, transformationMatrix)
-        diffVector = homoCoordinate2D - displacedCoordinate2D
-        diffVector = [i ** 2 for i in diffVector]
-        distance = sum(diffVector)
+                coordinates2D.append((coordinateProj2D, index))
 
-        return distance
+    def getInPlaneCoordinate2D(self, angle, coordinate3D):
+        projMatrix = self.getProjectionMatrix(angle)
+        coordinateProj3D = np.matmul(projMatrix, coordinate3D)
 
-    def getProjectionMatrix(self, angle):
+        coordinateProj2Dx = np.sqrt(np.power(coordinateProj3D[0], 2), np.power(coordinateProj3D[2], 2))
+        coordinateProj2Dy = coordinateProj3D[1]
+
+        return [coordinateProj2Dx, coordinateProj2Dy]
+
+    @staticmethod
+    def getProjectionMatrix(angle):
         """ Method to calculate the projection matrix of a plane given its tilt angle """
         angleRad = np.deg2rad(angle)
 
@@ -43,6 +42,16 @@ class TrackerDisplacement:
         vProj = np.matmul(v, np.matmul(vinv, vt))
 
         return vProj
+
+    def calculateDisplacement2D(self, coordinate2D, transformationMatrix):
+        """ Method to calculate the distance between a point and it misaligned correspondent """
+        homoCoordinate2D = [coordinate2D[0], coordinate2D[1], 1]
+        displacedCoordinate2D = self.getDisplacedCoordinate(homoCoordinate2D, transformationMatrix)
+        diffVector = homoCoordinate2D - displacedCoordinate2D
+        diffVector = [i ** 2 for i in diffVector]
+        distance = sum(diffVector)
+
+        return distance
 
     @staticmethod
     def getDisplacedCoordinate(coordinate2D, transformationMatrix):
