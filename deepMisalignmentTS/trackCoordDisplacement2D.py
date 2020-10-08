@@ -11,6 +11,7 @@ class TrackerDisplacement:
 
     @staticmethod
     def getDisplacedCoordinate(coordinate2D, transformationMatrix):
+
         return np.dot(transformationMatrix, coordinate2D)
 
     def calculateDisplacement2D(self, coordinate2D, transformationMatrix):
@@ -21,6 +22,14 @@ class TrackerDisplacement:
         distance = sum(diffVector)
 
         return distance
+
+    def getProjectionMatrix(self, angle):
+        # plane matrix
+        V = np.array([0, 1, 0], [np.cos(angle), 0, np.sin(angle)])
+        # projection matrix Vp = V (Vt V)^-1 Vt
+        Vp = np.matmul(V, np.matmul(np.linalg.inv(np.matmul(np.matrix.transpose(V), V)), np.matrix.transpose(V)))
+
+        return Vp
 
     @staticmethod
     def readCoordinates3D(filePath):
@@ -34,12 +43,16 @@ class TrackerDisplacement:
 
         return coordinates
 
-    def getProjectionMatrix(self, angle):
-        # plane matrix
-        V = np.array([0, 1, 0], [np.cos(angle), 0, np.sin(angle)])
-        # projection matrix Vp = V (Vt V)^-1 Vt
-        Vp = np.matmul(V, np.matmul(np.linalg.inv(np.matmul(np.matrix.transpose(V), V)), np.matrix.transpose(V)))
-        return Vp
+    @staticmethod
+    def readAngleFile(filePath):
+        angles = []
+        with open(filePath) as f:
+            lines = f.readlines()
+            for line in lines:
+                vector = line.split()
+                angles.append(vector[0])
+
+        return angles
 
 
 if __name__ == "__main__":
