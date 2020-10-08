@@ -8,11 +8,14 @@ class TrackerDisplacement:
         coordinates3D = self.readCoordinates3D(pathCoordinate3D)
         angles = self.readAngleFile(pathAngles)
 
-        for coordinates3D in coordinates3D:
+        for coordinate3D in coordinates3D:
             for angle in angles:
                 projMatrix = self.getProjectionMatrix(angle)
-                coordinate2DProj = np.matmul(projMatrix, coordinates3D)
-                print(coordinate2DProj)
+                coordinate3DProj = np.matmul(projMatrix, coordinate3D)
+                
+                print(projMatrix)
+                print(coordinate3D)
+                print(coordinate3DProj)
 
     def calculateDisplacement2D(self, coordinate2D, transformationMatrix):
         """ Method to calculate the distance between s point and it misaligned correspondent """
@@ -26,9 +29,11 @@ class TrackerDisplacement:
 
     def getProjectionMatrix(self, angle):
         """ Method to calculate the projection matrix of a plane given its tilt angle """
+        angleRad = np.deg2rad(angle)
+
         # plane matrix
         v1 = [0, 1, 0]
-        v2 = [np.cos(angle), 0, np.sin(angle)]
+        v2 = [np.cos(angleRad), 0, np.sin(angleRad)]
         v = np.matrix.transpose(np.array([v1, v2]))
 
         # projection matrix vProj = v (vt v)^-1 vt
