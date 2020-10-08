@@ -6,16 +6,13 @@ import sys
 class TrackerDisplacement:
     def __init__(self, pathCoordinate3D, pathAngles):
         coordinates3D = self.readCoordinates3D(pathCoordinate3D)
-        print(coordinates3D)
         angles = self.readAngleFile(pathAngles)
-        print(angles)
 
-
-
-    @staticmethod
-    def getDisplacedCoordinate(coordinate2D, transformationMatrix):
-
-        return np.dot(transformationMatrix, coordinate2D)
+        for coordinates3D in coordinates3D:
+            for angle in angles:
+                projMatrix = self.getProjectionMatrix(angle)
+                coordinate2DProj = np.matmul(projMatrix, coordinates3D)
+                print(coordinate2DProj)
 
     def calculateDisplacement2D(self, coordinate2D, transformationMatrix):
         """ Method to calculate the distance between s point and it misaligned correspondent """
@@ -30,11 +27,20 @@ class TrackerDisplacement:
     def getProjectionMatrix(self, angle):
         """ Method to calculate the projection matrix of a plane given its tilt angle """
         # plane matrix
-        V = np.array([0, 1, 0], [np.cos(angle), 0, np.sin(angle)])
+        v1 = [0, 1, 0]
+        v2 = [np.cos(angle), 0, np.sin(angle)]
+        V = np.array([v1, v2])
+
         # projection matrix Vp = V (Vt V)^-1 Vt
         Vp = np.matmul(V, np.matmul(np.linalg.inv(np.matmul(np.matrix.transpose(V), V)), np.matrix.transpose(V)))
 
         return Vp
+
+    @staticmethod
+    def getDisplacedCoordinate(coordinate2D, transformationMatrix):
+        """ Method to calculate the final position of a 2D coordinate after misalignment """
+
+        return np.dot(transformationMatrix, coordinate2D)
 
     @staticmethod
     def readCoordinates3D(filePath):
@@ -44,7 +50,9 @@ class TrackerDisplacement:
             lines = f.readlines()
             for line in lines:
                 vector = line.split()
-                coordinate = (vector[1], vector[2], vector[3])
+                coordinate = (float(vector[1]),
+                              float(vector[2]),
+                              float(vector[3]))
                 coordinates.append(coordinate)
 
         return coordinates
@@ -57,7 +65,7 @@ class TrackerDisplacement:
             lines = f.readlines()
             for line in lines:
                 vector = line.split()
-                angles.append(vector[0])
+                angles.append(float(vector[0]))
 
         return angles
 
