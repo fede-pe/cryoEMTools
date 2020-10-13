@@ -5,8 +5,8 @@ import sys
 
 class TrackerDisplacement:
     def __init__(self, pathCoordinate3D, pathAngles):
-        self.planeCoordinateMatrix = [[1, 0, 0],
-                                      [0, 1, 0]]
+        self.inPlaneCoordinateMatrix = [[1, 0, 0],
+                                        [0, 0, 1]]
         coordinates3D = self.readCoordinates3D(pathCoordinate3D)
         angles = self.readAngleFile(pathAngles)
 
@@ -18,9 +18,15 @@ class TrackerDisplacement:
 
                 coordinates2D.append((coordinateProj2D, index))
 
-            for c in coordinates2D:
-                print(c)
-            exit()
+    def getInPlaneCoordinate2D(self, angle, coordinate3D):
+        rotationMatrix = self.getRotationMatrix(angle)
+
+        inPlaneCoordinate2D = np.matmul(self.inPlaneCoordinateMatrix,
+                                        np.matmul(rotationMatrix,
+                                                  coordinate3D))
+
+        return inPlaneCoordinate2D
+
 
     # def getInPlaneCoordinate2D(self, angle, coordinate3D):
     #     projMatrix = self.getProjectionMatrix(angle)
@@ -84,9 +90,9 @@ class TrackerDisplacement:
             lines = f.readlines()
             for line in lines:
                 vector = line.split()
-                coordinate = (float(vector[1]),
-                              float(vector[2]),
-                              float(vector[3]))
+                coordinate = ([float(vector[1]),
+                               float(vector[2]),
+                               float(vector[3])])
                 coordinates.append(coordinate)
 
         return coordinates
