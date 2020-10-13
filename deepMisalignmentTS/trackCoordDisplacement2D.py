@@ -4,13 +4,15 @@ import sys
 
 
 class TrackerDisplacement:
-    def __init__(self, pathCoordinate3D, pathAngles):
+    def __init__(self, pathCoordinate3D, pathAngles, pathMisalignmentMatrix):
         self.inPlaneCoordinateMatrix = [[1, 0, 0],
                                         [0, 0, 1]]
         coordinates3D = self.readCoordinates3D(pathCoordinate3D)
         angles = self.readAngleFile(pathAngles)
 
         coordinates2D = []
+
+        misalignmentMatrices = self.readMisalignmentMatrix(pathMisalignmentMatrix)
 
         for index, coordinate3D in enumerate(coordinates3D):
             for angle in angles:
@@ -119,7 +121,7 @@ class TrackerDisplacement:
         return angles
 
     @staticmethod
-    def readTransformationMatrix(filePath):
+    def readMisalignmentMatrix(filePath):
         """ Method to read the transformation matrix (IMOD format) and returns a 3D matrix containing the
         transformation matrices for each tilt-image belonging to the tilt-series """
         with open(filePath, "r") as matrix:
@@ -143,14 +145,16 @@ class TrackerDisplacement:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: python prepareDataset.py <pathCoordinate3D> <pathAngleFile>\n"
+    if len(sys.argv) != 4:
+        print("Usage: python prepareDataset.py <pathCoordinate3D> <pathAngleFile> <pathMisalignmentMatrix>\n"
               "<pathCoordinate3D>: Path to file containing the 3D coordinates belonging to the same series in IMOD "
               "format. \n"
-              "<pathAngleFile>: Path to file containing the tilt angles of the tilt-series. \n")
+              "<pathAngleFile>: Path to file containing the tilt angles of the tilt-series. \n"
+              "<pathMisalignmentMatrix>: Path to file containing the misalignment matrices for each tilt-image from "
+              "the series. /n")
         exit()
 
-    td = TrackerDisplacement(sys.argv[1], sys.argv[2])
+    td = TrackerDisplacement(sys.argv[1], sys.argv[2], sys.argv[3])
 
 
 
