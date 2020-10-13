@@ -27,6 +27,15 @@ class TrackerDisplacement:
 
         return inPlaneCoordinate2D
 
+    def getInPlaneMisalignedCoordinate2D(self, angle, coordinate3D):
+        rotationMatrix = self.getRotationMatrix(angle)
+
+        inPlaneCoordinate2D = np.matmul(self.inPlaneCoordinateMatrix,
+                                        np.matmul(rotationMatrix,
+                                                  coordinate3D))
+
+        return inPlaneCoordinate2D
+
 
     # def getInPlaneCoordinate2D(self, angle, coordinate3D):
     #     projMatrix = self.getProjectionMatrix(angle)
@@ -108,6 +117,29 @@ class TrackerDisplacement:
                 angles.append(float(vector[0]))
 
         return angles
+
+    @staticmethod
+    def readTransformationMatrix(filePath):
+        """ Method to read the transformation matrix (IMOD format) and returns a 3D matrix containing the
+        transformation matrices for each tilt-image belonging to the tilt-series """
+        with open(filePath, "r") as matrix:
+            lines = matrix.readlines()
+        numberLines = len(lines)
+        frameMatrix = np.empty([3, 3, numberLines])
+        i = 0
+        for line in lines:
+            values = line.split()
+            frameMatrix[0, 0, i] = float(values[0])
+            frameMatrix[1, 0, i] = float(values[2])
+            frameMatrix[0, 1, i] = float(values[1])
+            frameMatrix[1, 1, i] = float(values[3])
+            frameMatrix[0, 2, i] = float(values[4])
+            frameMatrix[1, 2, i] = float(values[5])
+            frameMatrix[2, 0, i] = 0.0
+            frameMatrix[2, 1, i] = 0.0
+            frameMatrix[2, 2, i] = 1.0
+            i += 1
+        return frameMatrix
 
 
 if __name__ == "__main__":
