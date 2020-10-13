@@ -1,4 +1,3 @@
-
 import numpy as np
 import sys
 
@@ -14,11 +13,18 @@ class TrackerDisplacement:
 
         misalignmentMatrices = self.readMisalignmentMatrix(pathMisalignmentMatrix)
 
-        for index, coordinate3D in enumerate(coordinates3D):
-            for angle in angles:
-                coordinateProj2D = self.getInPlaneCoordinate2D(angle, coordinate3D)
+        for indexCoord, coordinate3D in enumerate(coordinates3D):
+            for indexAngle, angle in enumerate(angles):
+                coordinateProj2D = self.getInPlaneCoordinate2D(angle,
+                                                               coordinate3D)
 
-                coordinates2D.append((coordinateProj2D, index))
+                coordinateMisalginedProj2D = self.getInPlaneMisalignedCoordinate2D(angle,
+                                                                                   coordinate3D,
+                                                                                   misalignmentMatrices[indexAngle])
+
+                print(coordinateMisalginedProj2D)
+
+                coordinates2D.append((coordinateProj2D, indexCoord))
 
     def getInPlaneCoordinate2D(self, angle, coordinate3D):
         rotationMatrix = self.getRotationMatrix(angle)
@@ -29,15 +35,15 @@ class TrackerDisplacement:
 
         return inPlaneCoordinate2D
 
-    def getInPlaneMisalignedCoordinate2D(self, angle, coordinate3D):
+    def getInPlaneMisalignedCoordinate2D(self, angle, coordinate3D, misalignmentMatrix):
         rotationMatrix = self.getRotationMatrix(angle)
 
-        inPlaneCoordinate2D = np.matmul(self.inPlaneCoordinateMatrix,
-                                        np.matmul(rotationMatrix,
-                                                  coordinate3D))
+        inPlaneMisalignedCoordinate2D = np.matmul(misalignmentMatrix,
+                                                  np.matmul(self.inPlaneCoordinateMatrix,
+                                                            np.matmul(rotationMatrix,
+                                                                      coordinate3D)))
 
-        return inPlaneCoordinate2D
-
+        return inPlaneMisalignedCoordinate2D
 
     # def getInPlaneCoordinate2D(self, angle, coordinate3D):
     #     projMatrix = self.getProjectionMatrix(angle)
@@ -155,8 +161,3 @@ if __name__ == "__main__":
         exit()
 
     td = TrackerDisplacement(sys.argv[1], sys.argv[2], sys.argv[3])
-
-
-
-
-
