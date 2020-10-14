@@ -21,7 +21,7 @@ class TrackerDisplacement:
                                                             coordinate3D,
                                                             misalignmentMatrices[:, :, indexAngle])
 
-                print(projectedCoordinate2D, misalignedProjectedCoordinate2D)
+                #print(projectedCoordinate2D, misalignedProjectedCoordinate2D)
 
     def getProjectedCoordinate2D(self, angle, coordinate3D):
         rotationMatrix = self.getRotationMatrix(angle)
@@ -35,14 +35,12 @@ class TrackerDisplacement:
     def getMisalignedProjectedCoordinate2D(self, angle, coordinate3D, misalignmentMatrix):
         rotationMatrix = self.getRotationMatrix(angle)
 
-        projectedCoordiante2D = np.matmul(self.getXYCoordinatesMatrix,
-                                          np.matmul(rotationMatrix,
-                                                    coordinate3D))
+        projectedCoordiante2D = self.getProjectedCoordinate2D(angle, coordinate3D)
 
         misalignedProjectedCoordinate2D = np.matmul(misalignmentMatrix,
                                                     [projectedCoordiante2D[0],
                                                      projectedCoordiante2D[1],
-                                                     0])
+                                                     1])
 
         return [misalignedProjectedCoordinate2D[0], misalignedProjectedCoordinate2D[1]]
 
