@@ -4,46 +4,41 @@ import sys
 
 class TrackerDisplacement:
     def __init__(self, pathCoordinate3D, pathAngles, pathMisalignmentMatrix):
-        self.inPlaneCoordinateMatrix = [[1, 0, 0],
-                                        [0, 1, 0]]
+        self.getXYCoordinatesMatrix = [[1, 0, 0],
+                                       [0, 1, 0]]
         coordinates3D = self.readCoordinates3D(pathCoordinate3D)
         angles = self.readAngleFile(pathAngles)
-
-        coordinates2D = []
 
         misalignmentMatrices = self.readMisalignmentMatrix(pathMisalignmentMatrix)
 
         for indexCoord, coordinate3D in enumerate(coordinates3D):
             for indexAngle, angle in enumerate(angles):
-                coordinateProj2D = self.getInPlaneCoordinate2D(angle,
-                                                               coordinate3D)
-                print(misalignmentMatrices[:, :, indexAngle])
+                projectedCoordinate2D = self.getProjectedCoordinate2D(angle,
+                                                                      coordinate3D)
 
-                coordinateMisalginedProj2D = \
-                    self.getInPlaneMisalignedCoordinate2D(angle,
-                                                          coordinate3D,
-                                                          misalignmentMatrices[:, :, indexAngle])
+                misalignedProjectedCoordinate2D = \
+                    self.getMisalignedProjectedCoordinate2D(angle,
+                                                            coordinate3D,
+                                                            misalignmentMatrices[:, :, indexAngle])
 
-                coordinates2D.append((coordinateProj2D, indexCoord))
-
-    def getInPlaneCoordinate2D(self, angle, coordinate3D):
+    def getProjectedCoordinate2D(self, angle, coordinate3D):
         rotationMatrix = self.getRotationMatrix(angle)
 
-        inPlaneCoordinate2D = np.matmul(self.inPlaneCoordinateMatrix,
-                                        np.matmul(rotationMatrix,
-                                                  coordinate3D))
+        projectedCoordinate2D = np.matmul(self.getXYCoordinatesMatrix,
+                                          np.matmul(rotationMatrix,
+                                                    coordinate3D))
 
-        return inPlaneCoordinate2D
+        return projectedCoordinate2D
 
-    def getInPlaneMisalignedCoordinate2D(self, angle, coordinate3D, misalignmentMatrix):
+    def getMisalignedProjectedCoordinate2D(self, angle, coordinate3D, misalignmentMatrix):
         rotationMatrix = self.getRotationMatrix(angle)
 
-        inPlaneMisalignedCoordinate2D = np.matmul(misalignmentMatrix,
-                                                  np.matmul(self.inPlaneCoordinateMatrix,
-                                                            np.matmul(rotationMatrix,
-                                                                      coordinate3D)))
+        misalignedProjectedCoordinate2D = np.matmul(misalignmentMatrix,
+                                                    np.matmul(self.getXYCoordinatesMatrix,
+                                                              np.matmul(rotationMatrix,
+                                                                        coordinate3D)))
 
-        return inPlaneMisalignedCoordinate2D
+        return misalignedProjectedCoordinate2D
 
     # ----------------------------------- Utils methods -----------------------------------
 
