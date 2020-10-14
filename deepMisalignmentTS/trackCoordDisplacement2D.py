@@ -4,12 +4,16 @@ import sys
 
 class TrackerDisplacement:
     def __init__(self, pathCoordinate3D, pathAngles, pathMisalignmentMatrix):
+
         self.getXYCoordinatesMatrix = [[1, 0, 0],
                                        [0, 1, 0]]
+
         coordinates3D = self.readCoordinates3D(pathCoordinate3D)
         angles = self.readAngleFile(pathAngles)
 
         misalignmentMatrices = self.readMisalignmentMatrix(pathMisalignmentMatrix)
+
+        vectorDistance2D = []
 
         for indexCoord, coordinate3D in enumerate(coordinates3D):
             for indexAngle, angle in enumerate(angles):
@@ -20,6 +24,11 @@ class TrackerDisplacement:
                     self.getMisalignedProjectedCoordinate2D(angle,
                                                             coordinate3D,
                                                             misalignmentMatrices[:, :, indexAngle])
+
+                vectorDistance2D.append(self.getDistance2D(projectedCoordinate2D,
+                                                           misalignedProjectedCoordinate2D))
+
+            vectorDistance2D = []
 
     def getProjectedCoordinate2D(self, angle, coordinate3D):
         """ Method to calculate the projection of a 3D coordinate onto a plane defined by its angle (rotates
@@ -80,7 +89,7 @@ class TrackerDisplacement:
         return vProj
 
     @staticmethod
-    def calculateDisplacement2D(coordinate2D, misalignedCoordiante2D):
+    def getDistance2D(coordinate2D, misalignedCoordiante2D):
         """ Method to calculate the distance between a point and it misaligned correspondent """
 
         distanceVector = coordinate2D - misalignedCoordiante2D
