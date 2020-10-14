@@ -21,9 +21,10 @@ class TrackerDisplacement:
                                                             coordinate3D,
                                                             misalignmentMatrices[:, :, indexAngle])
 
-                #print(projectedCoordinate2D, misalignedProjectedCoordinate2D)
-
     def getProjectedCoordinate2D(self, angle, coordinate3D):
+        """ Method to calculate the projection of a 3D coordinate onto a plane defined by its angle (rotates
+        around the Y axis) """
+
         rotationMatrix = self.getRotationMatrix(angle)
 
         projectedCoordinate2D = np.matmul(self.getXYCoordinatesMatrix,
@@ -33,7 +34,8 @@ class TrackerDisplacement:
         return projectedCoordinate2D
 
     def getMisalignedProjectedCoordinate2D(self, angle, coordinate3D, misalignmentMatrix):
-        rotationMatrix = self.getRotationMatrix(angle)
+        """ Method to calculate the projection of a 3D coordinate onto a plane defined by its angle (rotates
+        around the Y axis) considering the misalginment introduce in its direction """
 
         projectedCoordiante2D = self.getProjectedCoordinate2D(angle, coordinate3D)
 
@@ -49,6 +51,7 @@ class TrackerDisplacement:
     @staticmethod
     def getRotationMatrix(angle):
         """ Method to calculate the 3D rotation matrix of a plane given its tilt angle """
+
         angleRad = np.deg2rad(angle)
 
         rotationMatrix = [[np.cos(angleRad), 0, np.sin(angleRad)],
@@ -60,6 +63,7 @@ class TrackerDisplacement:
     @staticmethod
     def getProjectionMatrix(angle):
         """ Method to calculate the projection matrix of a plane given its tilt angle """
+
         angleRad = np.deg2rad(angle)
 
         # plane matrix
@@ -77,6 +81,7 @@ class TrackerDisplacement:
 
     def calculateDisplacement2D(self, coordinate2D, transformationMatrix):
         """ Method to calculate the distance between a point and it misaligned correspondent """
+
         homoCoordinate2D = [coordinate2D[0], coordinate2D[1], 1]
         displacedCoordinate2D = self.getDisplacedCoordinate(homoCoordinate2D, transformationMatrix)
         diffVector = homoCoordinate2D - displacedCoordinate2D
@@ -96,6 +101,7 @@ class TrackerDisplacement:
     @staticmethod
     def readCoordinates3D(filePath):
         """ Method to read 3D coordinate files in IMOD format """
+
         coordinates = []
         with open(filePath) as f:
             lines = f.readlines()
@@ -111,6 +117,7 @@ class TrackerDisplacement:
     @staticmethod
     def readAngleFile(filePath):
         """ Method to read angles in .tlt format """
+
         angles = []
         with open(filePath) as f:
             lines = f.readlines()
@@ -124,6 +131,7 @@ class TrackerDisplacement:
     def readMisalignmentMatrix(filePath):
         """ Method to read the transformation matrix (IMOD format) and returns a 3D matrix containing the
         transformation matrices for each tilt-image belonging to the tilt-series """
+
         with open(filePath, "r") as matrix:
             lines = matrix.readlines()
         numberLines = len(lines)
