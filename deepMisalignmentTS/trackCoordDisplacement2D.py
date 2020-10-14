@@ -79,22 +79,15 @@ class TrackerDisplacement:
 
         return vProj
 
-    def calculateDisplacement2D(self, coordinate2D, transformationMatrix):
+    @staticmethod
+    def calculateDisplacement2D(coordinate2D, misalignedCoordiante2D):
         """ Method to calculate the distance between a point and it misaligned correspondent """
 
-        homoCoordinate2D = [coordinate2D[0], coordinate2D[1], 1]
-        displacedCoordinate2D = self.getDisplacedCoordinate(homoCoordinate2D, transformationMatrix)
-        diffVector = homoCoordinate2D - displacedCoordinate2D
-        diffVector = [i ** 2 for i in diffVector]
-        distance = sum(diffVector)
+        distanceVector = coordinate2D - misalignedCoordiante2D
+        distanceVector = [i ** 2 for i in distanceVector]
+        distance = sum(distanceVector)
 
         return distance
-
-    @staticmethod
-    def getDisplacedCoordinate(coordinate2D, transformationMatrix):
-        """ Method to calculate the final position of a 2D coordinate after misalignment """
-
-        return np.dot(transformationMatrix, coordinate2D)
 
     # ----------------------------------- I/O methods -----------------------------------
 
