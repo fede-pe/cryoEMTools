@@ -5,7 +5,7 @@ import sys
 class TrackerDisplacement:
     def __init__(self, pathCoordinate3D, pathAngles, pathMisalignmentMatrix):
         self.inPlaneCoordinateMatrix = [[1, 0, 0],
-                                        [0, 0, 1]]
+                                        [0, 1, 0]]
         coordinates3D = self.readCoordinates3D(pathCoordinate3D)
         angles = self.readAngleFile(pathAngles)
 
@@ -19,12 +19,11 @@ class TrackerDisplacement:
                                                                coordinate3D)
 
                 coordinateMisalginedProj2D = self.getInPlaneMisalignedCoordinate2D(angle,
-                                                                                   coordinate3D,
-                                                                                   misalignmentMatrices[indexAngle])
-
-                print(coordinateMisalginedProj2D)
+                                                                                  coordinate3D,
+                                                                                  misalignmentMatrices[indexAngle])
 
                 coordinates2D.append((coordinateProj2D, indexCoord))
+
 
     def getInPlaneCoordinate2D(self, angle, coordinate3D):
         rotationMatrix = self.getRotationMatrix(angle)
@@ -44,15 +43,6 @@ class TrackerDisplacement:
                                                                       coordinate3D)))
 
         return inPlaneMisalignedCoordinate2D
-
-    # def getInPlaneCoordinate2D(self, angle, coordinate3D):
-    #     projMatrix = self.getProjectionMatrix(angle)
-    #     coordinateProj3D = np.matmul(projMatrix, coordinate3D)
-    #
-    #     coordinateProj2Dx = np.sqrt(np.power(coordinateProj3D[0], 2) + np.power(coordinateProj3D[2], 2))
-    #     coordinateProj2Dy = coordinateProj3D[1]
-    #
-    #     return [coordinateProj2Dx, coordinateProj2Dy]
 
     @staticmethod
     def getRotationMatrix(angle):
