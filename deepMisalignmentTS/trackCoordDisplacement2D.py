@@ -17,13 +17,14 @@ class TrackerDisplacement:
             for indexAngle, angle in enumerate(angles):
                 coordinateProj2D = self.getInPlaneCoordinate2D(angle,
                                                                coordinate3D)
+                print(misalignmentMatrices[:, :, indexAngle])
 
-                coordinateMisalginedProj2D = self.getInPlaneMisalignedCoordinate2D(angle,
-                                                                                  coordinate3D,
-                                                                                  misalignmentMatrices[indexAngle])
+                coordinateMisalginedProj2D = \
+                    self.getInPlaneMisalignedCoordinate2D(angle,
+                                                          coordinate3D,
+                                                          misalignmentMatrices[:, :, indexAngle])
 
                 coordinates2D.append((coordinateProj2D, indexCoord))
-
 
     def getInPlaneCoordinate2D(self, angle, coordinate3D):
         rotationMatrix = self.getRotationMatrix(angle)
@@ -43,6 +44,8 @@ class TrackerDisplacement:
                                                                       coordinate3D)))
 
         return inPlaneMisalignedCoordinate2D
+
+    # ----------------------------------- Utils methods -----------------------------------
 
     @staticmethod
     def getRotationMatrix(angle):
@@ -88,6 +91,8 @@ class TrackerDisplacement:
         """ Method to calculate the final position of a 2D coordinate after misalignment """
 
         return np.dot(transformationMatrix, coordinate2D)
+
+    # ----------------------------------- I/O methods -----------------------------------
 
     @staticmethod
     def readCoordinates3D(filePath):
@@ -137,6 +142,7 @@ class TrackerDisplacement:
             frameMatrix[2, 1, i] = 0.0
             frameMatrix[2, 2, i] = 1.0
             i += 1
+
         return frameMatrix
 
 
