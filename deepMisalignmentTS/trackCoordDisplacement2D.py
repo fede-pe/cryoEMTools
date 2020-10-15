@@ -1,6 +1,8 @@
 import numpy as np
-import sys
 import scipy.stats
+
+import sys
+import math
 
 
 class TrackerDisplacement:
@@ -63,11 +65,12 @@ class TrackerDisplacement:
         counterpart through the series """
 
         binWidth = self.getFreedmanDiaconisBinWidth(distanceVector)
-        numberOfBins = int(round((max(distanceVector) - min(distanceVector) / binWidth) + 1))
+        numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
         hist, _ = np.histogram(distanceVector, numberOfBins)
 
         import matplotlib.pyplot as plt
         plt.hist(distanceVector, numberOfBins)
+        plt.show()
 
         return hist
 
@@ -116,12 +119,12 @@ class TrackerDisplacement:
 
     @staticmethod
     def getFreedmanDiaconisBinWidth(distanceVector):
-        """ Method to calulate the ooptimal bin width based on the Freedman-Diaconis method """
+        """ Method to calculate the optimal bin width based on the Freedman-Diaconis method """
 
         n = len(distanceVector)
         iqr = scipy.stats.iqr(distanceVector)
 
-        binWidth = int(round(2 * (iqr / n ** (1/3))) + 1)
+        binWidth = int(math.floor(2 * (iqr / n ** (1/3))) + 1)
 
         return binWidth
 
