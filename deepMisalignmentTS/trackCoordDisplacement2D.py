@@ -24,7 +24,7 @@ class TrackerDisplacement:
                                                                       coordinate3D)
 
                 misalignedProjectedCoordinate2D = \
-                    self.getMisalignedProjectedCoordina te2D(angle,
+                    self.getMisalignedProjectedCoordinate2D(angle,
                                                             coordinate3D,
                                                             misalignmentMatrices[:, :, indexAngle])
 
@@ -32,6 +32,7 @@ class TrackerDisplacement:
                                                            misalignedProjectedCoordinate2D))
 
             hist = self.getDistanceHistogram(vectorDistance2D)
+            exit()
 
             vectorDistance2D = []
 
@@ -64,7 +65,7 @@ class TrackerDisplacement:
         """ Method to generate an histogram representation from each distance of each 3D coordinate and its misaligned
         counterpart through the series """
 
-        binWidth = self.getFreedmanDiaconisBinWidth(distanceVector)
+        binWidth = self.getSquareRootBinWidth(distanceVector)
         numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
         hist, _ = np.histogram(distanceVector, numberOfBins)
 
@@ -134,6 +135,16 @@ class TrackerDisplacement:
 
         n = len(distanceVector)
         binWidth = int(math.floor(math.sqrt(n) + 1))
+
+        return binWidth
+
+    @staticmethod
+    def getSturguesBinWidth(distanceVector):
+        """ Method to calculate the optimal bin width based on the Sturgues method. It assumes a normal
+        distribution. """
+
+        n = len(distanceVector)
+        binWidth = int(math.floor(math.log2(n)) + 1)
 
         return binWidth
 
