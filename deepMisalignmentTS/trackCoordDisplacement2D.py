@@ -65,13 +65,9 @@ class TrackerDisplacement:
         """ Method to generate an histogram representation from each distance of each 3D coordinate and its misaligned
         counterpart through the series """
 
-        binWidth = self.getSquareRootBinWidth(distanceVector)
+        binWidth = self.getFreedmanDiaconisBinWidth(distanceVector)
         numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
         hist, _ = np.histogram(distanceVector, numberOfBins)
-
-        import matplotlib.pyplot as plt
-        plt.hist(distanceVector, numberOfBins)
-        plt.show()
 
         return hist
 
@@ -148,6 +144,14 @@ class TrackerDisplacement:
 
         return binWidth
 
+    @staticmethod
+    def getRiceBinWidth(distanceVector):
+        """ Method to calculate the optimal bin width based on the Rice method. It assumes a normal distribution. """
+
+        n = len(distanceVector)
+        binWidth = int(math.floor(2 * n ** (1/3)) + 1)
+
+        return binWidth
 
     # ----------------------------------- I/O methods -----------------------------------
 
