@@ -11,6 +11,8 @@ class TrackerDisplacement:
         self.getXYCoordinatesMatrix = [[1, 0, 0],
                                        [0, 1, 0]]
 
+        self.maximumOrderMoment = 7
+
         coordinates3D = self.readCoordinates3D(pathCoordinate3D)
         angles = self.readAngleFile(pathAngles)
 
@@ -31,7 +33,7 @@ class TrackerDisplacement:
                 vectorDistance2D.append(self.getDistance2D(projectedCoordinate2D,
                                                            misalignedProjectedCoordinate2D))
 
-            hist = self.getDistanceHistogram(vectorDistance2D)
+            histogram = self.getDistanceHistogram(vectorDistance2D)
             exit()
 
             vectorDistance2D = []
@@ -67,13 +69,22 @@ class TrackerDisplacement:
 
         binWidth = self.getFreedmanDiaconisBinWidth(distanceVector)
         numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
-        hist, _ = np.histogram(distanceVector, numberOfBins)
+        histogram, _ = np.histogram(distanceVector, numberOfBins)
 
         import matplotlib.pyplot as plt
         plt.hist(distanceVector, numberOfBins)
         plt.show()
 
-        return hist
+        return histogram
+
+    def getDistributionMoments(self, histogram):
+        """ Method to calculate the first n moments of distance distribution histogram."""
+
+        moments = []
+
+        for order in range(self.maximumOrderMoment + 1):
+            moments.append(scipy.stats.moment(histogram, order))
+
 
     # ----------------------------------- Utils methods -----------------------------------
 
