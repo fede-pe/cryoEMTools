@@ -1,6 +1,6 @@
 import numpy as np
 import sys
-import scipy
+import scipy.stats
 
 
 class TrackerDisplacement:
@@ -29,8 +29,7 @@ class TrackerDisplacement:
                 vectorDistance2D.append(self.getDistance2D(projectedCoordinate2D,
                                                            misalignedProjectedCoordinate2D))
 
-                hist = self.getDistanceHistogram(vectorDistance2D)
-                print(hist)
+            hist = self.getDistanceHistogram(vectorDistance2D)
 
             vectorDistance2D = []
 
@@ -60,9 +59,15 @@ class TrackerDisplacement:
         return [misalignedProjectedCoordinate2D[0], misalignedProjectedCoordinate2D[1]]
 
     def getDistanceHistogram(self, distanceVector):
+        """ Method to generate an histogram representation from each distance of each 3D coordinate and its misaligned
+        counterpart through the series """
+
         binWidth = self.getFreedmanDiaconisBinWidth(distanceVector)
-        numberOfBins = round( (max(distanceVector) - min(distanceVector)) / binWidth) + 1
+        numberOfBins = int(round((max(distanceVector) - min(distanceVector) / binWidth) + 1))
         hist, _ = np.histogram(distanceVector, numberOfBins)
+
+        import matplotlib.pyplot as plt
+        plt.hist(distanceVector, numberOfBins)
 
         return hist
 
@@ -116,7 +121,9 @@ class TrackerDisplacement:
         n = len(distanceVector)
         iqr = scipy.stats.iqr(distanceVector)
 
-        return 2 * (iqr / n ** (1/3))
+        binWidth = int(round(2 * (iqr / n ** (1/3))) + 1)
+
+        return binWidth
 
     # ----------------------------------- I/O methods -----------------------------------
 
