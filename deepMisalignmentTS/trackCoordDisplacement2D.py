@@ -8,6 +8,8 @@ import math
 class TrackerDisplacement:
     def __init__(self, pathCoordinate3D, pathAngles, pathMisalignmentMatrix):
 
+        self.generateOutputPlots = False
+
         self.getXYCoordinatesMatrix = [[1, 0, 0],
                                        [0, 1, 0]]
 
@@ -34,7 +36,10 @@ class TrackerDisplacement:
                                                            misalignedProjectedCoordinate2D))
 
             histogram = self.getDistanceHistogram(vectorDistance2D)
-            exit()
+
+            moments = self.getDistributionMoments(histogram)
+
+            print(moments)
 
             vectorDistance2D = []
 
@@ -71,9 +76,10 @@ class TrackerDisplacement:
         numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
         histogram, _ = np.histogram(distanceVector, numberOfBins)
 
-        import matplotlib.pyplot as plt
-        plt.hist(distanceVector, numberOfBins)
-        plt.show()
+        if self.generateOutputPlots:
+            import matplotlib.pyplot as plt
+            plt.hist(distanceVector, numberOfBins)
+            plt.show()
 
         return histogram
 
@@ -85,6 +91,7 @@ class TrackerDisplacement:
         for order in range(self.maximumOrderMoment + 1):
             moments.append(scipy.stats.moment(histogram, order))
 
+        return moments
 
     # ----------------------------------- Utils methods -----------------------------------
 
