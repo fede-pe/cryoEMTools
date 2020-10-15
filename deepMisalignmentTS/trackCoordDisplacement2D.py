@@ -29,6 +29,9 @@ class TrackerDisplacement:
                 vectorDistance2D.append(self.getDistance2D(projectedCoordinate2D,
                                                            misalignedProjectedCoordinate2D))
 
+                hist = self.getDistanceHistogram(vectorDistance2D)
+                print(hist)
+
             vectorDistance2D = []
 
     def getProjectedCoordinate2D(self, angle, coordinate3D):
@@ -57,7 +60,11 @@ class TrackerDisplacement:
         return [misalignedProjectedCoordinate2D[0], misalignedProjectedCoordinate2D[1]]
 
     def getDistanceHistogram(self, distanceVector):
-        pas
+        binWidth = self.getFreedmanDiaconisBinWidth(distanceVector)
+        numberOfBins = round( (max(distanceVector) - min(distanceVector)) / binWidth) + 1
+        hist, _ = np.histogram(distanceVector, numberOfBins)
+
+        return hist
 
     # ----------------------------------- Utils methods -----------------------------------
 
@@ -103,11 +110,11 @@ class TrackerDisplacement:
         return distance
 
     @staticmethod
-    def getFreedmanDiaconisBinWidth(distances):
+    def getFreedmanDiaconisBinWidth(distanceVector):
         """ Method to calulate the ooptimal bin width based on the Freedman-Diaconis method """
 
-        n = len(distances)
-        iqr = scipy.stats.iqr(distances)
+        n = len(distanceVector)
+        iqr = scipy.stats.iqr(distanceVector)
 
         return 2 * (iqr / n ** (1/3))
 
