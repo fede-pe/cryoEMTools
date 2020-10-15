@@ -1,5 +1,6 @@
 import numpy as np
 import sys
+import scipy
 
 
 class TrackerDisplacement:
@@ -55,6 +56,9 @@ class TrackerDisplacement:
 
         return [misalignedProjectedCoordinate2D[0], misalignedProjectedCoordinate2D[1]]
 
+    def getDistanceHistogram(self, distanceVector):
+        pas
+
     # ----------------------------------- Utils methods -----------------------------------
 
     @staticmethod
@@ -97,6 +101,15 @@ class TrackerDisplacement:
         distance = sum(distanceVector)
 
         return distance
+
+    @staticmethod
+    def getFreedmanDiaconisBinWidth(distances):
+        """ Method to calulate the ooptimal bin width based on the Freedman-Diaconis method """
+
+        n = len(distances)
+        iqr = scipy.stats.iqr(distances)
+
+        return 2 * (iqr / n ** (1/3))
 
     # ----------------------------------- I/O methods -----------------------------------
 
