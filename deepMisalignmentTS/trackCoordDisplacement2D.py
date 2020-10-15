@@ -18,13 +18,13 @@ class TrackerDisplacement:
 
         vectorDistance2D = []
 
-        for indexCoord, coordinate3D in enumerate(coordinates3D):
+        for coordinate3D in coordinates3D:
             for indexAngle, angle in enumerate(angles):
                 projectedCoordinate2D = self.getProjectedCoordinate2D(angle,
                                                                       coordinate3D)
 
                 misalignedProjectedCoordinate2D = \
-                    self.getMisalignedProjectedCoordinate2D(angle,
+                    self.getMisalignedProjectedCoordina te2D(angle,
                                                             coordinate3D,
                                                             misalignmentMatrices[:, :, indexAngle])
 
@@ -127,6 +127,16 @@ class TrackerDisplacement:
         binWidth = int(math.floor(2 * (iqr / n ** (1/3))) + 1)
 
         return binWidth
+
+    @staticmethod
+    def getSquareRootBinWidth(distanceVector):
+        """ Method to calculate the optimal bin width based on the square-root method """
+
+        n = len(distanceVector)
+        binWidth = int(math.floor(math.sqrt(n) + 1))
+
+        return binWidth
+
 
     # ----------------------------------- I/O methods -----------------------------------
 
