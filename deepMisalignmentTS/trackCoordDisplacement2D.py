@@ -69,6 +69,10 @@ class TrackerDisplacement:
         numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
         hist, _ = np.histogram(distanceVector, numberOfBins)
 
+        import matplotlib.pyplot as plt
+        plt.hist(distanceVector, numberOfBins)
+        plt.show()
+
         return hist
 
     # ----------------------------------- Utils methods -----------------------------------
