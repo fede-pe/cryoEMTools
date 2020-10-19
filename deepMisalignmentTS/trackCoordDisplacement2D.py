@@ -45,7 +45,7 @@ class TrackerDisplacement:
 
     def getProjectedCoordinate2D(self, angle, coordinate3D):
         """ Method to calculate the projection of a 3D coordinate onto a plane defined by its angle (rotates
-        around the Y axis) """
+        around the Y axis). """
 
         rotationMatrix = self.getRotationMatrix(angle)
 
@@ -57,7 +57,7 @@ class TrackerDisplacement:
 
     def getMisalignedProjectedCoordinate2D(self, angle, coordinate3D, misalignmentMatrix):
         """ Method to calculate the projection of a 3D coordinate onto a plane defined by its angle (rotates
-        around the Y axis) considering the misalginment introduce in its direction """
+        around the Y axis) considering the misalginment introduce in its direction. """
 
         projectedCoordiante2D = self.getProjectedCoordinate2D(angle, coordinate3D)
 
@@ -70,9 +70,36 @@ class TrackerDisplacement:
 
     def getDistanceHistogram(self, distanceVector):
         """ Method to generate an histogram representation from each distance of each 3D coordinate and its misaligned
-        counterpart through the series """
+        counterpart through the series. """
 
         binWidth = self.getFreedmanDiaconisBinWidth(distanceVector)
+        numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
+        histogram, _ = np.histogram(distanceVector, numberOfBins)
+
+        if self.generateOutputPlots:
+            import matplotlib.pyplot as plt
+            plt.hist(distanceVector, numberOfBins)
+            plt.show()
+
+        binWidth = self.getSquareRootBinWidth(distanceVector)
+        numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
+        histogram, _ = np.histogram(distanceVector, numberOfBins)
+
+        if self.generateOutputPlots:
+            import matplotlib.pyplot as plt
+            plt.hist(distanceVector, numberOfBins)
+            plt.show()
+
+        binWidth = self.getSturguesBinWidth(distanceVector)
+        numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
+        histogram, _ = np.histogram(distanceVector, numberOfBins)
+
+        if self.generateOutputPlots:
+            import matplotlib.pyplot as plt
+            plt.hist(distanceVector, numberOfBins)
+            plt.show()
+
+        binWidth = self.getRiceBinWidth(distanceVector)
         numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
         histogram, _ = np.histogram(distanceVector, numberOfBins)
 
@@ -84,11 +111,11 @@ class TrackerDisplacement:
         return histogram
 
     def getDistributionMoments(self, histogram):
-        """ Method to calculate the first n moments of distance distribution histogram."""
+        """ Method to calculate the first n moments of distance distribution histogram. """
 
         moments = []
 
-        for order in range(self.maximumOrderMoment + 1):
+        for order in range(1, self.maximumOrderMoment + 1):
             moments.append(scipy.stats.moment(histogram, order))
 
         return moments
@@ -97,7 +124,7 @@ class TrackerDisplacement:
 
     @staticmethod
     def getRotationMatrix(angle):
-        """ Method to calculate the 3D rotation matrix of a plane given its tilt angle """
+        """ Method to calculate the 3D rotation matrix of a plane given its tilt angle. """
 
         angleRad = np.deg2rad(angle)
 
@@ -109,7 +136,7 @@ class TrackerDisplacement:
 
     @staticmethod
     def getProjectionMatrix(angle):
-        """ Method to calculate the projection matrix of a plane given its tilt angle """
+        """ Method to calculate the projection matrix of a plane given its tilt angle."""
 
         angleRad = np.deg2rad(angle)
 
@@ -128,7 +155,7 @@ class TrackerDisplacement:
 
     @staticmethod
     def getDistance2D(coordinate2D, misalignedCoordiante2D):
-        """ Method to calculate the distance between a point and it misaligned correspondent """
+        """ Method to calculate the distance between a point and it misaligned correspondent. """
 
         distanceVector = coordinate2D - misalignedCoordiante2D
         distanceVector = [i ** 2 for i in distanceVector]
@@ -138,7 +165,7 @@ class TrackerDisplacement:
 
     @staticmethod
     def getFreedmanDiaconisBinWidth(distanceVector):
-        """ Method to calculate the optimal bin width based on the Freedman-Diaconis method """
+        """ Method to calculate the optimal bin width based on the Freedman-Diaconis method. """
 
         n = len(distanceVector)
         iqr = scipy.stats.iqr(distanceVector)
@@ -149,7 +176,7 @@ class TrackerDisplacement:
 
     @staticmethod
     def getSquareRootBinWidth(distanceVector):
-        """ Method to calculate the optimal bin width based on the square-root method """
+        """ Method to calculate the optimal bin width based on the square-root method. """
 
         n = len(distanceVector)
         binWidth = int(math.floor(math.sqrt(n) + 1))
@@ -179,7 +206,7 @@ class TrackerDisplacement:
 
     @staticmethod
     def readCoordinates3D(filePath):
-        """ Method to read 3D coordinate files in IMOD format """
+        """ Method to read 3D coordinate files in IMOD format. """
 
         coordinates = []
         with open(filePath) as f:
@@ -195,7 +222,7 @@ class TrackerDisplacement:
 
     @staticmethod
     def readAngleFile(filePath):
-        """ Method to read angles in .tlt format """
+        """ Method to read angles in .tlt format. """
 
         angles = []
         with open(filePath) as f:
@@ -209,7 +236,7 @@ class TrackerDisplacement:
     @staticmethod
     def readMisalignmentMatrix(filePath):
         """ Method to read the transformation matrix (IMOD format) and returns a 3D matrix containing the
-        transformation matrices for each tilt-image belonging to the tilt-series """
+        transformation matrices for each tilt-image belonging to the tilt-series. """
 
         with open(filePath, "r") as matrix:
             lines = matrix.readlines()
