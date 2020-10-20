@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.stats
 
+import errno
 import os
 import sys
 import math
