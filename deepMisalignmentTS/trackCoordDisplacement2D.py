@@ -37,9 +37,10 @@ class TrackerDisplacement:
 
             histogram = self.getDistanceHistogram(vectorDistance2D)
 
+            maximumDistance = self.getMaximumDistance(vectorDistance2D)
             moments = self.getDistributionMoments(histogram)
 
-            print(moments)
+            statistics = maximumDistance + moments
 
             vectorDistance2D = []
 
@@ -119,6 +120,12 @@ class TrackerDisplacement:
             moments.append(scipy.stats.moment(histogram, order))
 
         return moments
+
+    @staticmethod
+    def getMaximumDistance(distanceVector):
+        """ Method to calculate the maximum distance in trajectory """
+
+        return [max(distanceVector)]
 
     # ----------------------------------- Utils methods -----------------------------------
 
@@ -257,6 +264,10 @@ class TrackerDisplacement:
             i += 1
 
         return frameMatrix
+
+    @staticmethod
+    def saveStaticts(statistics):
+        """ Method to save statistics in output file"""
 
 
 if __name__ == "__main__":
