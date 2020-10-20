@@ -121,7 +121,7 @@ class TrackerDisplacement:
         moments = []
 
         for order in range(1, self.maximumOrderMoment + 1):
-            moments.append(scipy.stats.moment(histogram, order))
+            moments.append('%.4f' % scipy.stats.moment(histogram, order))
 
         return moments
 
@@ -129,7 +129,7 @@ class TrackerDisplacement:
     def getMaximumDistance(distanceVector):
         """ Method to calculate the maximum distance in trajectory """
 
-        return [max(distanceVector)]
+        return ['%.4f' % max(distanceVector)]
 
     # ----------------------------------- Utils methods -----------------------------------
 
