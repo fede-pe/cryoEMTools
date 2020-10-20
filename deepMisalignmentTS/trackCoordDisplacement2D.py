@@ -1,8 +1,10 @@
 import numpy as np
 import scipy.stats
 
+import os
 import sys
 import math
+import csv
 
 
 class TrackerDisplacement:
@@ -41,6 +43,8 @@ class TrackerDisplacement:
             moments = self.getDistributionMoments(histogram)
 
             statistics = maximumDistance + moments
+
+            self.saveStaticts(statistics)
 
             vectorDistance2D = []
 
@@ -265,9 +269,46 @@ class TrackerDisplacement:
 
         return frameMatrix
 
-    @staticmethod
-    def saveStaticts(statistics):
+    def saveStaticts(self, statistics):
         """ Method to save statistics in output file"""
+
+        fieldNames = ['max']
+
+        " Create as many fields as moments calculated "
+        for order in range(1, self.maximumOrderMoment + 1):
+            fieldNames.append('E(X^%d)' % order)
+
+        fieldNames.append('subTomoPath')
+
+        fileName = 'misalignmentStatistics.txt'
+        filePrefix = os.path.dirname(os.path.abspath(sys.argv[0]))
+        filePath = os.path.join(filePrefix, 'trainingSet', fileName)
+
+        " Create intermediate directories if missing "
+        if not os.path.exists(filePath):
+            try:
+                os.makedirs(os.path.dirname(filePath))
+            except OSError as exc:  # Guard against race condition
+                if exc.errno != errno.EEXIST:
+                    raise
+
+        mode = "a" if os.path.exists(filePath) else "w"
+
+        with open(filePath, mode) as f:
+            writer = csv.DictWriter(f, delimiter='\t', fieldnames=fieldNames)
+
+            if mode == "w":
+                writer.writeheader()
+
+            writerDict = {
+                'max': statistics[0]
+            }
+
+            for order in range(1, self.maximumOrderMoment + 1):
+                dicKey = 'E(X^%d)' % order
+                writerDict[dicKey] = statistics[order]
+
+            writer.writerow(writerDict)
 
 
 if __name__ == "__main__":
