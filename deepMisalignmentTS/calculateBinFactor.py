@@ -2,17 +2,20 @@ import sys
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
-        print("Usage: python calculateBinFactor.py <beadSize> <tomoBoxSize>\n"
-              "<beadSize>:  Size in Angstroms (A) of the gold beads to be picked in the tomogram. \n"
-              "<tomoBoxSize>: Path to file containing the tilt angles of the tilt-series. /n")
+        print("Usage: python calculateBinFactor.py <beadDiameter> <tomoVoxelSize>\n"
+              "<beadDiameter>:  Diameter in nanometers (nm) of the gold beads to be picked in the tomogram. \n"
+              "<tomoVoxelSize>: Voxel size of the tomogram containing the beads to be picked in angstroms/pixel"
+              "(A/px). /n")
         exit()
 
-    targetBeadPixSize = 10
-    inputBeadRealSize = float(sys.argv[1])
+    targetBeadPixRadius = 10
+    inputBeadRealDiameter = float(sys.argv[1])
     inputTomoBoxSize = float(sys.argv[2])
 
-    # Calculate the size of the beads from the original tomogram in pixels
-    inputBeadPixSize = inputBeadRealSize / inputTomoBoxSize
+    # Calculate the diameter of the beads from the original tomogram in pixels
+    # * 10 to nanometers -> angstroms
+    # / 2 to diameter -> radius
+    inputBeadPixRadius = (inputBeadRealDiameter * 10) / (2 * inputTomoBoxSize)
 
     # Calculate the binning factor to match the pixel size of the beads in the tomogram with target
     binFactor = targetBeadPixSize / inputBeadPixSize
