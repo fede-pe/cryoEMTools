@@ -41,9 +41,10 @@ class TrackerDisplacement:
             histogram = self.getDistanceHistogram(vectorDistance2D)
 
             maximumDistance = self.getMaximumDistance(vectorDistance2D)
+            totalDistance = self.getTotalDistance(vectorDistance2D)
             moments = self.getDistributionMoments(histogram)
 
-            statistics = maximumDistance + moments
+            statistics = maximumDistance + totalDistance + moments
 
             self.saveStaticts(statistics)
 
@@ -141,8 +142,8 @@ class TrackerDisplacement:
         for distance in distanceVector:
             totalDistance += distance
 
-        return totalDistance
-    
+        return ['%.4f' % totalDistance]
+
     # ----------------------------------- Utils methods -----------------------------------
 
     @staticmethod
@@ -284,7 +285,7 @@ class TrackerDisplacement:
     def saveStaticts(self, statistics):
         """ Method to save statistics in output file"""
 
-        fieldNames = ['max']
+        fieldNames = ['max', 'total']
 
         " Create as many fields as moments calculated "
         for order in range(1, self.maximumOrderMoment + 1):
@@ -307,18 +308,19 @@ class TrackerDisplacement:
         mode = "a" if os.path.exists(filePath) else "w"
 
         with open(filePath, mode) as f:
-            writer = csv.DictWriter(f, delimiter='\t', fieldnames=fieldNames)
+            writer = csv.DictWriter(f, delimiter=' ', fieldnames=fieldNames)
 
             if mode == "w":
                 writer.writeheader()
 
             writerDict = {
-                'max': statistics[0]
+                'max': statistics[0],
+                'total': statistics[1]
             }
 
             for order in range(1, self.maximumOrderMoment + 1):
                 dicKey = 'E(X^%d)' % order
-                writerDict[dicKey] = statistics[order]
+                writerDict[dicKey] = statistics[order + 1]
 
             writer.writerow(writerDict)
 
