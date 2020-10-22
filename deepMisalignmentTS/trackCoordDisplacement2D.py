@@ -132,6 +132,17 @@ class TrackerDisplacement:
 
         return ['%.4f' % max(distanceVector)]
 
+    @staticmethod
+    def getTotalDistance(distanceVector):
+        """ Method to calculate the total distance of the trajectory """
+
+        totalDistance = 0
+
+        for distance in distanceVector:
+            totalDistance += distance
+
+        return totalDistance
+    
     # ----------------------------------- Utils methods -----------------------------------
 
     @staticmethod
