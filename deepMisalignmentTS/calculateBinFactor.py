@@ -18,7 +18,7 @@ if __name__ == "__main__":
     inputBeadPixRadius = (inputBeadRealDiameter * 10) / (2 * inputTomoBoxSize)
 
     # Calculate the binning factor to match the pixel size of the beads in the tomogram with target
-    binFactor = targetBeadPixSize / inputBeadPixSize
+    binFactor = targetBeadPixRadius / inputBeadPixRadius
 
     print("\n"
           "\t Binning factor: %.4f \n" % binFactor,
