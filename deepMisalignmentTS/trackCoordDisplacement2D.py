@@ -38,6 +38,8 @@ class TrackerDisplacement:
                 vectorDistance2D.append(self.getDistance2D(projectedCoordinate2D,
                                                            misalignedProjectedCoordinate2D))
 
+            print(vectorDistance2D)
+
             histogram = self.getDistanceHistogram(vectorDistance2D)
 
             maximumDistance = self.getMaximumDistance(vectorDistance2D)
@@ -144,6 +146,10 @@ class TrackerDisplacement:
 
         return ['%.4f' % totalDistance]
 
+    @staticmethod
+    def getCoordinatesArea(self):
+        pass
+
     # ----------------------------------- Utils methods -----------------------------------
 
     @staticmethod
@@ -183,7 +189,7 @@ class TrackerDisplacement:
 
         distanceVector = coordinate2D - misalignedCoordiante2D
         distanceVector = [i ** 2 for i in distanceVector]
-        distance = sum(distanceVector)
+        distance = np.sqrt(sum(distanceVector))
 
         return distance
 
