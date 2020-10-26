@@ -88,32 +88,32 @@ class TrackerDisplacement:
             plt.hist(distanceVector, numberOfBins)
             plt.show()
 
-        binWidth = self.getSquareRootBinWidth(distanceVector)
-        numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
-        histogram, _ = np.histogram(distanceVector, numberOfBins)
-
-        if self.generateOutputPlots:
-            import matplotlib.pyplot as plt
-            plt.hist(distanceVector, numberOfBins)
-            plt.show()
-
-        binWidth = self.getSturguesBinWidth(distanceVector)
-        numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
-        histogram, _ = np.histogram(distanceVector, numberOfBins)
-
-        if self.generateOutputPlots:
-            import matplotlib.pyplot as plt
-            plt.hist(distanceVector, numberOfBins)
-            plt.show()
-
-        binWidth = self.getRiceBinWidth(distanceVector)
-        numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
-        histogram, _ = np.histogram(distanceVector, numberOfBins)
-
-        if self.generateOutputPlots:
-            import matplotlib.pyplot as plt
-            plt.hist(distanceVector, numberOfBins)
-            plt.show()
+        # binWidth = self.getSquareRootBinWidth(distanceVector)
+        # numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
+        # histogram, _ = np.histogram(distanceVector, numberOfBins)
+        #
+        # if self.generateOutputPlots:
+        #     import matplotlib.pyplot as plt
+        #     plt.hist(distanceVector, numberOfBins)
+        #     plt.show()
+        #
+        # binWidth = self.getSturguesBinWidth(distanceVector)
+        # numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
+        # histogram, _ = np.histogram(distanceVector, numberOfBins)
+        #
+        # if self.generateOutputPlots:
+        #     import matplotlib.pyplot as plt
+        #     plt.hist(distanceVector, numberOfBins)
+        #     plt.show()
+        #
+        # binWidth = self.getRiceBinWidth(distanceVector)
+        # numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
+        # histogram, _ = np.histogram(distanceVector, numberOfBins)
+        #
+        # if self.generateOutputPlots:
+        #     import matplotlib.pyplot as plt
+        #     plt.hist(distanceVector, numberOfBins)
+        #     plt.show()
 
         return histogram
 

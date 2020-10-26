@@ -22,7 +22,5 @@ if __name__ == "__main__":
 
     print("\n"
           "\t Binning factor: %.4f \n" % binFactor,
-          "\t Target bead pixel size: %d pixels\n" % targetBeadPixRadius)
-
-
+          "\t Target bead pixel radius: %d pixels\n" % targetBeadPixRadius)
 
