@@ -42,13 +42,11 @@ class TrackerDisplacement:
                 vectorDistance2D.append(self.getDistance2D(projectedCoordinate2D,
                                                            misalignedProjectedCoordinate2D))
 
-            print(vectorDistance2D)
-            print(vectorMisalignment2D)
-
             histogram = self.getDistanceHistogram(vectorDistance2D)
 
             maximumDistance = self.getMaximumDistance(vectorDistance2D)
             totalDistance = self.getTotalDistance(vectorDistance2D)
+            area = self.getCoordinatesArea(vectorMisalignment2D)
             moments = self.getDistributionMoments(histogram)
 
             statistics = maximumDistance + totalDistance + moments
@@ -151,12 +149,18 @@ class TrackerDisplacement:
 
         return ['%.4f' % totalDistance]
 
-    @staticmethod
-    def getCoordinatesArea(misalignmentVector):
+    def getCoordinatesArea(self, misalignmentVector):
         """ Method to calculate the area occupied by the set of points that describes the misalignment introduced for
         each 3D coordinate at each projection through the tilt-series. Every point describes the module and direction
         of the misalignment introduces and the area occupied by them is described by the shoelace formula. """
-        pass
+
+        """ Since it may be a non-convex polygon the points must be sorted. In order to do so, a inner reference point 
+        is selected and the points are rearranged in terms of the angle that is formed by the line containing each 
+        point and the reference one, and the x axis. """
+
+        self.getReferencePoint(misalignmentVector)
+
+        return 0
 
     # ----------------------------------- Utils methods -----------------------------------
 
@@ -215,7 +219,7 @@ class TrackerDisplacement:
         n = len(distanceVector)
         iqr = scipy.stats.iqr(distanceVector)
 
-        binWidth = int(math.floor(2 * (iqr / n ** (1/3))) + 1)
+        binWidth = int(math.floor(2 * (iqr / n ** (1 / 3))) + 1)
 
         return binWidth
 
@@ -243,9 +247,17 @@ class TrackerDisplacement:
         """ Method to calculate the optimal bin width based on the Rice method. It assumes a normal distribution. """
 
         n = len(distanceVector)
-        binWidth = int(math.floor(2 * n ** (1/3)) + 1)
+        binWidth = int(math.floor(2 * n ** (1 / 3)) + 1)
 
         return binWidth
+
+    @staticmethod
+    def getReferencePoint(misalignmentVector):
+        n = len(misalignmentVector)
+        sum = np.sum(misalignmentVector)
+        print(misalignmentVector)
+        print(sum)
+        print(n)
 
     # ----------------------------------- I/O methods -----------------------------------
 
