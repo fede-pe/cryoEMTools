@@ -24,6 +24,7 @@ class TrackerDisplacement:
         misalignmentMatrices = self.readMisalignmentMatrix(pathMisalignmentMatrix)
 
         vectorDistance2D = []
+        vectorMisalignment2D = []
 
         for coordinate3D in coordinates3D:
             for indexAngle, angle in enumerate(angles):
@@ -35,10 +36,14 @@ class TrackerDisplacement:
                                                             coordinate3D,
                                                             misalignmentMatrices[:, :, indexAngle])
 
+                vectorMisalignment2D.append(self.getMisalignmentVector(projectedCoordinate2D,
+                                                                       misalignedProjectedCoordinate2D))
+
                 vectorDistance2D.append(self.getDistance2D(projectedCoordinate2D,
                                                            misalignedProjectedCoordinate2D))
 
             print(vectorDistance2D)
+            print(vectorMisalignment2D)
 
             histogram = self.getDistanceHistogram(vectorDistance2D)
 
@@ -182,6 +187,10 @@ class TrackerDisplacement:
         vProj = np.matmul(v, np.matmul(vinv, vt))
 
         return vProj
+
+    @staticmethod
+    def getMisalignmentVector(coordinate2D, misalignedCoordiante2D):
+        return [misalignedCoordiante2D[0] - coordinate2D[0], misalignedCoordiante2D[1] - coordinate2D[1]]
 
     @staticmethod
     def getDistance2D(coordinate2D, misalignedCoordiante2D):
