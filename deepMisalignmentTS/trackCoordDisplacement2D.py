@@ -152,7 +152,10 @@ class TrackerDisplacement:
         return ['%.4f' % totalDistance]
 
     @staticmethod
-    def getCoordinatesArea(self):
+    def getCoordinatesArea(misalignmentVector):
+        """ Method to calculate the area occupied by the set of points that describes the misalignment introduced for
+        each 3D coordinate at each projection through the tilt-series. Every point describes the module and direction
+        of the misalignment introduces and the area occupied by them is described by the shoelace formula. """
         pass
 
     # ----------------------------------- Utils methods -----------------------------------
@@ -190,11 +193,14 @@ class TrackerDisplacement:
 
     @staticmethod
     def getMisalignmentVector(coordinate2D, misalignedCoordiante2D):
+        """ Method to calculate the vector described by the projected 2D coordinate and its misaligned
+        correspondent. """
+
         return [misalignedCoordiante2D[0] - coordinate2D[0], misalignedCoordiante2D[1] - coordinate2D[1]]
 
     @staticmethod
     def getDistance2D(coordinate2D, misalignedCoordiante2D):
-        """ Method to calculate the distance between a point and it misaligned correspondent. """
+        """ Method to calculate the distance between a the projected 2D coordinate and its misaligned correspondent. """
 
         distanceVector = coordinate2D - misalignedCoordiante2D
         distanceVector = [i ** 2 for i in distanceVector]
