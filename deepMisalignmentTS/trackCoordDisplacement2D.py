@@ -150,15 +150,15 @@ class TrackerDisplacement:
         return ['%.4f' % totalDistance]
 
     def getCoordinatesArea(self, misalignmentVector):
-        """ Method to calculate the area occupied by the set of points that describes the misalignment introduced for
-        each 3D coordinate at each projection through the tilt-series. Every point describes the module and direction
-        of the misalignment introduces and the area occupied by them is described by the shoelace formula. """
+        """ Method to calculate the area occupied by the set of coordinates that describes the misalignment introduced
+        for each 3D coordinate at each projection through the tilt-series. Every coordinate describes the module and
+        direction of the misalignment introduces and the area occupied by them is described by the shoelace formula. """
 
-        """ Since it may be a non-convex polygon the points must be sorted. In order to do so, a inner reference point 
-        is selected and the points are rearranged in terms of the angle that is formed by the line containing each 
-        point and the reference one, and the x axis. """
+        """ Since it may be a non-convex polygon the vertexes must be sorted. In order to do so, a inner reference 
+        coordinate is calculated and the set of coordinates is rearranged in terms of the angle that is formed by the 
+        line containing each coordinate and the reference one, and the x axis. """
 
-        referencePoint = self.getReferencePoint(misalignmentVector)
+        referenceCoordiante = self.getReferenceCoordinate(misalignmentVector)
 
         return 0
 
@@ -252,7 +252,10 @@ class TrackerDisplacement:
         return binWidth
 
     @staticmethod
-    def getReferencePoint(misalignmentVector):
+    def getReferenceCoordinate(misalignmentVector):
+        """ Method to obtain a reference coordinate to sort a set of coordinates in terms of its relative position to
+        the reference. The reference is calculated as the average of all the coordinates from the set. """
+
         n = len(misalignmentVector)
         sumX = 0
         sumY = 0
@@ -261,9 +264,29 @@ class TrackerDisplacement:
             sumX += vector[0]
             sumY += vector[1]
 
-        referencePoint = [sumX / n, sumY / n]
+        referenceCoordinate = [sumX / n, sumY / n]
 
-        return referencePoint
+        return referenceCoordinate
+
+    @staticmethod
+    def getSegmentAngle(referenceCoordinate, coordinate):
+        """ Method to calculate the relative angle formed by the x-axis and the line defined by one coordinate and the
+        reference one. """
+
+        sine = (referenceCoordinate[1] - coordinate[1]) / self.getDistance2D(referenceCoordinate, coordinate)
+
+        if sine >= 0:
+            if referenceCoordinate[0] >= coordinate[1]:  # First Quadrant
+                angle = 2.0 * math.pi - math.asin(sine)
+            else:  # Second Quadrant
+                angle = math.pi + math.asin(sine)
+        else:
+            if x2 >= x1:  # Fourth Quadrant
+                angle = math.asin(-sine)
+            else:  # Third Quadrant
+                angle = math.pi - math.asin(-sine)
+
+        return angle
 
     # ----------------------------------- I/O methods -----------------------------------
 
