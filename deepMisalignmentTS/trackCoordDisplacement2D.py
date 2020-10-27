@@ -158,7 +158,7 @@ class TrackerDisplacement:
         is selected and the points are rearranged in terms of the angle that is formed by the line containing each 
         point and the reference one, and the x axis. """
 
-        self.getReferencePoint(misalignmentVector)
+        referencePoint = self.getReferencePoint(misalignmentVector)
 
         return 0
 
@@ -254,10 +254,16 @@ class TrackerDisplacement:
     @staticmethod
     def getReferencePoint(misalignmentVector):
         n = len(misalignmentVector)
-        sum = np.sum(misalignmentVector)
-        print(misalignmentVector)
-        print(sum)
-        print(n)
+        sumX = 0
+        sumY = 0
+
+        for vector in misalignmentVector:
+            sumX += vector[0]
+            sumY += vector[1]
+
+        referencePoint = [sumX / n, sumY / n]
+
+        return referencePoint
 
     # ----------------------------------- I/O methods -----------------------------------
 
