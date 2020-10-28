@@ -149,7 +149,7 @@ class TrackerDisplacement:
 
         return ['%.4f' % totalDistance]
 
-    def getCoordinatesArea(self, misalignmentVector):
+    def getCoordinatesArea(self, misalignmentCoordinates):
         """ Method to calculate the area occupied by the set of coordinates that describes the misalignment introduced
         for each 3D coordinate at each projection through the tilt-series. Every coordinate describes the module and
         direction of the misalignment introduces and the area occupied by them is described by the shoelace formula. """
@@ -158,10 +158,18 @@ class TrackerDisplacement:
         coordinate is calculated and the set of coordinates is rearranged in terms of the angle that is formed by the 
         line containing each coordinate and the reference one, and the x axis. """
 
-        referenceCoordiante = self.getReferenceCoordinate(misalignmentVector)
+        referenceCoordiante = self.getReferenceCoordinate(misalignmentCoordinates)
 
-        for coordinate in misalignmentVector:
-            angle = self.getSegmentAngle(referenceCoordiante, coordinate)
+        """ Sort angles anticlockwise using getSegmentAngle() function"""
+        sortedCoorinates = sorted(misalignmentCoordinates,
+                                  key=lambda coordinate: -self.getSegmentAngle(coordinate, referenceCoordiante))
+
+        print(sortedCoorinates)
+
+        if self.generateOutputPlots:
+            import matplotlib.pyplot as plt
+            plt.scatter(*zip(*sortedCoorinates))
+            plt.show()
 
         return 0
 
