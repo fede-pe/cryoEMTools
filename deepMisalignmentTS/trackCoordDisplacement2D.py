@@ -11,7 +11,8 @@ import csv
 class TrackerDisplacement:
     def __init__(self, pathCoordinate3D, pathAngles, pathMisalignmentMatrix):
 
-        self.generateOutputPlots = False
+        self.generateOutputHistogramPlots = False
+        self.generateOutputMisalignedCoordinatesPlots = True
 
         self.getXYCoordinatesMatrix = [[1, 0, 0],
                                        [0, 1, 0]]
@@ -88,7 +89,7 @@ class TrackerDisplacement:
         numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
         histogram, _ = np.histogram(distanceVector, numberOfBins)
 
-        if self.generateOutputPlots:
+        if self.generateOutputHistogramPlots:
             import matplotlib.pyplot as plt
             plt.hist(distanceVector, numberOfBins)
             plt.show()
@@ -97,7 +98,7 @@ class TrackerDisplacement:
         # numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
         # histogram, _ = np.histogram(distanceVector, numberOfBins)
         #
-        # if self.generateOutputPlots:
+        # if self.generateOutputHistogramPlots:
         #     import matplotlib.pyplot as plt
         #     plt.hist(distanceVector, numberOfBins)
         #     plt.show()
@@ -106,7 +107,7 @@ class TrackerDisplacement:
         # numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
         # histogram, _ = np.histogram(distanceVector, numberOfBins)
         #
-        # if self.generateOutputPlots:
+        # if self.generateOutputHistogramPlots:
         #     import matplotlib.pyplot as plt
         #     plt.hist(distanceVector, numberOfBins)
         #     plt.show()
@@ -115,7 +116,7 @@ class TrackerDisplacement:
         # numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
         # histogram, _ = np.histogram(distanceVector, numberOfBins)
         #
-        # if self.generateOutputPlots:
+        # if self.generateOutputHistogramPlots:
         #     import matplotlib.pyplot as plt
         #     plt.hist(distanceVector, numberOfBins)
         #     plt.show()
@@ -164,9 +165,7 @@ class TrackerDisplacement:
         sortedCoorinates = sorted(misalignmentCoordinates,
                                   key=lambda coordinate: -self.getSegmentAngle(coordinate, referenceCoordiante))
 
-        print(sortedCoorinates)
-
-        if self.generateOutputPlots:
+        if self.generateOutputMisalignedCoordinatesPlots:
             import matplotlib.pyplot as plt
             plt.scatter(*zip(*sortedCoorinates))
             plt.show()
