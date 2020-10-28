@@ -187,25 +187,6 @@ class TrackerDisplacement:
         return rotationMatrix
 
     @staticmethod
-    def getProjectionMatrix(angle):
-        """ Method to calculate the projection matrix of a plane given its tilt angle."""
-
-        angleRad = np.deg2rad(angle)
-
-        # plane matrix
-        v1 = [0, 1, 0]
-        v2 = [np.cos(angleRad), 0, np.sin(angleRad)]
-        v = np.matrix.transpose(np.array([v1, v2]))
-
-        # projection matrix vProj = v (vt v)^-1 vt
-        vt = np.matrix.transpose(v)
-        vinv = np.linalg.inv(np.matmul(vt, v))
-
-        vProj = np.matmul(v, np.matmul(vinv, vt))
-
-        return vProj
-
-    @staticmethod
     def getMisalignmentVector(coordinate2D, misalignedCoordiante2D):
         """ Method to calculate the vector described by the projected 2D coordinate and its misaligned
         correspondent. """
@@ -277,42 +258,6 @@ class TrackerDisplacement:
         referenceCoordinate = [sumX / n, sumY / n]
 
         return referenceCoordinate
-
-    def getSegmentAngle(self, referenceCoordinate, coordinate):
-        """ Method to calculate the relative angle formed by the x-axis and the line defined by one coordinate and the
-        reference one. """
-
-        relativeCoordinate = [coordinate[0] - referenceCoordinate[0], coordinate[1] - referenceCoordinate[1]]
-
-        sine = abs(relativeCoordinate[1]) / self.getDistance2D(np.array(referenceCoordinate),
-                                                               np.array(coordinate))
-
-        if relativeCoordinate[1] >= 0:
-
-            # First Quadrant
-            if relativeCoordinate[0] >= 0:
-                angle = math.asin(sine)
-
-                return np.rad2deg(angle)
-
-            # Second Quadrant
-            else:
-                angle = math.pi - math.asin(sine)
-
-                return np.rad2deg(angle)
-        else:
-
-            # Fourth Quadrant
-            if relativeCoordinate[0] >= 0:
-                angle = (2 * math.pi) - math.asin(sine)
-
-                return np.rad2deg(angle)
-
-            # Third Quadrant
-            else:
-                angle = math.pi + math.asin(sine)
-
-                return np.rad2deg(angle)
 
     # ----------------------------------- I/O methods -----------------------------------
 
@@ -411,6 +356,63 @@ class TrackerDisplacement:
                 writerDict[dicKey] = statistics[order + 1]
 
             writer.writerow(writerDict)
+
+    # ----------------------------------- Unused methods -----------------------------------
+
+    @staticmethod
+    def getProjectionMatrix(angle):
+        """ Method to calculate the projection matrix of a plane given its tilt angle."""
+
+        angleRad = np.deg2rad(angle)
+
+        # plane matrix
+        v1 = [0, 1, 0]
+        v2 = [np.cos(angleRad), 0, np.sin(angleRad)]
+        v = np.matrix.transpose(np.array([v1, v2]))
+
+        # projection matrix vProj = v (vt v)^-1 vt
+        vt = np.matrix.transpose(v)
+        vinv = np.linalg.inv(np.matmul(vt, v))
+
+        vProj = np.matmul(v, np.matmul(vinv, vt))
+
+        return vProj
+
+    def getSegmentAngle(self, referenceCoordinate, coordinate):
+        """ Method to calculate the relative angle formed by the x-axis and the line defined by one coordinate and the
+        reference one. """
+
+        relativeCoordinate = [coordinate[0] - referenceCoordinate[0], coordinate[1] - referenceCoordinate[1]]
+
+        sine = abs(relativeCoordinate[1]) / self.getDistance2D(np.array(referenceCoordinate),
+                                                               np.array(coordinate))
+
+        if relativeCoordinate[1] >= 0:
+
+            # First Quadrant
+            if relativeCoordinate[0] >= 0:
+                angle = math.asin(sine)
+
+                return np.rad2deg(angle)
+
+            # Second Quadrant
+            else:
+                angle = math.pi - math.asin(sine)
+
+                return np.rad2deg(angle)
+        else:
+
+            # Fourth Quadrant
+            if relativeCoordinate[0] >= 0:
+                angle = (2 * math.pi) - math.asin(sine)
+
+                return np.rad2deg(angle)
+
+            # Third Quadrant
+            else:
+                angle = math.pi + math.asin(sine)
+
+                return np.rad2deg(angle)
 
 
 if __name__ == "__main__":
