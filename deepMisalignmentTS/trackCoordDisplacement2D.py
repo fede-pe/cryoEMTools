@@ -160,6 +160,9 @@ class TrackerDisplacement:
 
         referenceCoordiante = self.getReferenceCoordinate(misalignmentVector)
 
+        for coordinate in misalignmentVector:
+            angle = self.getSegmentAngle(referenceCoordiante, coordinate)
+
         return 0
 
     # ----------------------------------- Utils methods -----------------------------------
@@ -268,25 +271,41 @@ class TrackerDisplacement:
 
         return referenceCoordinate
 
-    @staticmethod
-    def getSegmentAngle(referenceCoordinate, coordinate):
+    def getSegmentAngle(self, referenceCoordinate, coordinate):
         """ Method to calculate the relative angle formed by the x-axis and the line defined by one coordinate and the
         reference one. """
 
-        sine = (referenceCoordinate[1] - coordinate[1]) / self.getDistance2D(referenceCoordinate, coordinate)
+        relativeCoordinate = [coordinate[0] - referenceCoordinate[0], coordinate[1] - referenceCoordinate[1]]
 
-        if sine >= 0:
-            if referenceCoordinate[0] >= coordinate[1]:  # First Quadrant
-                angle = 2.0 * math.pi - math.asin(sine)
-            else:  # Second Quadrant
-                angle = math.pi + math.asin(sine)
+        sine = abs(relativeCoordinate[1]) / self.getDistance2D(np.array(referenceCoordinate),
+                                                               np.array(coordinate))
+
+        if relativeCoordinate[1] >= 0:
+
+            # First Quadrant
+            if relativeCoordinate[0] >= 0:
+                angle = math.asin(sine)
+
+                return np.rad2deg(angle)
+
+            # Second Quadrant
+            else:
+                angle = math.pi - math.asin(sine)
+
+                return np.rad2deg(angle)
         else:
-            if x2 >= x1:  # Fourth Quadrant
-                angle = math.asin(-sine)
-            else:  # Third Quadrant
-                angle = math.pi - math.asin(-sine)
 
-        return angle
+            # Fourth Quadrant
+            if relativeCoordinate[0] >= 0:
+                angle = (2 * math.pi) - math.asin(sine)
+
+                return np.rad2deg(angle)
+
+            # Third Quadrant
+            else:
+                angle = math.pi + math.asin(sine)
+
+                return np.rad2deg(angle)
 
     # ----------------------------------- I/O methods -----------------------------------
 
