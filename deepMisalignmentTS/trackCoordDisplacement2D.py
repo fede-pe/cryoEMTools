@@ -150,6 +150,12 @@ class TrackerDisplacement:
 
         return ['%.4f' % totalDistance]
 
+    def getConvexHull(self, misalignmentCoordinates):
+        """ Method to calculate the convex hull that contains all the misalignment coordinates. In order to do so,
+        the algorithm will pick the coordinate with the smallest components as a initial point and, will look for the
+        next coordinate that in contained in the hull recursively, starting the process again with each coordinate that
+        is added to the hull. """
+
     def getCoordinatesArea(self, misalignmentCoordinates):
         """ Method to calculate the area occupied by the set of coordinates that describes the misalignment introduced
         for each 3D coordinate at each projection through the tilt-series. Every coordinate describes the module and
@@ -241,23 +247,6 @@ class TrackerDisplacement:
         binWidth = int(math.floor(2 * n ** (1 / 3)) + 1)
 
         return binWidth
-
-    @staticmethod
-    def getReferenceCoordinate(misalignmentVector):
-        """ Method to obtain a reference coordinate to sort a set of coordinates in terms of its relative position to
-        the reference. The reference is calculated as the average of all the coordinates from the set. """
-
-        n = len(misalignmentVector)
-        sumX = 0
-        sumY = 0
-
-        for vector in misalignmentVector:
-            sumX += vector[0]
-            sumY += vector[1]
-
-        referenceCoordinate = [sumX / n, sumY / n]
-
-        return referenceCoordinate
 
     # ----------------------------------- I/O methods -----------------------------------
 
@@ -377,6 +366,23 @@ class TrackerDisplacement:
         vProj = np.matmul(v, np.matmul(vinv, vt))
 
         return vProj
+
+    @staticmethod
+    def getReferenceCoordinate(misalignmentVector):
+        """ Method to obtain a reference coordinate to sort a set of coordinates in terms of its relative position to
+        the reference. The reference is calculated as the average of all the coordinates from the set. """
+
+        n = len(misalignmentVector)
+        sumX = 0
+        sumY = 0
+
+        for vector in misalignmentVector:
+            sumX += vector[0]
+            sumY += vector[1]
+
+        referenceCoordinate = [sumX / n, sumY / n]
+
+        return referenceCoordinate
 
     def getSegmentAngle(self, referenceCoordinate, coordinate):
         """ Method to calculate the relative angle formed by the x-axis and the line defined by one coordinate and the
