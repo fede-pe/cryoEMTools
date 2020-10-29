@@ -13,6 +13,7 @@ class TrackerDisplacement:
     def __init__(self, pathCoordinate3D, pathAngles, pathMisalignmentMatrix):
 
         self.generateOutputHistogramPlots = False
+        self.generateOutputHullPlot = False
         self.generateOutputMisalignedCoordinatesPlots = False
 
         self.getXYCoordinatesMatrix = [[1, 0, 0],
@@ -153,10 +154,12 @@ class TrackerDisplacement:
         return ['%.4f' % totalDistance]
 
     def getConvexHull(self, vectorMisalignment2D):
-        """ Method to calculate the convex hull that contains all the misalignment coordinates. In order to do so,
-        the algorithm will pick the coordinate with the smallest components as a initial point and, will look for the
+        """ Method to calculate the convex hull that contains all the misalignment coordinates. Each coordinate is
+        described by the module and direction of the misalignment introduced in each tilt-image. In order to do so,
+        the algorithm will pick the coordinate with the smallest component as a initial point. Then, will look for the
         next coordinate that in contained in the hull recursively, starting the process again with each coordinate that
-        is added to the hull. """
+        is added to the hull. The condition for a coordinate to be added to the is that no concave angle may be formed
+        with this coordinate and ony other contained in the set."""
 
         hull = []
         misalignmentCoordinates = vectorMisalignment2D.copy()
@@ -199,27 +202,18 @@ class TrackerDisplacement:
             misalignmentCoordinates.remove(coordinate)
             remainingCoordinates = misalignmentCoordinates.copy()
 
-        import matplotlib.pyplot as plt
-        plt.scatter(*zip(*vectorMisalignment2D))
-        plt.scatter(*zip(*hull))
-        plt.show()
+        if generateOutputHullPlot:
+            import matplotlib.pyplot as plt
+            plt.scatter(*zip(*vectorMisalignment2D))
+            plt.scatter(*zip(*hull))
+            plt.show()
 
         return hull
 
-    def getCoordinatesArea(self, misalignmentCoordinates):
-        """ Method to calculate the area occupied by the set of coordinates that describes the misalignment introduced
-        for each 3D coordinate at each projection through the tilt-series. Every coordinate describes the module and
-        direction of the misalignment introduces and the area occupied by them is described by the shoelace formula. """
-
-        """ Since it may be a non-convex polygon the vertexes must be sorted. In order to do so, a inner reference 
-        coordinate is calculated and the set of coordinates is rearranged in terms of the angle that is formed by the 
-        line containing each coordinate and the reference one, and the x axis. """
-
-        referenceCoordiante = self.getReferenceCoordinate(misalignmentCoordinates)
-
-        """ Sort angles anticlockwise using getSegmentAngle() function"""
-        sortedCoorinates = sorted(misalignmentCoordinates,
-                                  key=lambda coordinate: -self.getSegmentAngle(coordinate, referenceCoordiante))
+    def getCoordinatesArea(self, hull):
+        """ Method to calculate the area occupied by the convex hull in which set of coordinates that describes the
+        misalignment introduced for each 3D coordinate at each projection through the tilt-series are contained. As
+        a convex polygon, its area is calculate applying the shoelace formula. """
 
         if self.generateOutputMisalignedCoordinatesPlots:
             import matplotlib.pyplot as plt
