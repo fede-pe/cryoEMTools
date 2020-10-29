@@ -13,7 +13,7 @@ class TrackerDisplacement:
     def __init__(self, pathCoordinate3D, pathAngles, pathMisalignmentMatrix):
 
         self.generateOutputHistogramPlots = False
-        self.generateOutputHullPlot = False
+        self.generateOutputHullPlot = True
 
         self.getXYCoordinatesMatrix = [[1, 0, 0],
                                        [0, 1, 0]]
@@ -50,7 +50,7 @@ class TrackerDisplacement:
             maximumDistance = self.getMaximumDistance(vectorDistance2D)
             totalDistance = self.getTotalDistance(vectorDistance2D)
             area = self.getHullArea(hull)
-            perymeter = self.getHullPerymeter(hull)
+            perimeter = self.getHullPerimeter(hull)
             moments = self.getDistributionMoments(histogram)
 
             statistics = maximumDistance + totalDistance + moments
@@ -164,7 +164,7 @@ class TrackerDisplacement:
         hull = []
         misalignmentCoordinates = vectorMisalignment2D.copy()
 
-        """ The recursion algorithm is started at the coordinate with minimum X component (could be minimum y too) """
+        """ The recursion algorithm is started at the coordinate with minimum X component (could be minimum y too). """
         startingCoordinate = sorted(misalignmentCoordinates, key=lambda elem: elem[0])[0]
 
         hull.append(startingCoordinate)
@@ -220,16 +220,34 @@ class TrackerDisplacement:
         summary2 = 0
 
         for i in range(len(hull)):
-            sindex = (i + 1) % len(hull)
-            prod1 = hull[i][0] * hull[sindex][1]
+            shiftedIndex1 = (i + 1) % len(hull)
+            prod1 = hull[i][0] * hull[shiftedIndex1][1]
             summary1 += prod1
 
         for i in range(len(hull)):
-            sindex = (i + 1) % len(hull)
-            prod2 = hull[sindex][0] * hull[i][1]
+            shiftedIndex2 = (i + 1) % len(hull)
+            prod2 = hull[shiftedIndex2][0] * hull[i][1]
             summary2 += prod2
 
-        return abs(1 / 2 * (summary1 - summary2))
+        area = abs(1 / 2 * (summary1 - summary2))
+
+        print(area)
+
+        return area
+
+    def getHullPerimeter(self, hull):
+        """ Method to calculate the perimeter occupied by the convex hull in which set of coordinates that describes the
+        misalignment introduced for each 3D coordinate at each projection through the tilt-series are contained. """
+
+        perimeter = 0
+
+        for i in range(len(hull)):
+            shiftedIndex = (i + 1) % len(hull)
+            perimeter += self.getDistance2D(np.array(hull[i]), np.array(hull[shiftedIndex]))
+
+        print(perimeter)
+
+        return perimeter
 
     # ----------------------------------- Utils methods -----------------------------------
 
@@ -254,7 +272,7 @@ class TrackerDisplacement:
 
     @staticmethod
     def getDistance2D(coordinate2D, misalignedCoordiante2D):
-        """ Method to calculate the distance between a the projected 2D coordinate and its misaligned correspondent. """
+        """ Method to calculate the distance between two 2D coordinates. """
 
         distanceVector = coordinate2D - misalignedCoordiante2D
         distanceVector = [i ** 2 for i in distanceVector]
