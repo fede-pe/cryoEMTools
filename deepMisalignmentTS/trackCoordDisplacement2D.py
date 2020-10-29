@@ -13,7 +13,7 @@ class TrackerDisplacement:
     def __init__(self, pathCoordinate3D, pathAngles, pathMisalignmentMatrix):
 
         self.generateOutputHistogramPlots = False
-        self.generateOutputHullPlot = True
+        self.generateOutputHullPlot = False
 
         self.getXYCoordinatesMatrix = [[1, 0, 0],
                                        [0, 1, 0]]
@@ -54,6 +54,7 @@ class TrackerDisplacement:
             moments = self.getDistributionMoments(histogram)
 
             statistics = maximumDistance + totalDistance + moments
+            print(maximumDistance + totalDistance + area + perimeter + moments)
 
             self.saveStaticts(statistics)
 
@@ -231,9 +232,7 @@ class TrackerDisplacement:
 
         area = abs(1 / 2 * (summary1 - summary2))
 
-        print(area)
-
-        return area
+        return ['%.4f' % area]
 
     def getHullPerimeter(self, hull):
         """ Method to calculate the perimeter occupied by the convex hull in which set of coordinates that describes the
@@ -245,9 +244,7 @@ class TrackerDisplacement:
             shiftedIndex = (i + 1) % len(hull)
             perimeter += self.getDistance2D(np.array(hull[i]), np.array(hull[shiftedIndex]))
 
-        print(perimeter)
-
-        return perimeter
+        return ['%.4f' % perimeter]
 
     # ----------------------------------- Utils methods -----------------------------------
 
