@@ -49,12 +49,11 @@ class TrackerDisplacement:
 
             maximumDistance = self.getMaximumDistance(vectorDistance2D)
             totalDistance = self.getTotalDistance(vectorDistance2D)
-            area = self.getHullArea(hull)
-            perimeter = self.getHullPerimeter(hull)
+            hullArea = self.getHullArea(hull)
+            hullPerimeter = self.getHullPerimeter(hull)
             moments = self.getDistributionMoments(histogram)
 
-            statistics = maximumDistance + totalDistance + moments
-            print(maximumDistance + totalDistance + area + perimeter + moments)
+            statistics = maximumDistance + totalDistance + hullArea + hullPerimeter + moments
 
             self.saveStaticts(statistics)
 
@@ -375,7 +374,7 @@ class TrackerDisplacement:
     def saveStaticts(self, statistics):
         """ Method to save statistics in output file"""
 
-        fieldNames = ['max', 'total']
+        fieldNames = ['maxDistance', 'totalDistance', 'hullArea', 'hullPerimeter']
 
         " Create as many fields as moments calculated "
         for order in range(1, self.maximumOrderMoment + 1):
@@ -404,13 +403,17 @@ class TrackerDisplacement:
                 writer.writeheader()
 
             writerDict = {
-                'max': statistics[0],
-                'total': statistics[1]
+                'maxDistance': statistics[0],
+                'totalDistance': statistics[1],
+                'hullArea': statistics[2],
+                'hullPerimeter': statistics[3]
             }
 
             for order in range(1, self.maximumOrderMoment + 1):
                 dicKey = 'E(X^%d)' % order
-                writerDict[dicKey] = statistics[order + 1]
+                writerDict[dicKey] = statistics[order + 3]
+
+            #writerDict['subTomoPath'] = statistics[-1]
 
             writer.writerow(writerDict)
 
