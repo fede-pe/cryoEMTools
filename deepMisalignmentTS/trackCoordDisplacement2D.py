@@ -6,6 +6,7 @@ import os
 import sys
 import math
 import csv
+import random
 
 
 class TrackerDisplacement:
@@ -47,6 +48,7 @@ class TrackerDisplacement:
 
             maximumDistance = self.getMaximumDistance(vectorDistance2D)
             totalDistance = self.getTotalDistance(vectorDistance2D)
+            hull = self.getConvexHull(vectorMisalignment2D)
             area = self.getCoordinatesArea(vectorMisalignment2D)
             moments = self.getDistributionMoments(histogram)
 
@@ -155,6 +157,52 @@ class TrackerDisplacement:
         the algorithm will pick the coordinate with the smallest components as a initial point and, will look for the
         next coordinate that in contained in the hull recursively, starting the process again with each coordinate that
         is added to the hull. """
+
+        hull = []
+
+        """ The recursion algorithm is started at the coordinate with minimum X component (could be minimum y too) """
+        startingCoordinate = sorted(misalignmentCoordinates, key=lambda elem: elem[0])[0]
+
+        hull.append(startingCoordinate)
+        remainingCoordinates = misalignmentCoordinates
+
+        while misalignmentCoordinates:
+            coordinate = random.choice(misalignmentCoordinates)
+            remainingCoordinates.remove(coordinate)
+
+            while remainingCoordinates:
+                element = remainingCoordinates[0]
+                coordinateVector = [hull[-1][0] - coordinate[0], hull[-1][1] - coordinate[1]]
+
+                elementVector = [element[0] - coordinate[0], element[1] - coordinate[1]]
+
+                angle = np.arctan2(elementVector[1],
+                                   elementVector[0]) - np.arctan2(coordinateVector[1],
+                                                                  coordinateVector[0])
+
+                if angle < 0:
+                    angle += 2 * math.pi
+
+                angle = np.rad2deg(angle)
+
+                if angle < 180:
+                    remainingCoordinates.remove(element)
+                else:
+                    coordinate = element  # comprobar para 180 grados
+                    remainingCoordinates.remove(element)
+
+                print(len(remainingCoordinates))
+
+            print(hull)
+            hull.append(coordinate)
+            misalignmentCoordinates.remove(coordinate)
+            remainingCoordinates = misalignmentCoordinates
+
+        import matplotlib.pyplot as plt
+        plt.scatter(*zip(*hull))
+        plt.show()
+
+        return hull
 
     def getCoordinatesArea(self, misalignmentCoordinates):
         """ Method to calculate the area occupied by the set of coordinates that describes the misalignment introduced
