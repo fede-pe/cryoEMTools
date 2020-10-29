@@ -14,7 +14,6 @@ class TrackerDisplacement:
 
         self.generateOutputHistogramPlots = False
         self.generateOutputHullPlot = False
-        self.generateOutputMisalignedCoordinatesPlots = False
 
         self.getXYCoordinatesMatrix = [[1, 0, 0],
                                        [0, 1, 0]]
@@ -46,11 +45,12 @@ class TrackerDisplacement:
                                                            misalignedProjectedCoordinate2D))
 
             histogram = self.getDistanceHistogram(vectorDistance2D)
+            hull = self.getConvexHull(vectorMisalignment2D)
 
             maximumDistance = self.getMaximumDistance(vectorDistance2D)
             totalDistance = self.getTotalDistance(vectorDistance2D)
-            hull = self.getConvexHull(vectorMisalignment2D)
-            area = self.getCoordinatesArea(vectorMisalignment2D)
+            area = self.getHullArea(hull)
+            perymeter = self.getHullPerymeter(hull)
             moments = self.getDistributionMoments(histogram)
 
             statistics = maximumDistance + totalDistance + moments
@@ -202,7 +202,7 @@ class TrackerDisplacement:
             misalignmentCoordinates.remove(coordinate)
             remainingCoordinates = misalignmentCoordinates.copy()
 
-        if generateOutputHullPlot:
+        if self.generateOutputHullPlot:
             import matplotlib.pyplot as plt
             plt.scatter(*zip(*vectorMisalignment2D))
             plt.scatter(*zip(*hull))
@@ -210,17 +210,26 @@ class TrackerDisplacement:
 
         return hull
 
-    def getCoordinatesArea(self, hull):
+    @staticmethod
+    def getHullArea(hull):
         """ Method to calculate the area occupied by the convex hull in which set of coordinates that describes the
         misalignment introduced for each 3D coordinate at each projection through the tilt-series are contained. As
         a convex polygon, its area is calculate applying the shoelace formula. """
 
-        if self.generateOutputMisalignedCoordinatesPlots:
-            import matplotlib.pyplot as plt
-            plt.scatter(*zip(*sortedCoorinates))
-            plt.show()
+        summary1 = 0
+        summary2 = 0
 
-        return 0
+        for i in range(len(hull)):
+            sindex = (i + 1) % len(hull)
+            prod1 = hull[i][0] * hull[sindex][1]
+            summary1 += prod1
+
+        for i in range(len(hull)):
+            sindex = (i + 1) % len(hull)
+            prod2 = hull[sindex][0] * hull[i][1]
+            summary2 += prod2
+
+        return abs(1 / 2 * (summary1 - summary2))
 
     # ----------------------------------- Utils methods -----------------------------------
 
