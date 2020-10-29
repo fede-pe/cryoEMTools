@@ -13,7 +13,7 @@ class TrackerDisplacement:
     def __init__(self, pathCoordinate3D, pathAngles, pathMisalignmentMatrix):
 
         self.generateOutputHistogramPlots = False
-        self.generateOutputMisalignedCoordinatesPlots = True
+        self.generateOutputMisalignedCoordinatesPlots = False
 
         self.getXYCoordinatesMatrix = [[1, 0, 0],
                                        [0, 1, 0]]
@@ -152,23 +152,23 @@ class TrackerDisplacement:
 
         return ['%.4f' % totalDistance]
 
-    def getConvexHull(self, misalignmentCoordinates):
+    def getConvexHull(self, vectorMisalignment2D):
         """ Method to calculate the convex hull that contains all the misalignment coordinates. In order to do so,
         the algorithm will pick the coordinate with the smallest components as a initial point and, will look for the
         next coordinate that in contained in the hull recursively, starting the process again with each coordinate that
         is added to the hull. """
 
         hull = []
+        misalignmentCoordinates = vectorMisalignment2D.copy()
 
         """ The recursion algorithm is started at the coordinate with minimum X component (could be minimum y too) """
         startingCoordinate = sorted(misalignmentCoordinates, key=lambda elem: elem[0])[0]
 
         hull.append(startingCoordinate)
-        remainingCoordinates = misalignmentCoordinates
+        remainingCoordinates = misalignmentCoordinates.copy()
 
         while misalignmentCoordinates:
             coordinate = random.choice(misalignmentCoordinates)
-            remainingCoordinates.remove(coordinate)
 
             while remainingCoordinates:
                 element = remainingCoordinates[0]
@@ -191,14 +191,16 @@ class TrackerDisplacement:
                     coordinate = element  # comprobar para 180 grados
                     remainingCoordinates.remove(element)
 
-                print(len(remainingCoordinates))
+            if coordinate == startingCoordinate:
+                break
 
-            print(hull)
             hull.append(coordinate)
+
             misalignmentCoordinates.remove(coordinate)
-            remainingCoordinates = misalignmentCoordinates
+            remainingCoordinates = misalignmentCoordinates.copy()
 
         import matplotlib.pyplot as plt
+        plt.scatter(*zip(*vectorMisalignment2D))
         plt.scatter(*zip(*hull))
         plt.show()
 
