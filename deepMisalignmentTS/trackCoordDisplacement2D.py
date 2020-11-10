@@ -46,6 +46,9 @@ class TrackerDisplacement:
 
             histogram = self.getDistanceHistogram(vectorDistance2D)
             hull = self.getConvexHull(vectorMisalignment2D)
+            #scipy https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.ConvexHull.html
+
+            # TODO: PCA
 
             maximumDistance = self.getMaximumDistance(vectorDistance2D)
             totalDistance = self.getTotalDistance(vectorDistance2D)
