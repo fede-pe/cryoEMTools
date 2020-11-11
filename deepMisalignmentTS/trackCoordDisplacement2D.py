@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.stats
+import scipy.spatial
 
 import errno
 import os
@@ -155,86 +156,6 @@ class TrackerDisplacement:
             totalDistance += distance
 
         return ['%.4f' % totalDistance]
-
-    def getConvexHull(self, vectorMisalignment2D):
-        """ Method to calculate the convex hull that contains all the misalignment coordinates. Each coordinate is
-        described by the module and direction of the misalignment introduced in each tilt-image. In order to do so,
-        the algorithm will pick the coordinate with the smallest component as a initial point. Then, will look for the
-        next coordinate that in contained in the hull recursively, starting the process again with each coordinate that
-        is added to the hull. The condition for a coordinate to be added to the is that no concave angle may be formed
-        with this coordinate and ony other contained in the set."""
-
-        hull = []
-        misalignmentCoordinates = vectorMisalignment2D.copy()
-
-        """ The recursion algorithm is started at the coordinate with minimum X component (could be minimum y too). """
-        startingCoordinate = sorted(misalignmentCoordinates, key=lambda elem: elem[0])[0]
-
-        hull.append(startingCoordinate)
-        remainingCoordinates = misalignmentCoordinates.copy()
-
-        while misalignmentCoordinates:
-            coordinate = random.choice(misalignmentCoordinates)
-
-            while remainingCoordinates:
-                element = remainingCoordinates[0]
-                coordinateVector = [hull[-1][0] - coordinate[0], hull[-1][1] - coordinate[1]]
-
-                elementVector = [element[0] - coordinate[0], element[1] - coordinate[1]]
-
-                angle = np.arctan2(elementVector[1],
-                                   elementVector[0]) - np.arctan2(coordinateVector[1],
-                                                                  coordinateVector[0])
-
-                if angle < 0:
-                    angle += 2 * math.pi
-
-                angle = np.rad2deg(angle)
-
-                if angle < 180:
-                    remainingCoordinates.remove(element)
-                else:
-                    coordinate = element  # comprobar para 180 grados
-                    remainingCoordinates.remove(element)
-
-            if coordinate == startingCoordinate:
-                break
-
-            hull.append(coordinate)
-
-            misalignmentCoordinates.remove(coordinate)
-            remainingCoordinates = misalignmentCoordinates.copy()
-
-        if self.generateOutputHullPlot:
-            import matplotlib.pyplot as plt
-            plt.scatter(*zip(*vectorMisalignment2D))
-            plt.scatter(*zip(*hull))
-            plt.show()
-
-        return hull
-
-    @staticmethod
-    def getHullArea(hull):
-        """ Method to calculate the area occupied by the convex hull in which set of coordinates that describes the
-        misalignment introduced for each 3D coordinate at each projection through the tilt-series are contained. As
-        a convex polygon, its area is calculate applying the shoelace formula. """
-
-        summary1 = 0
-        summary2 = 0
-
-        for i in range(len(hull)):
-            shiftedIndex1 = (i + 1) % len(hull)
-            prod1 = hull[i][0] * hull[shiftedIndex1][1]
-            summary1 += prod1
-
-        for i in range(len(hull)):
-            shiftedIndex2 = (i + 1) % len(hull)
-            prod2 = hull[shiftedIndex2][0] * hull[i][1]
-            summary2 += prod2
-
-        area = abs(1 / 2 * (summary1 - summary2))
-
-        return ['%.4f' % area]
 
     def getHullPerimeter(self, hull):
         """ Method to calculate the perimeter occupied by the convex hull in which set of coordinates that describes the
@@ -493,6 +414,86 @@ class TrackerDisplacement:
                 angle = math.pi + math.asin(sine)
 
                 return np.rad2deg(angle)
+
+    def getConvexHull(self, vectorMisalignment2D):
+        """ Method to calculate the convex hull that contains all the misalignment coordinates. Each coordinate is
+        described by the module and direction of the misalignment introduced in each tilt-image. In order to do so,
+        the algorithm will pick the coordinate with the smallest component as a initial point. Then, will look for the
+        next coordinate that in contained in the hull recursively, starting the process again with each coordinate that
+        is added to the hull. The condition for a coordinate to be added to the is that no concave angle may be formed
+        with this coordinate and ony other contained in the set."""
+
+        hull = []
+        misalignmentCoordinates = vectorMisalignment2D.copy()
+
+        """ The recursion algorithm is started at the coordinate with minimum X component (could be minimum y too). """
+        startingCoordinate = sorted(misalignmentCoordinates, key=lambda elem: elem[0])[0]
+
+        hull.append(startingCoordinate)
+        remainingCoordinates = misalignmentCoordinates.copy()
+
+        while misalignmentCoordinates:
+            coordinate = random.choice(misalignmentCoordinates)
+
+            while remainingCoordinates:
+                element = remainingCoordinates[0]
+                coordinateVector = [hull[-1][0] - coordinate[0], hull[-1][1] - coordinate[1]]
+
+                elementVector = [element[0] - coordinate[0], element[1] - coordinate[1]]
+
+                angle = np.arctan2(elementVector[1],
+                                   elementVector[0]) - np.arctan2(coordinateVector[1],
+                                                                  coordinateVector[0])
+
+                if angle < 0:
+                    angle += 2 * math.pi
+
+                angle = np.rad2deg(angle)
+
+                if angle < 180:
+                    remainingCoordinates.remove(element)
+                else:
+                    coordinate = element  # comprobar para 180 grados
+                    remainingCoordinates.remove(element)
+
+            if coordinate == startingCoordinate:
+                break
+
+            hull.append(coordinate)
+
+            misalignmentCoordinates.remove(coordinate)
+            remainingCoordinates = misalignmentCoordinates.copy()
+
+        if self.generateOutputHullPlot:
+            import matplotlib.pyplot as plt
+            plt.scatter(*zip(*vectorMisalignment2D))
+            plt.scatter(*zip(*hull))
+            plt.show()
+
+        return hull
+
+    @staticmethod
+    def getHullArea(hull):
+        """ Method to calculate the area occupied by the convex hull in which set of coordinates that describes the
+        misalignment introduced for each 3D coordinate at each projection through the tilt-series are contained. As
+        a convex polygon, its area is calculate applying the shoelace formula. """
+
+        summary1 = 0
+        summary2 = 0
+
+        for i in range(len(hull)):
+            shiftedIndex1 = (i + 1) % len(hull)
+            prod1 = hull[i][0] * hull[shiftedIndex1][1]
+            summary1 += prod1
+
+        for i in range(len(hull)):
+            shiftedIndex2 = (i + 1) % len(hull)
+            prod2 = hull[shiftedIndex2][0] * hull[i][1]
+            summary2 += prod2
+
+        area = abs(1 / 2 * (summary1 - summary2))
+
+        return ['%.4f' % area]
 
 
 if __name__ == "__main__":
