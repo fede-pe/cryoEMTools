@@ -189,6 +189,8 @@ class TrackerDisplacement:
 
     @staticmethod
     def getPCA(vectorMisalignment2D):
+        """ Method to calculate the PCA of the misalignment introduced for each 3D coordinate at each projection
+        through the tilt-series distribution in order to characterize the occupied region. """
 
         pca = PCA(n_components=2)
         pca.fit(vectorMisalignment2D)
