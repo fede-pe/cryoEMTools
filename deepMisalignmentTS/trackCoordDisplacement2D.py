@@ -20,7 +20,7 @@ class TrackerDisplacement:
         self.getXYCoordinatesMatrix = [[1, 0, 0],
                                        [0, 1, 0]]
 
-        self.maximumOrderMoment = 7
+        # self.maximumOrderMoment = 7
 
         coordinates3D = self.readCoordinates3D(pathCoordinate3D)
         angles = self.readAngleFile(pathAngles)
@@ -54,7 +54,7 @@ class TrackerDisplacement:
             hullArea = [hull.area]
             hullPerimeter = self.getHullPerimeter(hull)
 
-            pca = self.getPCA(vectorMisalignment2D)
+            pca = self.getPCA(vectorMisalignment2D)[0]
 
             statistics = maximumDistance + totalDistance + hullArea + hullPerimeter + [pca[0]] + [pca[1]]
 
@@ -143,7 +143,7 @@ class TrackerDisplacement:
         pca.fit(vectorMisalignment2D)
 
         # Return only the first component (remove redundant information)
-        return pca.components_[0]
+        return pca.components_
 
     # ----------------------------------- Utils methods -----------------------------------
 
@@ -271,16 +271,15 @@ class TrackerDisplacement:
 
         return frameMatrix
 
-    def saveStaticts(self, statistics):
+    @staticmethod
+    def saveStaticts(statistics):
         """ Method to save statistics in output file"""
 
-        fieldNames = ['maxDistance', 'totalDistance', 'hullArea', 'hullPerimeter']
+        fieldNames = ['maxDistance', 'totalDistance', 'hullArea', 'hullPerimeter', 'pcaX', 'pcaY', 'subTomoPath']
 
-        " Create as many fields as moments calculated "
-        for order in range(1, self.maximumOrderMoment + 1):
-            fieldNames.append('E(X^%d)' % order)
-
-        fieldNames.append('subTomoPath')
+        # " Create as many fields as moments calculated "
+        # for order in range(1, self.maximumOrderMoment + 1):
+        #     fieldNames.append('E(X^%d)' % order)
 
         fileName = 'misalignmentStatistics.txt'
         filePrefix = os.path.dirname(os.path.abspath(sys.argv[0]))
@@ -306,12 +305,15 @@ class TrackerDisplacement:
                 'maxDistance': statistics[0],
                 'totalDistance': statistics[1],
                 'hullArea': statistics[2],
-                'hullPerimeter': statistics[3]
+                'hullPerimeter': statistics[3],
+                'pcaX': statistics[4],
+                'pcaY': statistics[5]
+                # 'subTomoPath': statistics[6]
             }
 
-            for order in range(1, self.maximumOrderMoment + 1):
-                dicKey = 'E(X^%d)' % order
-                writerDict[dicKey] = statistics[order + 3]
+            # for order in range(1, self.maximumOrderMoment + 1):
+            #     dicKey = 'E(X^%d)' % order
+            #     writerDict[dicKey] = statistics[order + 3]
 
             # writerDict['subTomoPath'] = statistics[-1]
 
