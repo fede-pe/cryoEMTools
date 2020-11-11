@@ -46,18 +46,17 @@ class TrackerDisplacement:
                 vectorDistance2D.append(self.getDistance2D(projectedCoordinate2D,
                                                            misalignedProjectedCoordinate2D))
 
-            histogram = self.getDistanceHistogram(vectorDistance2D)
+            maximumDistance = self.getMaximumDistance(vectorDistance2D)
+            totalDistance = self.getTotalDistance(vectorDistance2D)
+
             hull = self.getConvexHull(vectorMisalignment2D)
+
+            hullArea = [hull.area]
+            hullPerimeter = self.getHullPerimeter(hull)
 
             pca = self.getPCA(vectorMisalignment2D)
 
-            maximumDistance = self.getMaximumDistance(vectorDistance2D)
-            totalDistance = self.getTotalDistance(vectorDistance2D)
-            hullArea = [hull.area]
-            hullPerimeter = self.getHullPerimeter(hull)
-            moments = self.getDistributionMoments(histogram)
-
-            statistics = maximumDistance + totalDistance + hullArea + hullPerimeter + moments
+            statistics = maximumDistance + totalDistance + hullArea + hullPerimeter + pca[1] + pca[2]
 
             self.saveStaticts(statistics)
 
@@ -87,58 +86,6 @@ class TrackerDisplacement:
                                                      1])
 
         return [misalignedProjectedCoordinate2D[0], misalignedProjectedCoordinate2D[1]]
-
-    def getDistanceHistogram(self, distanceVector):
-        """ Method to generate an histogram representation from each distance of each 3D coordinate and its misaligned
-        counterpart through the series. """
-
-        binWidth = self.getFreedmanDiaconisBinWidth(distanceVector)
-        numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
-        histogram, _ = np.histogram(distanceVector, numberOfBins)
-
-        if self.generateOutputHistogramPlots:
-            import matplotlib.pyplot as plt
-            plt.hist(distanceVector, numberOfBins)
-            plt.show()
-
-        # binWidth = self.getSquareRootBinWidth(distanceVector)
-        # numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
-        # histogram, _ = np.histogram(distanceVector, numberOfBins)
-        #
-        # if self.generateOutputHistogramPlots:
-        #     import matplotlib.pyplot as plt
-        #     plt.hist(distanceVector, numberOfBins)
-        #     plt.show()
-        #
-        # binWidth = self.getSturguesBinWidth(distanceVector)
-        # numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
-        # histogram, _ = np.histogram(distanceVector, numberOfBins)
-        #
-        # if self.generateOutputHistogramPlots:
-        #     import matplotlib.pyplot as plt
-        #     plt.hist(distanceVector, numberOfBins)
-        #     plt.show()
-        #
-        # binWidth = self.getRiceBinWidth(distanceVector)
-        # numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
-        # histogram, _ = np.histogram(distanceVector, numberOfBins)
-        #
-        # if self.generateOutputHistogramPlots:
-        #     import matplotlib.pyplot as plt
-        #     plt.hist(distanceVector, numberOfBins)
-        #     plt.show()
-
-        return histogram
-
-    def getDistributionMoments(self, histogram):
-        """ Method to calculate the first n moments of distance distribution histogram. """
-
-        moments = []
-
-        for order in range(1, self.maximumOrderMoment + 1):
-            moments.append('%.4f' % scipy.stats.moment(histogram, order))
-
-        return moments
 
     @staticmethod
     def getMaximumDistance(distanceVector):
@@ -525,6 +472,60 @@ class TrackerDisplacement:
 
         return ['%.4f' % area]
 
+    def getDistanceHistogram(self, distanceVector):
+        """ Method to generate an histogram representation from each distance of each 3D coordinate and its misaligned
+        counterpart through the series. """
+
+        binWidth = self.getFreedmanDiaconisBinWidth(distanceVector)
+        numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
+        histogram, _ = np.histogram(distanceVector, numberOfBins)
+
+        if self.generateOutputHistogramPlots:
+            import matplotlib.pyplot as plt
+            plt.hist(distanceVector, numberOfBins)
+            plt.show()
+
+        binWidth = self.getSquareRootBinWidth(distanceVector)
+        numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
+        histogram, _ = np.histogram(distanceVector, numberOfBins)
+
+        if self.generateOutputHistogramPlots:
+            import matplotlib.pyplot as plt
+            plt.hist(distanceVector, numberOfBins)
+            plt.show()
+
+        binWidth = self.getSturguesBinWidth(distanceVector)
+        numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
+        histogram, _ = np.histogram(distanceVector, numberOfBins)
+
+        if self.generateOutputHistogramPlots:
+            import matplotlib.pyplot as plt
+            plt.hist(distanceVector, numberOfBins)
+            plt.show()
+
+        binWidth = self.getRiceBinWidth(distanceVector)
+        numberOfBins = int(math.floor((max(distanceVector) - min(distanceVector) / binWidth) + 1))
+        histogram, _ = np.histogram(distanceVector, numberOfBins)
+
+        if self.generateOutputHistogramPlots:
+            import matplotlib.pyplot as plt
+            plt.hist(distanceVector, numberOfBins)
+            plt.show()
+
+        return histogram
+
+    def getDistributionMoments(self, histogram):
+        """ Method to calculate the first n moments of distance distribution histogram. """
+
+        moments = []
+
+        for order in range(1, self.maximumOrderMoment + 1):
+            moments.append('%.4f' % scipy.stats.moment(histogram, order))
+
+        return moments
+
+
+# ----------------------------------- Main ------------------------------------------------
 
 if __name__ == "__main__":
     if len(sys.argv) != 4:
