@@ -52,7 +52,7 @@ class TrackerDisplacement:
 
             maximumDistance = self.getMaximumDistance(vectorDistance2D)
             totalDistance = self.getTotalDistance(vectorDistance2D)
-            hullArea = hull.area
+            hullArea = [hull.area]
             hullPerimeter = self.getHullPerimeter(hull)
             moments = self.getDistributionMoments(histogram)
 
