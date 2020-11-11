@@ -14,7 +14,7 @@ class TrackerDisplacement:
     def __init__(self, pathCoordinate3D, pathAngles, pathMisalignmentMatrix):
 
         self.generateOutputHistogramPlots = False
-        self.generateOutputHullPlot = False
+        self.generateOutputHullPlot = True
 
         self.getXYCoordinatesMatrix = [[1, 0, 0],
                                        [0, 1, 0]]
@@ -156,11 +156,16 @@ class TrackerDisplacement:
 
         return ['%.4f' % totalDistance]
 
-    @staticmethod
-    def getConvexHull(vectorMisalignment2D):
+    def getConvexHull(self, vectorMisalignment2D):
         """ Method to calculate the convex hull containing the misalignment coordinates """
 
         convexHull = scipy.spatial.ConvexHull(vectorMisalignment2D)
+
+        if self.generateOutputHullPlot:
+            import matplotlib.pyplot as plt
+            plt.scatter(*zip(*vectorMisalignment2D))
+            plt.scatter(*zip(*convexHull.vertices))
+            plt.show()
 
         return convexHull
 
