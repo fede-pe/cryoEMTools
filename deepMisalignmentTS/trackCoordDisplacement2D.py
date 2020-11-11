@@ -47,13 +47,12 @@ class TrackerDisplacement:
 
             histogram = self.getDistanceHistogram(vectorDistance2D)
             hull = self.getConvexHull(vectorMisalignment2D)
-            #scipy https://docs.scipy.org/doc/scipy/reference/generated/scipy.spatial.ConvexHull.html
 
             # TODO: PCA
 
             maximumDistance = self.getMaximumDistance(vectorDistance2D)
             totalDistance = self.getTotalDistance(vectorDistance2D)
-            hullArea = hull.area()
+            hullArea = hull.area
             hullPerimeter = self.getHullPerimeter(hull)
             moments = self.getDistributionMoments(histogram)
 
@@ -171,9 +170,14 @@ class TrackerDisplacement:
 
         perimeter = 0
 
-        for i in range(len(hull)):
-            shiftedIndex = (i + 1) % len(hull)
-            perimeter += self.getDistance2D(np.array(hull[i]), np.array(hull[shiftedIndex]))
+        hullVertices = []
+
+        for position in hull.vertices:
+            hullVertices.append(hull.points[position])
+
+        for i in range(len(hullVertices)):
+            shiftedIndex = (i + 1) % len(hullVertices)
+            perimeter += self.getDistance2D(np.array(hullVertices[i]), np.array(hullVertices[shiftedIndex]))
 
         return ['%.4f' % perimeter]
 
