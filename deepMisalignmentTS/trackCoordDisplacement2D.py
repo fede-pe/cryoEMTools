@@ -163,8 +163,8 @@ class TrackerDisplacement:
 
         if self.generateOutputHullPlot:
             import matplotlib.pyplot as plt
-            plt.scatter(*zip(*vectorMisalignment2D))
-            plt.scatter(*zip(*convexHull.vertices))
+            plt.scatter(*zip(*convexHull.points))
+            plt.scatter(*zip(*convexHull.points[convexHull.vertices]))
             plt.show()
 
         return convexHull
