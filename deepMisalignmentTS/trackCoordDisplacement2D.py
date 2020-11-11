@@ -56,7 +56,7 @@ class TrackerDisplacement:
 
             pca = self.getPCA(vectorMisalignment2D)
 
-            statistics = maximumDistance + totalDistance + hullArea + hullPerimeter + pca[1] + pca[2]
+            statistics = maximumDistance + totalDistance + hullArea + hullPerimeter + [pca[0]] + [pca[1]]
 
             self.saveStaticts(statistics)
 
@@ -141,10 +141,9 @@ class TrackerDisplacement:
 
         pca = PCA(n_components=2)
         pca.fit(vectorMisalignment2D)
-        print(pca.components_)
 
         # Return only the first component (remove redundant information)
-        return pca[0]
+        return pca.components_[0]
 
     # ----------------------------------- Utils methods -----------------------------------
 
