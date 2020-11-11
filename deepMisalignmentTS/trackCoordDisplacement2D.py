@@ -53,7 +53,7 @@ class TrackerDisplacement:
 
             maximumDistance = self.getMaximumDistance(vectorDistance2D)
             totalDistance = self.getTotalDistance(vectorDistance2D)
-            hullArea = self.getHullArea(hull)
+            hullArea = hull.area()
             hullPerimeter = self.getHullPerimeter(hull)
             moments = self.getDistributionMoments(histogram)
 
@@ -156,6 +156,14 @@ class TrackerDisplacement:
             totalDistance += distance
 
         return ['%.4f' % totalDistance]
+
+    @staticmethod
+    def getConvexHull(vectorMisalignment2D):
+        """ Method to calculate the convex hull containing the misalignment coordinates """
+
+        convexHull = scipy.spatial.ConvexHull(vectorMisalignment2D)
+
+        return convexHull
 
     def getHullPerimeter(self, hull):
         """ Method to calculate the perimeter occupied by the convex hull in which set of coordinates that describes the
@@ -415,7 +423,7 @@ class TrackerDisplacement:
 
                 return np.rad2deg(angle)
 
-    def getConvexHull(self, vectorMisalignment2D):
+    def getConvexHullBis(self, vectorMisalignment2D):
         """ Method to calculate the convex hull that contains all the misalignment coordinates. Each coordinate is
         described by the module and direction of the misalignment introduced in each tilt-image. In order to do so,
         the algorithm will pick the coordinate with the smallest component as a initial point. Then, will look for the
