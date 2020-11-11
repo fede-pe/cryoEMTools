@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.stats
-import scipy.spatial
+from scipy.spatial import ConvexHull
+from sklearn.decomposition import PCA
 
 import errno
 import os
@@ -14,7 +15,7 @@ class TrackerDisplacement:
     def __init__(self, pathCoordinate3D, pathAngles, pathMisalignmentMatrix):
 
         self.generateOutputHistogramPlots = False
-        self.generateOutputHullPlot = True
+        self.generateOutputHullPlot = False
 
         self.getXYCoordinatesMatrix = [[1, 0, 0],
                                        [0, 1, 0]]
@@ -48,7 +49,7 @@ class TrackerDisplacement:
             histogram = self.getDistanceHistogram(vectorDistance2D)
             hull = self.getConvexHull(vectorMisalignment2D)
 
-            # TODO: PCA
+            pca = self.getPCA(vectorMisalignment2D)
 
             maximumDistance = self.getMaximumDistance(vectorDistance2D)
             totalDistance = self.getTotalDistance(vectorDistance2D)
@@ -159,7 +160,7 @@ class TrackerDisplacement:
     def getConvexHull(self, vectorMisalignment2D):
         """ Method to calculate the convex hull containing the misalignment coordinates """
 
-        convexHull = scipy.spatial.ConvexHull(vectorMisalignment2D)
+        convexHull = ConvexHull(vectorMisalignment2D)
 
         if self.generateOutputHullPlot:
             import matplotlib.pyplot as plt
@@ -185,6 +186,16 @@ class TrackerDisplacement:
             perimeter += self.getDistance2D(np.array(hullVertices[i]), np.array(hullVertices[shiftedIndex]))
 
         return ['%.4f' % perimeter]
+
+    @staticmethod
+    def getPCA(vectorMisalignment2D):
+
+        pca = PCA(n_components=2)
+        pca.fit(vectorMisalignment2D)
+        print(pca.components_)
+
+        # Return only the first component (remove redundant information)
+        return pca[0]
 
     # ----------------------------------- Utils methods -----------------------------------
 
@@ -354,7 +365,7 @@ class TrackerDisplacement:
                 dicKey = 'E(X^%d)' % order
                 writerDict[dicKey] = statistics[order + 3]
 
-            #writerDict['subTomoPath'] = statistics[-1]
+            # writerDict['subTomoPath'] = statistics[-1]
 
             writer.writerow(writerDict)
 
@@ -373,9 +384,9 @@ class TrackerDisplacement:
 
         # projection matrix vProj = v (vt v)^-1 vt
         vt = np.matrix.transpose(v)
-        vinv = np.linalg.inv(np.matmul(vt, v))
+        vInv = np.linalg.inv(np.matmul(vt, v))
 
-        vProj = np.matmul(v, np.matmul(vinv, vt))
+        vProj = np.matmul(v, np.matmul(vInv, vt))
 
         return vProj
 
