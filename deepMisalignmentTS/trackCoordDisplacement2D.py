@@ -219,19 +219,33 @@ class TrackerDisplacement:
 
     @staticmethod
     def readCoordinates3D(filePath):
-        """ Method to read 3D coordinate files in IMOD format. """
+        """ Method to read 3D coordinate files in Xmipp format (xmd). """
 
         coordinates = []
         with open(filePath) as f:
             lines = f.readlines()
+            lines = lines[7:]
             for line in lines:
                 vector = line.split()
-                coordinate = ([float(vector[1]),
-                               float(vector[2]),
-                               float(vector[3])])
+                coordinate = ([float(vector[0]),
+                               float(vector[1]),
+                               float(vector[2])])
                 coordinates.append(coordinate)
 
         return coordinates
+
+    # Read IMOD format coordinates file
+    # coordinates = []
+    # with open(filePath) as f:
+    #     lines = f.readlines()
+    #     for line in lines:
+    #         vector = line.split()
+    #         coordinate = ([float(vector[1]),
+    #                        float(vector[2]),
+    #                        float(vector[3])])
+    #         coordinates.append(coordinate)
+    #
+    # return coordinates
 
     @staticmethod
     def readAngleFile(filePath):
@@ -284,6 +298,7 @@ class TrackerDisplacement:
         fileName = 'misalignmentStatistics.txt'
         filePrefix = os.path.dirname(os.path.abspath(sys.argv[0]))
         filePath = os.path.join(filePrefix, 'trainingSet', fileName)
+        print(filePath)
 
         " Create intermediate directories if missing "
         if not os.path.exists(filePath):
@@ -296,7 +311,7 @@ class TrackerDisplacement:
         mode = "a" if os.path.exists(filePath) else "w"
 
         with open(filePath, mode) as f:
-            writer = csv.DictWriter(f, delimiter=' ', fieldnames=fieldNames)
+            writer = csv.DictWriter(f, delimiter='\t', fieldnames=fieldNames)
 
             if mode == "w":
                 writer.writeheader()
@@ -531,8 +546,8 @@ class TrackerDisplacement:
 if __name__ == "__main__":
     if len(sys.argv) != 4:
         print("Usage: python prepareDataset.py <pathCoordinate3D> <pathAngleFile> <pathMisalignmentMatrix>\n"
-              "<pathCoordinate3D>: Path to file containing the 3D coordinates belonging to the same series in IMOD "
-              "format. \n"
+              "<pathCoordinate3D>: Path to file containing the 3D coordinates belonging to the same series in Xmipp "
+              "format (xmd). \n"
               "<pathAngleFile>: Path to file containing the tilt angles of the tilt-series. \n"
               "<pathMisalignmentMatrix>: Path to file containing the misalignment matrices for each tilt-image from "
               "the series. /n")
