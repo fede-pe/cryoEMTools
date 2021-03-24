@@ -70,6 +70,8 @@ class TrackerDisplacement:
 
             vectorDistance2D = []
 
+        self.createSubtomoLinks(subtomos)
+
     def getProjectedCoordinate2D(self, angle, coordinate3D):
         """ Method to calculate the projection of a 3D coordinate onto a plane defined by its angle (rotates
         around the Y axis). """
@@ -355,6 +357,22 @@ class TrackerDisplacement:
             # writerDict['subTomoPath'] = statistics[-1]
 
             writer.writerow(writerDict)
+
+    @staticmethod
+    def createSubtomoLinks(subtomos):
+        prefix = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), 'trainingSet')
+
+        # Search ofr the last subtomo saved
+        lastIndex = 0
+        while True:
+            if os.path.exists(os.path.join(prefix, "subtomo%s.mrc" % str(lastIndex).zfill(4))):
+                lastIndex += 1
+            else:
+                break
+
+        for subtomo in subtomos:
+            os.symlink(subtomo, os.path.join(prefix, "subtomo%s.mrc" % str(lastIndex).zfill(4)))
+            lastIndex += 1
 
     # ----------------------------------- Unused methods -----------------------------------
 
