@@ -298,7 +298,6 @@ class TrackerDisplacement:
         fileName = 'misalignmentStatistics.txt'
         filePrefix = os.path.dirname(os.path.abspath(sys.argv[0]))
         filePath = os.path.join(filePrefix, 'trainingSet', fileName)
-        print(filePath)
 
         " Create intermediate directories if missing "
         if not os.path.exists(filePath):
