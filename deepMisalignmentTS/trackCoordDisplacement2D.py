@@ -1,3 +1,4 @@
+
 import numpy as np
 import scipy.stats
 from scipy.spatial import ConvexHull
@@ -9,10 +10,11 @@ import sys
 import math
 import csv
 import random
+import glob
 
 
 class TrackerDisplacement:
-    def __init__(self, pathCoordinate3D, pathAngles, pathMisalignmentMatrix):
+    def __init__(self, pathCoordinate3D, pathAngles, pathMisalignmentMatrix, pathPatternToSubtomoFiles):
 
         self.generateOutputHistogramPlots = False
         self.generateOutputHullPlot = False
@@ -22,15 +24,21 @@ class TrackerDisplacement:
 
         # self.maximumOrderMoment = 7
 
+        subtomos = self.getSubtomoList(pathPatternToSubtomoFiles)
         coordinates3D = self.readCoordinates3D(pathCoordinate3D)
         angles = self.readAngleFile(pathAngles)
+
+        if len(subtomos) != len(coordinates3D):
+            raise Exception("Subtomo list and coordinate list length must be equal.\n"
+                            "Subtomo list length: %d\n"
+                            "Coordinate list length: %d\n" % (len(subtomos), len(coordinates3D)))
 
         misalignmentMatrices = self.readMisalignmentMatrix(pathMisalignmentMatrix)
 
         vectorDistance2D = []
         vectorMisalignment2D = []
 
-        for coordinate3D in coordinates3D:
+        for coordinate3D, subtomo in zip(coordinates3D, subtomos):
             for indexAngle, angle in enumerate(angles):
                 projectedCoordinate2D = self.getProjectedCoordinate2D(angle,
                                                                       coordinate3D)
@@ -58,7 +66,7 @@ class TrackerDisplacement:
 
             statistics = maximumDistance + totalDistance + hullArea + hullPerimeter + [pca[0]] + [pca[1]]
 
-            self.saveStaticts(statistics)
+            self.saveStaticts(statistics + [subtomo])
 
             vectorDistance2D = []
 
@@ -218,10 +226,25 @@ class TrackerDisplacement:
     # ----------------------------------- I/O methods -----------------------------------
 
     @staticmethod
+    def getSubtomoList(pathPatternToSubtomoFiles):
+        """ Method to get the list of subtomos peaked from the input coordinates using a regular expression indicating
+        its location"""
+
+        subtomoList = []
+
+        for file in glob.glob(pathPatternToSubtomoFiles):
+            subtomoList.append(file)
+
+        subtomoList.sort()
+
+        return subtomoList
+
+    @staticmethod
     def readCoordinates3D(filePath):
         """ Method to read 3D coordinate files in Xmipp format (xmd). """
 
         coordinates = []
+
         with open(filePath) as f:
             lines = f.readlines()
             lines = lines[7:]
@@ -321,8 +344,8 @@ class TrackerDisplacement:
                 'hullArea': statistics[2],
                 'hullPerimeter': statistics[3],
                 'pcaX': statistics[4],
-                'pcaY': statistics[5]
-                # 'subTomoPath': statistics[6]
+                'pcaY': statistics[5],
+                'subTomoPath': statistics[6]
             }
 
             # for order in range(1, self.maximumOrderMoment + 1):
@@ -543,13 +566,16 @@ class TrackerDisplacement:
 # ----------------------------------- Main ------------------------------------------------
 
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
-        print("Usage: python prepareDataset.py <pathCoordinate3D> <pathAngleFile> <pathMisalignmentMatrix>\n"
+    if len(sys.argv) != 5:
+        print("Usage: python prepareDataset.py <pathCoordinate3D> <pathAngleFile> <pathMisalignmentMatrix> "
+              "<pathPatternToSubtomoFiles>\n"
               "<pathCoordinate3D>: Path to file containing the 3D coordinates belonging to the same series in Xmipp "
               "format (xmd). \n"
               "<pathAngleFile>: Path to file containing the tilt angles of the tilt-series. \n"
               "<pathMisalignmentMatrix>: Path to file containing the misalignment matrices for each tilt-image from "
-              "the series. /n")
+              "the series. \n"
+              "<pathPatternToSubtomoFiles>: Path pattern to files containing the subtomo volumes (it is a regular "
+              "expression")
         exit()
 
-    td = TrackerDisplacement(sys.argv[1], sys.argv[2], sys.argv[3])
+    td = TrackerDisplacement(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
