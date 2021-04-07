@@ -51,7 +51,7 @@ if __name__ == "__main__":
     elapsed_time = time() - start_time
     print("Time spent preparing the data: %0.10f seconds." % elapsed_time)
 
-    print("Train mode")
+    print("Train model")
     start_time = time()
     optimizer = Adam(lr=0.0001)
     model.compile(loss='mean_absolute_error', optimizer='Adam')
@@ -88,13 +88,17 @@ if __name__ == "__main__":
     np.savetxt(os.path.join(modelDir, 'model.txt'), myValLoss)
     model.save(os.path.join(modelDir, 'model.h5'))
     elapsed_time = time() - start_time
-    print("Time in training model: %0.10f seconds." % elapsed_time)
+    print("Time spent training the model: %0.10f seconds." % elapsed_time)
 
+    print("Test model")
+    start_time = time()
     loadModelDir = os.path.join(modelDir, 'model.txt')
     model = load_model(loadModelDir)
     imagPrediction = model.predict(inputSubtomoStream)
     np.savetxt(os.path.join(stackDir, 'imagPrediction.txt'), imagPrediction)
-    from sklearn.metrics import mean_absolute_error
+    elapsed_time = time() - start_time
+    print("Time spent testing the model: %0.10f seconds." % elapsed_time)
 
+    from sklearn.metrics import mean_absolute_error
     mae = mean_absolute_error(misalignmentInfoVector, imagPrediction)
     print("Final model mean absolute error val_loss: %f", mae)
