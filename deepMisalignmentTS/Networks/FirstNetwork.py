@@ -7,57 +7,54 @@ from time import time
 batch_size = 128  # Number of boxes per batch
 
 if __name__ == "__main__":
-    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
-    from keras.callbacks import TensorBoard, ModelCheckpoint
-    import keras.callbacks as callbacks
-    from keras.models import Model
-    from keras.layers import Input, Conv2D, MaxPooling2D, BatchNormalization, Dropout, Flatten, Dense
-    from keras.optimizers import Adam
-    import tensorflow as tf
-    from keras.models import load_model
-
-
-    def constructModel():
-        inputLayer = Input(shape=(32, 32, 32), name="input")
-        L = Conv2D(16, (15, 15), activation="relu")(inputLayer)
-        L = BatchNormalization()(L)
-        L = MaxPooling2D((3, 3))(L)
-        L = Conv2D(16, (9, 9), activation="relu")(L)
-        L = BatchNormalization()(L)
-        L = MaxPooling2D()(L)
-        L = Conv2D(16, (5, 5), activation="relu")(L)
-        L = BatchNormalization()(L)
-        L = MaxPooling2D()(L)
-        L = Dropout(0.2)(L)
-        L = Flatten()(L)
-        L = Dense(1, name="output", activation="linear")(L)
-        return Model(inputLayer, L)
-
-    model = constructModel()
-    model.summary()
-
+    # Check no program arguments missing
     if len(sys.argv) < 3:
         print("Usage: scipion python batch_deepDefocus.py <stackDir> <modelDir>")
         sys.exit()
     stackDir = sys.argv[1]
     modelDir = sys.argv[2]
 
-    print("Loading data...")
-    imageStackDir = os.path.join(stackDir, "preparedImageStack.npy")
-    defocusStackDir = os.path.join(stackDir, "preparedDefocusStack.npy")
-    imagMatrix = np.load(imageStackDir)
-    defocusVector = np.load(defocusStackDir)
+    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
-    print("Train mode")
-    start_time = time()
+    import keras.callbacks as callbacks
+    from keras.models import Model, load_model
+    from keras.layers import Input, Conv3D, MaxPooling3D, BatchNormalization, Dropout, Flatten, Dense
+    from keras.optimizers import Adam
+
+
+    def constructModel():
+        inputLayer = Input(shape=(32, 32, 32), name="input")
+        L = Conv3D(16, kernel_size=(16, 16, 16), activation="relu")(inputLayer)
+        L = BatchNormalization()(L)
+        L = MaxPooling3D((2, 2, 2))(L)
+        L = Conv3D(16, (8, 8, 8), activation="relu")(L)
+        L = BatchNormalization()(L)
+        L = MaxPooling3D((2, 2, 2))(L)
+        L = Conv3D(16, (4, 4, 4), activation="relu")(L)
+        L = BatchNormalization()(L)
+        L = MaxPooling3D((2, 2, 2))(L)
+        L = Dropout(0.2)(L)
+        L = Flatten()(L)
+        L = Dense(256, name="output", activation="relu")(L)
+        L = Dense(256, name="output", activation="relu")(L)
+        L = Dense(6, name="output", activation="softmax")(L)
+        return Model(inputLayer, L)
+
     model = constructModel()
     model.summary()
-    optimizer = Adam(lr=0.0001)
-    model.compile(loss='mean_absolute_error', optimizer='Adam')
+
+    print("Loading data...")
+    start_time = time()
+    inputSubtomoStream = np.load(os.path.join(stackDir, "inputDataStream.npy"))
+    misalignmentInfoVector = np.load(os.path.join(stackDir, "misalignmentInfoList.npy"))
     elapsed_time = time() - start_time
     print("Time spent preparing the data: %0.10f seconds." % elapsed_time)
 
+    print("Train mode")
+    start_time = time()
+    optimizer = Adam(lr=0.0001)
+    model.compile(loss='mean_absolute_error', optimizer='Adam')
     callbacks_list = [callbacks.CSVLogger("./outCSV_06_28_1", separator=',', append=False),
                       callbacks.TensorBoard(log_dir='./outTB_06_28_1',
                                             histogram_freq=0,
@@ -77,8 +74,15 @@ if __name__ == "__main__":
                                                   min_delta=0.0001,
                                                   cooldown=0,
                                                   min_lr=0)]
-    history = model.fit(imagMatrix, defocusVector, batch_size=128, epochs=100, verbose=1, validation_split=0.1,
+
+    history = model.fit(inputSubtomoStream,
+                        misalignmentInfoVector,
+                        batch_size=128,
+                        epochs=100,
+                        verbose=1,
+                        validation_split=0.1,
                         callbacks=callbacks_list)
+
     myValLoss = np.zeros(1)
     myValLoss[0] = history.history['val_loss'][-1]
     np.savetxt(os.path.join(modelDir, 'model.txt'), myValLoss)
@@ -88,9 +92,9 @@ if __name__ == "__main__":
 
     loadModelDir = os.path.join(modelDir, 'model.txt')
     model = load_model(loadModelDir)
-    imagPrediction = model.predict(imagMatrix)
+    imagPrediction = model.predict(inputSubtomoStream)
     np.savetxt(os.path.join(stackDir, 'imagPrediction.txt'), imagPrediction)
     from sklearn.metrics import mean_absolute_error
 
-    mae = mean_absolute_error(defocusVector, imagPrediction)
-    print("Final model mean absolute error val_loss: ", mae)
+    mae = mean_absolute_error(misalignmentInfoVector, imagPrediction)
+    print("Final model mean absolute error val_loss: %f", mae)
