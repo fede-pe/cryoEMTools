@@ -42,16 +42,16 @@ class TrackerDisplacement:
 
             # Check that files exist
             if not os.path.exists(pathCoordinate3D):
-                raise Exception("%s does not exist." % pathCoordinate3D)
+                raise Exception("Path to coordinate 3d files %s does not exist." % pathCoordinate3D)
 
             if not os.path.exists(pathAngles):
-                raise Exception("%s does not exist." % pathAngles)
+                raise Exception("Path to angle file %s does not exist." % pathAngles)
 
             if not os.path.exists(pathMisalignmentMatrix):
-                raise Exception("%s does not exist." % pathMisalignmentMatrix)
+                raise Exception("Path to misalignment matrix %s does not exist." % pathMisalignmentMatrix)
 
             if not os.path.exists(pathPatternToSubtomoFiles):
-                raise Exception("%s does not exist." % pathPatternToSubtomoFiles)
+                raise Exception("Path to subtomos %s does not exist." % pathPatternToSubtomoFiles)
 
             subtomos = self.getSubtomoList(pathPatternToSubtomoFiles)
             coordinates3D = self.readCoordinates3D(pathCoordinate3D)
