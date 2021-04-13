@@ -30,7 +30,11 @@ class TrackerDisplacement:
         # Iterate for all the set of coordinates
         pathCoordinate3DRegex = os.path.join(pathCoordinate3DFolder + "*.xmd")
 
+        print("Metadata processed:\n")
+
         for file in glob.glob(pathCoordinate3DRegex):
+
+            print(file)
 
             fileName = os.path.splitext(os.path.basename(file))[0]
 
