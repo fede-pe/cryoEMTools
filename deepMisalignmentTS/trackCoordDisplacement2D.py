@@ -40,17 +40,18 @@ class TrackerDisplacement:
             pathMisalignmentMatrix = os.path.join(pathMisalignmentMatrixFolder, fileName, "TM_" + fileName + ".xf")
             pathPatternToSubtomoFiles = os.path.join(pathPatternToSubtomoFilesFolder, fileName + "*.mrc")
 
+            # Check that files exist
             if not os.path.exists(pathCoordinate3D):
-                raise Exception("%s does not exist.")
+                raise Exception("%s does not exist." % pathCoordinate3D)
 
             if not os.path.exists(pathAngles):
-                raise Exception("%s does not exist.")
+                raise Exception("%s does not exist." % pathAngles)
 
             if not os.path.exists(pathMisalignmentMatrix):
-                raise Exception("%s does not exist.")
+                raise Exception("%s does not exist." % pathMisalignmentMatrix)
 
             if not os.path.exists(pathPatternToSubtomoFiles):
-                raise Exception("%s does not exist.")
+                raise Exception("%s does not exist." % pathPatternToSubtomoFiles)
 
             subtomos = self.getSubtomoList(pathPatternToSubtomoFiles)
             coordinates3D = self.readCoordinates3D(pathCoordinate3D)
