@@ -50,9 +50,6 @@ class TrackerDisplacement:
             if not os.path.exists(pathMisalignmentMatrix):
                 raise Exception("Path to misalignment matrix %s does not exist." % pathMisalignmentMatrix)
 
-            if not os.path.exists(pathPatternToSubtomoFiles):
-                raise Exception("Path to subtomos %s does not exist." % pathPatternToSubtomoFiles)
-
             subtomos = self.getSubtomoList(pathPatternToSubtomoFiles)
             coordinates3D = self.readCoordinates3D(pathCoordinate3D)
             angles = self.readAngleFile(pathAngles)
