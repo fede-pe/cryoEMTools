@@ -37,7 +37,7 @@ if __name__ == "__main__":
         L = Dropout(0.2)(L)
         L = Flatten()(L)
         L = Dense(256, name="output", activation="relu")(L)
-        L = Dense(256, name="output", activation="relu")(L)
+       # L = Dense(256, name="output", activation="relu")(L)
         L = Dense(6, name="output", activation="softmax")(L)
         return Model(inputLayer, L)
 
