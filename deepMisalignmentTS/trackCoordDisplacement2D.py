@@ -36,7 +36,7 @@ class TrackerDisplacement:
 
             # Generate paths to input data
             pathCoordinate3D = file
-            pathAngles = os.path.join(pathAnglesFolder, fileName, ".tlt")
+            pathAngles = os.path.join(pathAnglesFolder, fileName + ".tlt")
             pathMisalignmentMatrix = os.path.join(pathMisalignmentMatrixFolder, fileName, "TM_" + fileName + ".xf")
             pathPatternToSubtomoFiles = os.path.join(pathPatternToSubtomoFilesFolder, fileName + "*.mrc")
 
