@@ -14,7 +14,10 @@ import glob
 
 
 class TrackerDisplacement:
-    def __init__(self, pathCoordinate3D, pathAngles, pathMisalignmentMatrix, pathPatternToSubtomoFiles):
+    def __init__(self, pathCoordinate3DFolder,
+                 pathAnglesFolder,
+                 pathMisalignmentMatrixFolder,
+                 pathPatternToSubtomoFilesFolder):
 
         self.generateOutputHistogramPlots = False
         self.generateOutputHullPlot = False
@@ -24,53 +27,78 @@ class TrackerDisplacement:
 
         # self.maximumOrderMoment = 7
 
-        subtomos = self.getSubtomoList(pathPatternToSubtomoFiles)
-        coordinates3D = self.readCoordinates3D(pathCoordinate3D)
-        angles = self.readAngleFile(pathAngles)
+        # Iterate for all the set of coordinates
+        pathCoordinate3DRegex = os.path.join(pathCoordinate3DFolder + "*.xmd")
 
-        if len(subtomos) != len(coordinates3D):
-            raise Exception("Subtomo list and coordinate list length must be equal.\n"
-                            "Subtomo list length: %d\n"
-                            "Coordinate list length: %d\n" % (len(subtomos), len(coordinates3D)))
+        for file in glob.glob(pathCoordinate3DRegex):
 
-        misalignmentMatrices = self.readMisalignmentMatrix(pathMisalignmentMatrix)
+            fileName = os.path.splitext(os.path.basename(file))[0]
 
-        vectorDistance2D = []
-        vectorMisalignment2D = []
+            # Generate paths to input data
+            pathCoordinate3D = file
+            pathAngles = os.path.join(pathAnglesFolder, fileName, ".tlt")
+            pathMisalignmentMatrix = os.path.join(pathMisalignmentMatrixFolder, fileName, fileName, ".xf")
+            pathPatternToSubtomoFiles = os.path.join(pathPatternToSubtomoFilesFolder, fileName + "*.mrc")
 
-        for coordinate3D, subtomo in zip(coordinates3D, subtomos):
-            for indexAngle, angle in enumerate(angles):
-                projectedCoordinate2D = self.getProjectedCoordinate2D(angle,
-                                                                      coordinate3D)
+            if not os.path.exists(pathCoordinate3D):
+                raise Exception("%s does not exist.")
 
-                misalignedProjectedCoordinate2D = \
-                    self.getMisalignedProjectedCoordinate2D(angle,
-                                                            coordinate3D,
-                                                            misalignmentMatrices[:, :, indexAngle])
+            if not os.path.exists(pathAngles):
+                raise Exception("%s does not exist.")
 
-                vectorMisalignment2D.append(self.getMisalignmentVector(projectedCoordinate2D,
-                                                                       misalignedProjectedCoordinate2D))
+            if not os.path.exists(pathMisalignmentMatrix):
+                raise Exception("%s does not exist.")
 
-                vectorDistance2D.append(self.getDistance2D(projectedCoordinate2D,
-                                                           misalignedProjectedCoordinate2D))
+            if not os.path.exists(pathPatternToSubtomoFiles):
+                raise Exception("%s does not exist.")
 
-            maximumDistance = self.getMaximumDistance(vectorDistance2D)
-            totalDistance = self.getTotalDistance(vectorDistance2D)
+            subtomos = self.getSubtomoList(pathPatternToSubtomoFiles)
+            coordinates3D = self.readCoordinates3D(pathCoordinate3D)
+            angles = self.readAngleFile(pathAngles)
 
-            hull = self.getConvexHull(vectorMisalignment2D)
+            if len(subtomos) != len(coordinates3D):
+                raise Exception("Subtomo list and coordinate list length must be equal.\n"
+                                "Subtomo list length: %d\n"
+                                "Coordinate list length: %d\n" % (len(subtomos), len(coordinates3D)))
 
-            hullArea = [hull.area]
-            hullPerimeter = self.getHullPerimeter(hull)
-
-            pca = self.getPCA(vectorMisalignment2D)[0]
-
-            statistics = maximumDistance + totalDistance + hullArea + hullPerimeter + [pca[0]] + [pca[1]]
-
-            self.saveStaticts(statistics + [subtomo])
+            misalignmentMatrices = self.readMisalignmentMatrix(pathMisalignmentMatrix)
 
             vectorDistance2D = []
+            vectorMisalignment2D = []
 
-        self.createSubtomoLinks(subtomos)
+            for coordinate3D, subtomo in zip(coordinates3D, subtomos):
+                for indexAngle, angle in enumerate(angles):
+                    projectedCoordinate2D = self.getProjectedCoordinate2D(angle,
+                                                                          coordinate3D)
+
+                    misalignedProjectedCoordinate2D = \
+                        self.getMisalignedProjectedCoordinate2D(angle,
+                                                                coordinate3D,
+                                                                misalignmentMatrices[:, :, indexAngle])
+
+                    vectorMisalignment2D.append(self.getMisalignmentVector(projectedCoordinate2D,
+                                                                           misalignedProjectedCoordinate2D))
+
+                    vectorDistance2D.append(self.getDistance2D(projectedCoordinate2D,
+                                                               misalignedProjectedCoordinate2D))
+
+                maximumDistance = self.getMaximumDistance(vectorDistance2D)
+                totalDistance = self.getTotalDistance(vectorDistance2D)
+
+                hull = self.getConvexHull(vectorMisalignment2D)
+
+                hullArea = [hull.area]
+                hullPerimeter = self.getHullPerimeter(hull)
+
+                pca = self.getPCA(vectorMisalignment2D)[0]
+
+                statistics = maximumDistance + totalDistance + hullArea + hullPerimeter + [pca[0]] + [pca[1]]
+
+                self.saveStaticts(statistics + [subtomo])
+
+                vectorDistance2D = []
+
+            self.createSubtomoLinks(subtomos)
 
     def getProjectedCoordinate2D(self, angle, coordinate3D):
         """ Method to calculate the projection of a 3D coordinate onto a plane defined by its angle (rotates
@@ -587,13 +615,12 @@ if __name__ == "__main__":
     if len(sys.argv) != 5:
         print("Usage: python prepareDataset.py <pathCoordinate3D> <pathAngleFile> <pathMisalignmentMatrix> "
               "<pathPatternToSubtomoFiles>\n"
-              "<pathCoordinate3D>: Path to file containing the 3D coordinates belonging to the same series in Xmipp "
-              "format (xmd). \n"
-              "<pathAngleFile>: Path to file containing the tilt angles of the tilt-series. \n"
-              "<pathMisalignmentMatrix>: Path to file containing the misalignment matrices for each tilt-image from "
-              "the series. \n"
-              "<pathPatternToSubtomoFiles>: Path pattern to files containing the subtomo volumes (it is a regular "
-              "expression")
+              "<pathCoordinate3D>: Path to folder containing the 3D coordinate files belonging to the same series in "
+              "Xmipp format (xmd). \n"
+              "<pathAngleFile>: Path to folder containing the tilt angle files of the tilt-series. \n"
+              "<pathMisalignmentMatrix>: Path to the folder containing the misalignment matrix files for each "
+              "tilt-image from the series. \n"
+              "<pathPatternToSubtomoFiles>: Path to the folder containing the subtomo volume files")
         exit()
 
     td = TrackerDisplacement(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
