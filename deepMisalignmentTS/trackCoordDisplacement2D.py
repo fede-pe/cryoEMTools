@@ -392,10 +392,10 @@ class TrackerDisplacement:
     def createSubtomoLinks(subtomos):
         prefix = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), 'trainingSet')
 
-        # Search ofr the last subtomo saved
+        # Search for the last subtomo saved
         lastIndex = 0
         while True:
-            if os.path.exists(os.path.join(prefix, "subtomo%s.mrc" % str(lastIndex).zfill(4))):
+            if os.path.exists(os.path.join(prefix, "subtomo%s.mrc" % str(lastIndex).zfill(8))):
                 lastIndex += 1
             else:
                 break
