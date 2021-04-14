@@ -11,6 +11,7 @@ import math
 import csv
 import random
 import glob
+import statistics
 
 
 class TrackerDisplacement:
@@ -33,7 +34,7 @@ class TrackerDisplacement:
         print("Coordinated metadata processed:")
 
         for file in glob.glob(pathCoordinate3DRegex):
-
+            # Track the last processed file
             print(file)
 
             fileName = os.path.splitext(os.path.basename(file))[0]
@@ -84,6 +85,7 @@ class TrackerDisplacement:
                     vectorDistance2D.append(self.getDistance2D(projectedCoordinate2D,
                                                                misalignedProjectedCoordinate2D))
 
+                centroid = self.getCentroidCoordinates(vectorDistance2D)
                 maximumDistance = self.getMaximumDistance(vectorDistance2D)
                 totalDistance = self.getTotalDistance(vectorDistance2D)
 
@@ -94,7 +96,7 @@ class TrackerDisplacement:
 
                 pca = self.getPCA(vectorMisalignment2D)[0]
 
-                statistics = maximumDistance + totalDistance + hullArea + hullPerimeter + [pca[0]] + [pca[1]]
+                statistics = centroid + maximumDistance + totalDistance + hullArea + hullPerimeter + [pca[0]] + [pca[1]]
 
                 self.saveStaticts(statistics + [subtomo])
 
@@ -126,6 +128,25 @@ class TrackerDisplacement:
                                                      1])
 
         return [misalignedProjectedCoordinate2D[0], misalignedProjectedCoordinate2D[1]]
+
+    @staticmethod
+    def getCentroidCoordinates(coordinates):
+        """ Method to calculate the centroid of a set of coordinates that form the trajectory """
+
+        xSum = 0
+        ySum = 0
+
+        for coordinate in coordinates:
+            xSum += coordinate[0]
+            ySum += coordinate[1]
+
+        centroidX = statistics.mean(xSum)
+        centroidY = statistics.mean(ySum)
+
+        centroidX = '%.1f' %centroidX
+        centroidY = '%.1f' % centroidY
+
+        return [centroidX, centroidY]
 
     @staticmethod
     def getMaximumDistance(distanceVector):
@@ -344,7 +365,8 @@ class TrackerDisplacement:
     def saveStaticts(statistics):
         """ Method to save statistics in output file"""
 
-        fieldNames = ['maxDistance', 'totalDistance', 'hullArea', 'hullPerimeter', 'pcaX', 'pcaY', 'subTomoPath']
+        fieldNames = ['centroidX', 'centroidY', 'maxDistance', 'totalDistance', 'hullArea', 'hullPerimeter',
+                      'pcaX', 'pcaY', 'subTomoPath']
 
         # " Create as many fields as moments calculated "
         # for order in range(1, self.maximumOrderMoment + 1):
@@ -371,13 +393,15 @@ class TrackerDisplacement:
                 writer.writeheader()
 
             writerDict = {
-                'maxDistance': statistics[0],
-                'totalDistance': statistics[1],
-                'hullArea': statistics[2],
-                'hullPerimeter': statistics[3],
-                'pcaX': statistics[4],
-                'pcaY': statistics[5],
-                'subTomoPath': statistics[6]
+                'centroidX': statistics[0],
+                'centroidY': statistics[1],
+                'maxDistance': statistics[2],
+                'totalDistance': statistics[3],
+                'hullArea': statistics[4],
+                'hullPerimeter': statistics[5],
+                'pcaX': statistics[6],
+                'pcaY': statistics[7],
+                'subTomoPath': statistics[8]
             }
 
             # for order in range(1, self.maximumOrderMoment + 1):
