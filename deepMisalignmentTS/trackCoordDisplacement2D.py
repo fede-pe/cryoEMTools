@@ -401,7 +401,7 @@ class TrackerDisplacement:
                 break
 
         for subtomo in subtomos:
-            os.symlink(subtomo, os.path.join(prefix, "subtomo%s.mrc" % str(lastIndex).zfill(4)))
+            os.symlink(subtomo, os.path.join(prefix, "subtomo%s.mrc" % str(lastIndex).zfill(8)))
             lastIndex += 1
 
     # ----------------------------------- Unused methods -----------------------------------
