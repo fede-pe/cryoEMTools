@@ -7,39 +7,40 @@ from time import time
 
 
 def prepareData(stackDir):
-    with open(os.path.join(stackDir, "metadata.txt")) as f:
+    with open(os.path.join(stackDir, "misalignmentStatistics.txt")) as f:
         metadataLines = csv.DictReader(f)
 
-    # fieldNames = ['maxDistance', 'totalDistance', 'hullArea', 'hullPerimeter', 'pcaX', 'pcaY', 'subTomoPath']
+        # fieldNames = ['maxDistance', 'totalDistance', 'hullArea', 'hullPerimeter', 'pcaX', 'pcaY', 'subTomoPath']
 
-    Ndim = len(list(metadataLines))
-    inputDataStream = np.zeros((Ndim, 32, 32, 32), dtype=np.float64)
-    misalignmentInfoList = []
+        Ndim = sum(1 for line in metadataLines)
 
-    for i, line in enumerate(metadataLines):
-        if i == 0:
-            pass
+        inputDataStream = np.zeros((Ndim, 32, 32, 32), dtype=np.float64)
+        misalignmentInfoList = []
 
-        misalignmentInfoVector = [line["maxDistance"],
-                                  line["totalDistance"],
-                                  line["hullArea"],
-                                  line["hullPerimeter"],
-                                  line["pcaX"],
-                                  line["pcaY"]]
+        for i, line in enumerate(metadataLines):
+            if i == 0:
+                pass
 
-        subtomoPath = line["subTomoPath"]
+            misalignmentInfoVector = [line["maxDistance"],
+                                      line["totalDistance"],
+                                      line["hullArea"],
+                                      line["hullPerimeter"],
+                                      line["pcaX"],
+                                      line["pcaY"]]
 
-        subtomoVol = xmipp.Image(subtomoPath).getData()
+            subtomoPath = line["subTomoPath"]
 
-        inputDataStream[i, :, :, :] = subtomoVol
+            subtomoVol = xmipp.Image(subtomoPath).getData()
 
-        misalignmentInfoList.append(misalignmentInfoVector)
+            inputDataStream[i, :, :, :] = subtomoVol
 
-    inputDataStreamPath = os.path.join(stackDir, "inputDataStream.npy")
-    misalignmentInfoPath = os.path.join(stackDir, "misalignmentInfoList.npy")
+            misalignmentInfoList.append(misalignmentInfoVector)
 
-    np.save(inputDataStreamPath, inputDataStream)
-    np.save(misalignmentInfoPath, misalignmentInfoList)
+        inputDataStreamPath = os.path.join(stackDir, "inputDataStream.npy")
+        misalignmentInfoPath = os.path.join(stackDir, "misalignmentInfoList.npy")
+
+        np.save(inputDataStreamPath, inputDataStream)
+        np.save(misalignmentInfoPath, misalignmentInfoList)
 
 
 if __name__ == "__main__":
