@@ -8,19 +8,16 @@ from time import time
 
 def prepareData(stackDir):
     with open(os.path.join(stackDir, "misalignmentStatistics.txt")) as f:
-        metadataLines = csv.DictReader(f)
+        metadataLines = csv.DictReader(f, delimiter='\t')
 
         # fieldNames = ['maxDistance', 'totalDistance', 'hullArea', 'hullPerimeter', 'pcaX', 'pcaY', 'subTomoPath']
 
-        Ndim = sum(1 for line in metadataLines)
-
-        inputDataStream = np.zeros((Ndim, 32, 32, 32), dtype=np.float64)
+        Ndim = 0
         misalignmentInfoList = []
+        subtomoPathList = []
 
+        # Complete misalignmentInfoList vector.
         for i, line in enumerate(metadataLines):
-            if i == 0:
-                pass
-
             misalignmentInfoVector = [line["maxDistance"],
                                       line["totalDistance"],
                                       line["hullArea"],
@@ -28,13 +25,19 @@ def prepareData(stackDir):
                                       line["pcaX"],
                                       line["pcaY"]]
 
-            subtomoPath = line["subTomoPath"]
-
-            subtomoVol = xmipp.Image(subtomoPath).getData()
-
-            inputDataStream[i, :, :, :] = subtomoVol
-
+            subtomoPathList.append(line["subTomoPath"])
             misalignmentInfoList.append(misalignmentInfoVector)
+
+            Ndim += 1
+
+        print(Ndim)
+        inputDataStream = np.zeros((Ndim, 32, 32, 32), dtype=np.float64)
+
+        # Complete inputDataStream matrix (we only ca iterate over the csvReader once and it is necessary to know the
+        # Ndim a priori.
+        for i, subtomoPath in enumerate(subtomoPathList):
+            subtomoVol = xmipp.Image(subtomoPath).getData()
+            inputDataStream[i, :, :, :] = subtomoVol
 
         inputDataStreamPath = os.path.join(stackDir, "inputDataStream.npy")
         misalignmentInfoPath = os.path.join(stackDir, "misalignmentInfoList.npy")
