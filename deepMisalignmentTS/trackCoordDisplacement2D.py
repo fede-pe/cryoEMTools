@@ -43,8 +43,10 @@ class TrackerDisplacement:
             pathCoordinate3D = file
             pathAngles = os.path.join(pathAnglesFolder, fileName + ".tlt")
             pathMisalignmentMatrix = os.path.join(pathMisalignmentMatrixFolder, fileName, "TM_" + fileName + ".xf")
-            # pathPatternToSubtomoFiles = os.path.join(pathPatternToSubtomoFilesFolder, fileName + "*.mrc")
-            pathPatternToSubtomoFiles = os.path.join(pathPatternToSubtomoFilesFolder, "*.mrc")
+            pathPatternToSubtomoFiles = os.path.join(pathPatternToSubtomoFilesFolder, fileName + "*.mrc")
+
+            # For testing purposes in local
+            # pathPatternToSubtomoFiles = os.path.join(pathPatternToSubtomoFilesFolder, "*.mrc")
 
             # Check that files exist
             if not os.path.exists(pathCoordinate3D):
