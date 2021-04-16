@@ -43,31 +43,37 @@ class TrackerDisplacement:
             pathCoordinate3D = file
             pathAngles = os.path.join(pathAnglesFolder, fileName + ".tlt")
             pathMisalignmentMatrix = os.path.join(pathMisalignmentMatrixFolder, fileName, "TM_" + fileName + ".xf")
-            pathPatternToSubtomoFiles = os.path.join(pathPatternToSubtomoFilesFolder, fileName + "*.mrc")
+            # pathPatternToSubtomoFiles = os.path.join(pathPatternToSubtomoFilesFolder, fileName + "*.mrc")
+            pathPatternToSubtomoFiles = os.path.join(pathPatternToSubtomoFilesFolder, "*.mrc")
 
             # Check that files exist
             if not os.path.exists(pathCoordinate3D):
-                raise Exception("Path to coordinate 3d files %s does not exist." % pathCoordinate3D)
+                message = "Path to coordinate 3d files %s does not exist." % pathCoordinate3D
+                raise Exception(message)
 
             if not os.path.exists(pathAngles):
-                raise Exception("Path to angle file %s does not exist." % pathAngles)
+                message = "Path to angle file %s does not exist." % pathAngles
+                raise Exception(message)
 
             if not os.path.exists(pathMisalignmentMatrix):
-                raise Exception("Path to misalignment matrix %s does not exist." % pathMisalignmentMatrix)
+                message = "Path to misalignment matrix %s does not exist." % pathMisalignmentMatrix
+                raise Exception(message)
 
             subtomos = self.getSubtomoList(pathPatternToSubtomoFiles)
             coordinates3D = self.readCoordinates3D(pathCoordinate3D)
             angles = self.readAngleFile(pathAngles)
 
             if len(subtomos) != len(coordinates3D):
-                raise Exception("Subtomo list and coordinate list length must be equal.\n"
-                                "Subtomo list length: %d\n"
-                                "Coordinate list length: %d\n" % (len(subtomos), len(coordinates3D)))
+                message = "Subtomo list and coordinate list length must be equal.\n" \
+                          "Subtomo list length: %d\n" \
+                          "Coordinate list length: %d\n" % (len(subtomos), len(coordinates3D))
+                raise Exception(message)
 
             misalignmentMatrices = self.readMisalignmentMatrix(pathMisalignmentMatrix)
 
             vectorDistance2D = []
             vectorMisalignment2D = []
+
 
             for coordinate3D, subtomo in zip(coordinates3D, subtomos):
                 for indexAngle, angle in enumerate(angles):
@@ -85,7 +91,8 @@ class TrackerDisplacement:
                     vectorDistance2D.append(self.getDistance2D(projectedCoordinate2D,
                                                                misalignedProjectedCoordinate2D))
 
-                centroid = self.getCentroidCoordinates(vectorDistance2D)
+                centroid = self.getCentroidCoordinates(vectorMisalignment2D)
+
                 maximumDistance = self.getMaximumDistance(vectorDistance2D)
                 totalDistance = self.getTotalDistance(vectorDistance2D)
 
@@ -100,7 +107,6 @@ class TrackerDisplacement:
 
                 self.saveStaticts(statistics + [subtomo])
 
-                vectorDistance2D = []
 
             self.createSubtomoLinks(subtomos)
 
@@ -133,17 +139,17 @@ class TrackerDisplacement:
     def getCentroidCoordinates(coordinates):
         """ Method to calculate the centroid of a set of coordinates that form the trajectory """
 
-        xSum = 0
-        ySum = 0
+        xSum = []
+        ySum = []
 
         for coordinate in coordinates:
-            xSum += coordinate[0]
-            ySum += coordinate[1]
+            xSum.append(coordinate[0])
+            ySum.append(coordinate[1])
 
         centroidX = statistics.mean(xSum)
         centroidY = statistics.mean(ySum)
 
-        centroidX = '%.1f' %centroidX
+        centroidX = '%.1f' % centroidX
         centroidY = '%.1f' % centroidY
 
         return [centroidX, centroidY]
