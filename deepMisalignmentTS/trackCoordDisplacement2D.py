@@ -34,9 +34,6 @@ class TrackerDisplacement:
         print("Coordinated metadata processed:")
 
         for file in glob.glob(pathCoordinate3DRegex):
-            # Track the last processed file
-            print(file)
-
             fileName = os.path.splitext(os.path.basename(file))[0]
 
             # Generate paths to input data
@@ -76,7 +73,6 @@ class TrackerDisplacement:
             vectorDistance2D = []
             vectorMisalignment2D = []
 
-
             for coordinate3D, subtomo in zip(coordinates3D, subtomos):
                 for indexAngle, angle in enumerate(angles):
                     projectedCoordinate2D = self.getProjectedCoordinate2D(angle,
@@ -108,6 +104,9 @@ class TrackerDisplacement:
                 statistics = centroid + maximumDistance + totalDistance + hullArea + hullPerimeter + [pca[0]] + [pca[1]]
 
                 self.saveStaticts(statistics + [subtomo])
+
+                # Track the last processed file
+                print(file)
 
 
             self.createSubtomoLinks(subtomos)
