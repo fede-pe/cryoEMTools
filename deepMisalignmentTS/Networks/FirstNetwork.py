@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     import keras.callbacks as callbacks
     from keras.models import Model, load_model
-    from keras.layers import Input, Conv3D, MaxPool3D, BatchNormalization, Dropout, Flatten, Dense
+    from keras.layers import Input, Conv3D, MaxPool3D, BatchNormalization, Dropout, Flatten, Dense, GlobalAveragePooling3D
     from keras.optimizers import Adam
 
 
