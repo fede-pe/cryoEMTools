@@ -19,26 +19,32 @@ if __name__ == "__main__":
 
     import keras.callbacks as callbacks
     from keras.models import Model, load_model
-    from keras.layers import Input, Conv3D, MaxPooling3D, BatchNormalization, Dropout, Flatten, Dense
+    from keras.layers import Input, Conv3D, MaxPool3D, MaxPooling3D, BatchNormalization, Dropout, Flatten, Dense
     from keras.optimizers import Adam
 
 
     def constructModel():
         inputLayer = Input(shape=(32, 32, 32, 1), name="input")
-        L = Conv3D(16, kernel_size=(16, 16, 16), activation="relu")(inputLayer)
+
+        L = Conv3D(filters=16, kernel_size=16, activation="relu")(inputLayer)
+        # L = MaxPooling3D((2, 2, 2))(L)
+        L = MaxPool3D(pool_size=2)(L)
         L = BatchNormalization()(L)
-        L = MaxPooling3D((2, 2, 2))(L)
+
         L = Conv3D(16, (8, 8, 8), activation="relu")(L)
         L = BatchNormalization()(L)
         L = MaxPooling3D((2, 2, 2))(L)
+
         L = Conv3D(16, (4, 4, 4), activation="relu")(L)
         L = BatchNormalization()(L)
         L = MaxPooling3D((2, 2, 2))(L)
+
         L = Dropout(0.2)(L)
         L = Flatten()(L)
         L = Dense(256, name="output", activation="relu")(L)
        # L = Dense(256, name="output", activation="relu")(L)
         L = Dense(6, name="output", activation="softmax")(L)
+
         return Model(inputLayer, L)
 
     model = constructModel()
