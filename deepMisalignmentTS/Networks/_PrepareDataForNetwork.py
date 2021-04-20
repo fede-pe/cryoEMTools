@@ -30,7 +30,6 @@ def prepareData(stackDir):
 
             Ndim += 1
 
-        print(Ndim)
         inputDataStream = np.zeros((Ndim, 32, 32, 32), dtype=np.float64)
 
         # Complete inputDataStream matrix (we only ca iterate over the csvReader once and it is necessary to know the
@@ -47,6 +46,12 @@ def prepareData(stackDir):
 
 
 if __name__ == "__main__":
+
+    if len(sys.argv) != 2:
+        print("Usage: python <pathStackDir> \n"
+              "<pathStackDir>: Path to folder containing the subtomo volumes and the misalignment information file ")
+        exit()
+
     stackDir = sys.argv[1]
 
     print("Preparing stack...")
