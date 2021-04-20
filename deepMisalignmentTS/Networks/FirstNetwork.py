@@ -26,25 +26,53 @@ if __name__ == "__main__":
     def constructModel():
         inputLayer = Input(shape=(32, 32, 32, 1), name="input")
 
-        L = Conv3D(filters=32, kernel_size=8, activation="relu")(inputLayer)
-        L = MaxPool3D(pool_size=2)(L)
-        L = BatchNormalization()(L)
+        x = Conv3D(filters=64, kernel_size=3, activation="relu")(inputLayer)
+        x = MaxPool3D(pool_size=2)(x)
+        x = BatchNormalization()(x)
 
-        L = Conv3D(filters=32, kernel_size=8, activation="relu")(L)
-        L = MaxPool3D(pool_size=2)(L)
-        L = BatchNormalization()(L)
+        x = Conv3D(filters=64, kernel_size=3, activation="relu")(x)
+        x = MaxPool3D(pool_size=2)(x)
+        x = BatchNormalization()(x)
 
-        L = Conv3D(filters=32, kernel_size=8, activation="relu")(L)
-        L = MaxPool3D(pool_size=2)(L)
-        L = BatchNormalization()(L)
+        x = Conv3D(filters=128, kernel_size=3, activation="relu")(x)
+        x = MaxPool3D(pool_size=2)(x)
+        x = BatchNormalization()(x)
 
-        L = Flatten()(L)
-        L = Dense(units=512, activation="relu")(L)
-        L = Dropout(0.2)(L)
+        x = Conv3D(filters=256, kernel_size=3, activation="relu")(x)
+        x = MaxPool3D(pool_size=2)(x)
+        x = BatchNormalization()(x)
 
-        L = Dense(units=6, name="output", activation="softmax")(L)
+        x = GlobalAveragePooling3D()(x)
+        x = Dense(units=512, activation="relu")(x)
+        x = Dropout(0.3)(x)
 
-        return Model(inputLayer, L, name="3dDNNmisali")
+        outputs = Dense(units=1, activation="sigmoid")(x)
+
+        # Define the model.
+        model = Model(inputLayer, outputs, name="3dcnn")
+        return model
+
+        # L = Conv3D(filters=32, kernel_size=8, activation="relu")(inputLayer)
+        # L = MaxPool3D(pool_size=2)(L)
+        # L = BatchNormalization()(L)
+        #
+        # L = Conv3D(filters=32, kernel_size=8, activation="relu")(L)
+        # L = MaxPool3D(pool_size=2)(L)
+        # L = BatchNormalization()(L)
+        #
+        # L = Conv3D(filters=32, kernel_size=8, activation="relu")(L)
+        # L = MaxPool3D(pool_size=2)(L)
+        # L = BatchNormalization()(L)
+        #
+        # L = Flatten()(L)
+        # L = Dense(units=512, activation="relu")(L)
+        # L = Dropout(0.2)(L)
+        #
+        # L = Dense(units=6, name="output", activation="softmax")(L)
+        #
+        # return Model(inputLayer, L, name="3dDNNmisali")
+
+
 
     model = constructModel()
     model.summary()
