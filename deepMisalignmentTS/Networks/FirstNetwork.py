@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
 
     def constructModel():
-        inputLayer = Input(shape=(1, 32, 32, 32), name="input")
+        inputLayer = Input(shape=(32, 32, 32, 1), name="input")
         L = Conv3D(16, kernel_size=(16, 16, 16), activation="relu")(inputLayer)
         L = BatchNormalization()(L)
         L = MaxPooling3D((2, 2, 2))(L)
