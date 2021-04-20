@@ -34,7 +34,7 @@ if __name__ == "__main__":
         L = MaxPool3D(pool_size=2)(L)
         L = BatchNormalization()(L)
 
-        L = Conv3D(filters=64, kernel_size=8, activation="relu")(L)
+        L = Conv3D(filters=32, kernel_size=8, activation="relu")(L)
         L = MaxPool3D(pool_size=2)(L)
         L = BatchNormalization()(L)
 
