@@ -30,11 +30,11 @@ if __name__ == "__main__":
         L = MaxPool3D(pool_size=2)(L)
         L = BatchNormalization()(L)
 
-        L = Conv3D(filters=16, kernel_size=8, activation="relu")(L)
+        L = Conv3D(filters=16, kernel_size=4, activation="relu")(L)
         L = MaxPool3D(pool_size=2)(L)
         L = BatchNormalization()(L)
 
-        L = Conv3D(filters=16, kernel_size=8, activation="relu")(L)
+        L = Conv3D(filters=16, kernel_size=4, activation="relu")(L)
         L = MaxPool3D(pool_size=2)(L)
         L = BatchNormalization()(L)
 
@@ -55,6 +55,9 @@ if __name__ == "__main__":
     misalignmentInfoVector = np.load(os.path.join(stackDir, "misalignmentInfoList.npy"))
     elapsed_time = time() - start_time
     print("Time spent preparing the data: %0.10f seconds." % elapsed_time)
+
+    print("Input subtomograms dimensions:" + np.shape(inputSubtomoStream))
+    print("Input misalignment dimensions:" + np.shape(misalignmentInfoVector))
 
     print("Train model")
     start_time = time()
@@ -79,10 +82,6 @@ if __name__ == "__main__":
                                                   min_delta=0.0001,
                                                   cooldown=0,
                                                   min_lr=0)]
-
-    print("------------------------------------")
-    print(np.shape(inputSubtomoStream))
-    print(np.shape(misalignmentInfoVector))
 
     history = model.fit(inputSubtomoStream,
                         misalignmentInfoVector,
