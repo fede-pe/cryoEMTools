@@ -18,12 +18,12 @@ def prepareData(stackDir):
 
         # Complete misalignmentInfoList vector.
         for i, line in enumerate(metadataLines):
-            misalignmentInfoVector = [line["maxDistance"],
-                                      line["totalDistance"],
-                                      line["hullArea"],
-                                      line["hullPerimeter"],
-                                      line["pcaX"],
-                                      line["pcaY"]]
+            misalignmentInfoVector = [float(line["maxDistance"]),
+                                      float(line["totalDistance"]),
+                                      float(line["hullArea"]),
+                                      float(line["hullPerimeter"]),
+                                      float(line["pcaX"]),
+                                      float(line["pcaY"])]
 
             subtomoPathList.append(line["subTomoPath"])
             misalignmentInfoList.append(misalignmentInfoVector)
