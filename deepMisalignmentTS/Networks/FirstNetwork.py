@@ -56,8 +56,8 @@ if __name__ == "__main__":
     elapsed_time = time() - start_time
     print("Time spent preparing the data: %0.10f seconds." % elapsed_time)
 
-    print("Input subtomograms dimensions:" + np.shape(inputSubtomoStream))
-    print("Input misalignment dimensions:" + np.shape(misalignmentInfoVector))
+    print("Input subtomograms dimensions: ", np.shape(inputSubtomoStream))
+    print("Input misalignment dimensions: ", np.shape(misalignmentInfoVector))
 
     print("Train model")
     start_time = time()
