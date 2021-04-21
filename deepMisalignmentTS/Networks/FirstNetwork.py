@@ -26,15 +26,15 @@ if __name__ == "__main__":
     def constructModel():
         inputLayer = Input(shape=(32, 32, 32, 1), name="input")
 
-        L = Conv3D(filters=32, kernel_size=4, activation="relu")(inputLayer)
+        L = Conv3D(filters=16, kernel_size=8, activation="relu")(inputLayer)
         L = MaxPool3D(pool_size=2)(L)
         L = BatchNormalization()(L)
 
-        L = Conv3D(filters=32, kernel_size=4, activation="relu")(L)
+        L = Conv3D(filters=16, kernel_size=8, activation="relu")(L)
         L = MaxPool3D(pool_size=2)(L)
         L = BatchNormalization()(L)
 
-        L = Conv3D(filters=32, kernel_size=4, activation="relu")(L)
+        L = Conv3D(filters=16, kernel_size=8, activation="relu")(L)
         L = MaxPool3D(pool_size=2)(L)
         L = BatchNormalization()(L)
 
@@ -79,6 +79,10 @@ if __name__ == "__main__":
                                                   min_delta=0.0001,
                                                   cooldown=0,
                                                   min_lr=0)]
+
+    print("------------------------------------")
+    print(np.shape(inputSubtomoStream))
+    print(np.shape(misalignmentInfoVector))
 
     history = model.fit(inputSubtomoStream,
                         misalignmentInfoVector,
