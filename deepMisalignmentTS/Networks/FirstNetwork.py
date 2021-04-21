@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     import keras.callbacks as callbacks
     from keras.models import Model, load_model
-    from keras.layers import Input, Conv3D, MaxPool3D, BatchNormalization, Dropout, Flatten, Dense
+    from keras.layers import Input, Conv3D, MaxPool3D, BatchNormalization, Dropout, Flatten, Dense, GlobalAveragePooling3D
     from keras.optimizers import Adam
 
 
@@ -38,7 +38,12 @@ if __name__ == "__main__":
         L = MaxPool3D(pool_size=2)(L)
         L = BatchNormalization()(L)
 
-        L = Flatten()(L)
+        L = Conv3D(filters=64, kernel_size=3, activation="relu")(L)
+        L = MaxPool3D(pool_size=2)(L)
+        L = BatchNormalization()(L)
+
+        # L = Flatten()(L)
+        L = GlobalAveragePooling3D()(L)
         L = Dense(units=512, activation="relu")(L)
         L = Dropout(0.2)(L)
 
