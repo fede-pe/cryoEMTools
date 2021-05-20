@@ -46,7 +46,8 @@ class DeepDefocus:
                     metadataPath = open(os.path.join(stackDir, "metadata.txt"), "r+")
                     metadataLines = metadataPath.read().splitlines()
                     lastLine = metadataLines[-1]
-                    i = int(lastLine[0:9]) + 1 # no deberia ser de [0:10]
+                    #i = int(lastLine[0:9]) + 1 # no deberia ser de [0:10]
+                    i = int(lastLine[0:10]) + 1
                 else:
                     metadataPath = open(os.path.join(stackDir, "metadata.txt"), "w+")
                     #metadataPath.write("  ID         DEFOCUS      kV   SUBSET  FILE\n")
@@ -66,7 +67,8 @@ class DeepDefocus:
                 metadataLines = metadataPath.read().splitlines()
                 metadataLines.pop(0)
                 for line in metadataLines:
-                    storedFile = line[40:] #cambiar para coger el file [88:]
+                    #storedFile = line[40:] #cambiar para coger el file [88:]
+                    storedFile = line[88:]
                     storedFileBase = os.path.split(storedFile)[1]
                     if storedFileBase == fnBase.replace("_xmipp_ctf_enhanced_psd.xmp", "_psdAt_1.xmp") \
                             or storedFileBase == fnBase.replace("_xmipp_ctf_enhanced_psd.xmp", "_psdAt_2.xmp") \
@@ -81,7 +83,8 @@ class DeepDefocus:
         lines.pop(0)
         nameFiles = []
         for line in lines:
-            fileName = line[40:-1] #está bien porque hay un espacio antes [88:-1]
+            #fileName = line[40:-1] #está bien porque hay un espacio antes [88:-1]
+            fileName = line[88:-1]
             nameFiles.append(fileName)
 
         for file in stackDir:
