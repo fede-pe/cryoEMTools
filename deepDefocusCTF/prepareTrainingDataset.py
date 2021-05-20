@@ -1,8 +1,11 @@
 import os
 import sys
-import xmippLib as xmipp
-import shutil
 
+import numpy as np
+import xmippLib as xmipp
+#import xmipp3 as xmipp
+import shutil
+#import pwem.emlib.metadata as md
 
 class DeepDefocus:
     @staticmethod
@@ -15,11 +18,17 @@ class DeepDefocus:
                 objId = md.firstObject()
                 dU = md.getValue(xmipp.MDL_CTF_DEFOCUSU, objId)
                 dV = md.getValue(xmipp.MDL_CTF_DEFOCUSV, objId)
+                #------dmt
+                dAngle = md.getValue(xmipp.MDL_CTF_DEFOCUS_ANGLE, objId)
+                dSinA = np.sin(2 * dAngle) #Mirar si lo de dos veces el angulo está bien
+                dCosA = np.cos(2*dAngle)
+                #------
                 kV = md.getValue(xmipp.MDL_CTF_VOLTAGE, objId)
-                enabled = md.getValue(xmipp.MDL_ENABLED, objId)
+                enabled = md.getValue(xmipp.MDL_ENABLED, objId) #Esto es lo que deberiamos coger de otro sitio
                 if dataFlag == 1:
                     if enabled == 1:
-                        fileList.append((fnRoot, 0.5*(dU+dV), kV))
+                        #fileList.append((fnRoot, 0.5*(dU+dV), kV))
+                        fileList.append((fnRoot, dU, dV, dSinA, dCosA, dAngle, kV)) #dmt
                 else:
                     fileList.append(fnRoot)
         print("Files read from origin")
@@ -29,20 +38,23 @@ class DeepDefocus:
     def downsampleCTF(fileList, stackDir, subset, dataFlag):
         if dataFlag == 1:
             for file in fileList:
-                fnRoot, defocus, kV = file
+                #fnRoot, defocus, kV = file
+                fnRoot, dU, dV,  dSinA, dCosA, dAngle, kV = file #dmt
                 fnBase = os.path.split(fnRoot)[1]
                 destRoot = stackDir + fnBase.replace("_xmipp_ctf_enhanced_psd.xmp", "_psdAt_%d.xmp" % subset)
                 if os.path.isfile(os.path.join(stackDir, "metadata.txt")):
                     metadataPath = open(os.path.join(stackDir, "metadata.txt"), "r+")
                     metadataLines = metadataPath.read().splitlines()
                     lastLine = metadataLines[-1]
-                    i = int(lastLine[0:9]) + 1
+                    i = int(lastLine[0:9]) + 1 # no deberia ser de [0:10]
                 else:
                     metadataPath = open(os.path.join(stackDir, "metadata.txt"), "w+")
-                    metadataPath.write("  ID         DEFOCUS      kV   SUBSET  FILE\n")
+                    #metadataPath.write("  ID         DEFOCUS      kV   SUBSET  FILE\n")
+                    metadataPath.write("  ID      DEFOCUS_U      DEFOCUS_V     Sin(angle)     Cos(angle)     Angle     kV   SUBSET  FILE\n")
                     i = 0
                 shutil.copy(fnRoot, destRoot)
-                metadataPath.write("%9.7d%11d%8d%9d  %s\n" % (i, defocus, kV, subset, destRoot))
+                #metadataPath.write("%9.7d%11d%8d%9d  %s\n" % (i, defocus, kV, subset, destRoot))
+                metadataPath.write("%9.7d%11d%11d%11d%11d%11d%8d%9d  %s\n" % (i, dU, dV, dSinA, dCosA, dAngle, kV, subset, destRoot))
                 i += 1
             print("Files copied to destiny and metadata generated")
 
@@ -54,7 +66,7 @@ class DeepDefocus:
                 metadataLines = metadataPath.read().splitlines()
                 metadataLines.pop(0)
                 for line in metadataLines:
-                    storedFile = line[40:]
+                    storedFile = line[40:] #cambiar para coger el file [88:]
                     storedFileBase = os.path.split(storedFile)[1]
                     if storedFileBase == fnBase.replace("_xmipp_ctf_enhanced_psd.xmp", "_psdAt_1.xmp") \
                             or storedFileBase == fnBase.replace("_xmipp_ctf_enhanced_psd.xmp", "_psdAt_2.xmp") \
@@ -69,7 +81,7 @@ class DeepDefocus:
         lines.pop(0)
         nameFiles = []
         for line in lines:
-            fileName = line [40:-1]
+            fileName = line[40:-1] #está bien porque hay un espacio antes [88:-1]
             nameFiles.append(fileName)
 
         for file in stackDir:

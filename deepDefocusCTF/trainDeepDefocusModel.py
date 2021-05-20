@@ -13,13 +13,21 @@ batch_size = 128  # Number of boxes per batch
 if __name__ == "__main__":
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
-    from keras.callbacks import TensorBoard, ModelCheckpoint
-    import keras.callbacks as callbacks
-    from keras.models import Model
-    from keras.layers import Input, Conv2D, MaxPooling2D, BatchNormalization, Dropout, Flatten, Dense
-    from keras.optimizers import Adam
+    #from keras.callbacks import TensorBoard, ModelCheckpoint
+    #import keras.callbacks as callbacks
+    #from keras.models import Model
+    #from keras.layers import Input, Conv2D, MaxPooling2D, BatchNormalization, Dropout, Flatten, Dense
+    #from keras.optimizers import Adam
     import tensorflow as tf
-    from keras.models import load_model
+    #from keras.models import load_model
+
+    #----TENSORFLOW INSIDE KERAS
+    from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
+    import tensorflow.keras.callbacks as callbacks
+    from tensorflow.keras.models import Model
+    from tensorflow.keras import Input, Conv2D, MaxPooling2D, BatchNormalization, Dropout, Flatten, Dense
+    from tensorflow.keras.optimizers import Adam
+    from tensorflow.keras.models import load_model
 
 
     def constructModel():
