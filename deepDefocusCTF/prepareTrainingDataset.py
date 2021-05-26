@@ -2,60 +2,79 @@ import os
 import sys
 
 import numpy as np
+import re
 import xmippLib as xmipp
 import shutil
-#import pwem.emlib.metadata as md
+import sqlite3
 
 class DeepDefocus:
+
     @staticmethod
     def importCTF(fnDir, dataFlag):
         fileList = []
-        for file in os.listdir(fnDir):
-            if file.endswith("_enhanced_psd.xmp"):
-                fnRoot = os.path.join(fnDir, file)
-                md = xmipp.MetaData(fnRoot.replace("_xmipp_ctf_enhanced_psd.xmp", "_xmipp_ctf.xmd"))
-                objId = md.firstObject()
-                dU = md.getValue(xmipp.MDL_CTF_DEFOCUSU, objId)
-                dV = md.getValue(xmipp.MDL_CTF_DEFOCUSV, objId)
-                #------dmt
-                dAngle = md.getValue(xmipp.MDL_CTF_DEFOCUS_ANGLE, objId)
-                dSinA = np.sin(2 * dAngle) #Mirar si lo de dos veces el angulo está bien
-                dCosA = np.cos(2*dAngle)
-                #------
-                kV = md.getValue(xmipp.MDL_CTF_VOLTAGE, objId)
-                enabled = md.getValue(xmipp.MDL_ENABLED, objId) #Esto es lo que deberiamos coger de otro sitio
-                if dataFlag == 1:
-                    if enabled == 1:
-                        #fileList.append((fnRoot, 0.5*(dU+dV), kV))
-                        fileList.append((fnRoot, dU, dV, dSinA, dCosA, dAngle, kV)) #dmt
-                else:
-                    fileList.append(fnRoot)
-        print("Files read from origin")
+        verbose = 0
+        #CONNECT TO THE DATABASE
+        dbName = 'subset.sqlite'
+        dbRoot = os.path.join(fnDir, dbName)
+        pattern = r'/Runs.*'
+        fnDirBase = re.sub(pattern, "", fnDir)
+        con = sqlite3.connect(dbRoot)
+        print("Opened database successfully: ", dbRoot)
+        # id = ID, Enabled = ENABLED, c67 = _xmipp_enhanced_psd, c01 = _defocusU, c02 = _defocusV, C03 = _defocusAngle
+        # C65 = _xmipp_ctfVoltage
+        query = "SELECT id, enabled, c67, c01, C02, C03, C65 from Objects"
+        print('query: ', query)
+        cursor = con.execute(query)
+
+        for row in cursor:
+            id = row[0]
+            enabled = row[1]
+            file = row[2]
+            file = os.path.join(fnDirBase, file)
+            dU = row[3]
+            dV = row[4]
+            dAngle = row[5]
+            kV = row[6]
+            dSinA = np.sin(2 * dAngle)
+            dCosA = np.cos(2 * dAngle)
+
+            if dataFlag == 1:
+                if enabled == 1:
+                    fileList.append((id, dU, dV, dSinA, dCosA, dAngle, kV, file))  # dmt
+            else:
+                fileList.append(file)
+
+            if verbose == 1:
+                print("ID = ", id)
+                print("ENABLED", enabled)
+                print("FILE = ", file)
+                print("DEFOCUS_U = ", dU)
+                print("DEFOCUS_V = ",  dV )
+                print("DEFOCUS_ANGLE = ", dAngle )
+                print("KV = ", kV, "\n")
+
+        con.close()
+        print("Closed database successfully")
         return fileList
 
     @staticmethod
     def downsampleCTF(fileList, stackDir, subset, dataFlag):
         if dataFlag == 1:
             for file in fileList:
-                #fnRoot, defocus, kV = file
-                fnRoot, dU, dV,  dSinA, dCosA, dAngle, kV = file #dmt
-                fnBase = os.path.split(fnRoot)[1]
+                id, dU, dV,  dSinA, dCosA, dAngle, kV, fnRoot = file
+                fnBase = os.path.split(fnRoot)[1] #name of the file
                 destRoot = stackDir + fnBase.replace("_xmipp_ctf_enhanced_psd.xmp", "_psdAt_%d.xmp" % subset)
-                if os.path.isfile(os.path.join(stackDir, "metadata.txt")):
-                    metadataPath = open(os.path.join(stackDir, "metadata.txt"), "r+")
-                    metadataLines = metadataPath.read().splitlines()
-                    lastLine = metadataLines[-1]
-                    #i = int(lastLine[0:9]) + 1 # no deberia ser de [0:10]
-                    i = int(lastLine[0:10]) + 1
-                else:
+                if not (os.path.exists(os.path.join(stackDir, "metadata.txt"))):
                     metadataPath = open(os.path.join(stackDir, "metadata.txt"), "w+")
-                    #metadataPath.write("  ID         DEFOCUS      kV   SUBSET  FILE\n")
-                    metadataPath.write("  ID      DEFOCUS_U      DEFOCUS_V     Sin(angle)     Cos(angle)     Angle     kV   SUBSET  FILE\n")
-                    i = 0
+                    metadataPath.write(
+                        "  ID        DEFOCUS_U   DEFOCUS_V Sin(angle) Cos(angle)  Angle        kV   SUBSET FILE\n")
+
+                metadataPath = open(os.path.join(stackDir, "metadata.txt"), "r+")
+                metadataLines = metadataPath.read().splitlines()
                 shutil.copy(fnRoot, destRoot)
-                #metadataPath.write("%9.7d%11d%8d%9d  %s\n" % (i, defocus, kV, subset, destRoot))
-                metadataPath.write("%9.7d%11d%11d%11d%11d%11d%8d%9d  %s\n" % (i, dU, dV, dSinA, dCosA, dAngle, kV, subset, destRoot))
-                i += 1
+                metadataPath.write("%9.7d%11d%11d%11f%11f%11f%8d%9d  %s\n" % (
+                                    id, dU, dV, dSinA, dCosA, dAngle, kV, subset, destRoot))
+
             print("Files copied to destiny and metadata generated")
 
         else:
@@ -66,15 +85,17 @@ class DeepDefocus:
                 metadataLines = metadataPath.read().splitlines()
                 metadataLines.pop(0)
                 for line in metadataLines:
-                    #storedFile = line[40:] #cambiar para coger el file [88:]
-                    storedFile = line[88:]
-                    storedFileBase = os.path.split(storedFile)[1]
+                    storedFile = line[83:]
+                    storedFileBase = os.path.split(storedFile)[1] #name of the file to store
                     if storedFileBase == fnBase.replace("_xmipp_ctf_enhanced_psd.xmp", "_psdAt_1.xmp") \
                             or storedFileBase == fnBase.replace("_xmipp_ctf_enhanced_psd.xmp", "_psdAt_2.xmp") \
                             or storedFileBase == fnBase.replace("_xmipp_ctf_enhanced_psd.xmp", "_psdAt_3.xmp"):
                         shutil.copy(fnRoot, destRoot)
             print("Files copied to destiny")
 
+        metadataPath.close()
+
+    #ESTE MÉTODO NO SE QUE HACE AQUI
     @staticmethod
     def prune(stackDir):
         metadataPath = open(os.path.join(stackDir, "metadata.txt"), "w+")
@@ -96,7 +117,7 @@ class DeepDefocus:
 
 if __name__ == "__main__":
     if len(sys.argv) != 5:
-        print("Usage: python prepareDataset.py <dirIn> <dirOut> <subsetNumber> <importDataFlag(0/1)>")
+        print("Usage: python prepareTrainingDataset.py <dirIn> <dirOut> <subsetNumber> <importDataFlag(0/1)>")
         exit(0)
 
     fnDir = sys.argv[1]
