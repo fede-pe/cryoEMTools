@@ -3,7 +3,6 @@ import sys
 
 import numpy as np
 import xmippLib as xmipp
-#import xmipp3 as xmipp
 import shutil
 #import pwem.emlib.metadata as md
 
@@ -96,8 +95,10 @@ class DeepDefocus:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) == 1:
+    if len(sys.argv) != 5:
         print("Usage: python prepareDataset.py <dirIn> <dirOut> <subsetNumber> <importDataFlag(0/1)>")
+        exit(0)
+
     fnDir = sys.argv[1]
     stackDir = sys.argv[2]
     subset = int(sys.argv[3])
