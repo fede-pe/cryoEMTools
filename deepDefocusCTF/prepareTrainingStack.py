@@ -13,6 +13,11 @@ def prepareData(stackDir):
     imagMatrix = np.zeros((Ndim, 512, 512, 3), dtype=np.float64)
     defocusVector = []
     i = 0
+
+    # df_metadata_2 = pd.read_csv(os.path.join(stackDir, "metadata.csv"))
+    # print('read the dataframe')
+    # print(df_metadata_2)
+
     for line in metadataLines:
         #storedFile = line[39:]  #[88:]
         storedFile = int(line[88:])

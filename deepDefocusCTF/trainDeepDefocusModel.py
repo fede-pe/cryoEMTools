@@ -96,6 +96,7 @@ if __name__ == "__main__":
                                                   min_delta=0.0001, cooldown=0, min_lr=0)]
     history = model.fit(imagMatrix, defocusVector, batch_size=128, epochs=100, verbose=1, validation_split=0.1,
                         callbacks=callbacks_list)
+
     myValLoss = np.zeros(1)
     myValLoss[0] = history.history['val_loss'][-1]
     np.savetxt(os.path.join(modelDir, 'model.txt'), myValLoss)
