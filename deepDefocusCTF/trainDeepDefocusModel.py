@@ -8,7 +8,9 @@ import sys
 import time
 from time import time
 
-batch_size = 128  # Number of boxes per batch
+#batch_size = 128  # Number of boxes per batch
+batch_size = 3
+epochs = 25
 
 if __name__ == "__main__":
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
@@ -25,7 +27,7 @@ if __name__ == "__main__":
     from tensorflow.keras.callbacks import TensorBoard, ModelCheckpoint
     import tensorflow.keras.callbacks as callbacks
     from tensorflow.keras.models import Model
-    from tensorflow.keras import Input, Conv2D, MaxPooling2D, BatchNormalization, Dropout, Flatten, Dense
+    from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, BatchNormalization, Dropout, Flatten, Dense
     from tensorflow.keras.optimizers import Adam
     from tensorflow.keras.models import load_model
 
@@ -43,7 +45,7 @@ if __name__ == "__main__":
         L = MaxPooling2D()(L)
         L = Dropout(0.2)(L)
         L = Flatten()(L)
-        L = Dense(1, name="output", activation="linear")(L)
+        L = Dense(4, name="output", activation="linear")(L) #it was 1 before
         return Model(inputLayer, L)
 
 
@@ -59,7 +61,7 @@ if __name__ == "__main__":
         L = Flatten()(L)
         L = Dense(256, activation="relu")(L)
         L = Dropout(0.2)(L)
-        L = Dense(1, name="output", activation="linear")(L)
+        L = Dense(4, name="output", activation="linear")(L)
         return Model(inputLayer, L)
 
 
@@ -67,7 +69,7 @@ if __name__ == "__main__":
     model.summary()
 
     if len(sys.argv) < 3:
-        print("Usage: scipion python batch_deepDefocus.py <stackDir> <modelDir>")
+        print("Usage: python3 trainDeepDefocusModel.py <stackDir> <modelDir>")
         sys.exit()
     stackDir = sys.argv[1]
     modelDir = sys.argv[2]
@@ -88,13 +90,14 @@ if __name__ == "__main__":
     print("Time spent preparing the data: %0.10f seconds." % elapsed_time)
 
     callbacks_list = [callbacks.CSVLogger("./outCSV_06_28_1", separator=',', append=False),
-                      callbacks.TensorBoard(log_dir='./outTB_06_28_1', histogram_freq=0, batch_size=128,
+                      callbacks.TensorBoard(log_dir='./outTB_06_28_1', histogram_freq=0, batch_size=batch_size,
                                             write_graph=True, write_grads=False, write_images=False, embeddings_freq=0,
                                             embeddings_layer_names=None, embeddings_metadata=None,
                                             embeddings_data=None),
                       callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.1, patience=5, verbose=1, mode='auto',
                                                   min_delta=0.0001, cooldown=0, min_lr=0)]
-    history = model.fit(imagMatrix, defocusVector, batch_size=128, epochs=100, verbose=1, validation_split=0.1,
+
+    history = model.fit(imagMatrix, defocusVector, batch_size=batch_size, epochs=epochs, verbose=1, validation_split=0.1,
                         callbacks=callbacks_list)
 
     myValLoss = np.zeros(1)
@@ -104,7 +107,8 @@ if __name__ == "__main__":
     elapsed_time = time() - start_time
     print("Time in training model: %0.10f seconds." % elapsed_time)
 
-    loadModelDir = os.path.join(modelDir, 'model.txt')
+    loadModelDir = os.path.join(modelDir, 'model.h5')
+
     model = load_model(loadModelDir)
     imagPrediction = model.predict(imagMatrix)
     np.savetxt(os.path.join(stackDir, 'imagPrediction.txt'), imagPrediction)
