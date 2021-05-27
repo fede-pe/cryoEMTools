@@ -58,49 +58,9 @@ class DeepDefocus:
         print("Closed database successfully")
         return fileList
 
+
     @staticmethod
     def downsampleCTF(fileList, stackDir, subset, dataFlag):
-        if dataFlag == 1:
-            for file in fileList:
-                id, dU, dV,  dSinA, dCosA, dAngle, kV, fnRoot = file
-                fnBase = os.path.split(fnRoot)[1] #name of the file
-                destRoot = stackDir + fnBase.replace("_xmipp_ctf_enhanced_psd.xmp", "_psdAt_%d.xmp" % subset)
-
-                if not (os.path.exists(os.path.join(stackDir, "metadata.txt"))):
-                    metadataPath = open(os.path.join(stackDir, "metadata.txt"), "w+")
-                    metadataPath.write(
-                        "  ID        DEFOCUS_U   DEFOCUS_V Sin(angle) Cos(angle)  Angle        kV   SUBSET FILE\n")
-
-                #metadataPath = open(os.path.join(stackDir, "metadata.txt"), "r+")
-                #metadataLines = metadataPath.read().splitlines()
-
-                shutil.copy(fnRoot, destRoot)
-                metadataPath.write("%9.7d%11d%11d%11f%11f%11f%8d%9d  %s\n" % (
-                                    id, dU, dV, dSinA, dCosA, dAngle, kV, subset, destRoot))
-
-            print("Files copied to destiny and metadata generated")
-
-        else:
-            for fnRoot in fileList:
-                metadataPath = open(os.path.join(stackDir, "metadata.txt"), "r+")
-                fnBase = os.path.split(fnRoot)[1]
-                destRoot = stackDir + fnBase.replace("_xmipp_ctf_enhanced_psd.xmp", "_psdAt_%d.xmp" % subset)
-                metadataLines = metadataPath.read().splitlines()
-                metadataLines.pop(0)
-                for line in metadataLines:
-                    storedFile = line[83:]
-                    storedFileBase = os.path.split(storedFile)[1] #name of the file to store
-                    if storedFileBase == fnBase.replace("_xmipp_ctf_enhanced_psd.xmp", "_psdAt_1.xmp") \
-                            or storedFileBase == fnBase.replace("_xmipp_ctf_enhanced_psd.xmp", "_psdAt_2.xmp") \
-                            or storedFileBase == fnBase.replace("_xmipp_ctf_enhanced_psd.xmp", "_psdAt_3.xmp"):
-                        shutil.copy(fnRoot, destRoot)
-            print("Files copied to destiny")
-
-        metadataPath.close()
-
-
-    @staticmethod
-    def downsampleCTF2(fileList, stackDir, subset, dataFlag):
         if dataFlag == 1:
             cols = ['ID','DEFOCUS_U', 'DEFOCUS_V', 'Sin(2*angle)', 'Cos(2*angle)', 'Angle', 'kV','FILE']
             df_metadata = pd.DataFrame(fileList, columns=cols)
@@ -118,6 +78,7 @@ class DeepDefocus:
             print("Files copied to destiny and metadata generated")
             print(df_metadata)
 
+
         else:
             for fnRoot in fileList:
                 fnBase = os.path.split(fnRoot)[1]
@@ -134,7 +95,6 @@ class DeepDefocus:
 
 
 
-    #ESTE MÉTODO NO SE QUE HACE AQUI
     @staticmethod
     def prune(stackDir):
         metadataPath = open(os.path.join(stackDir, "metadata.txt"), "w+")
@@ -166,6 +126,6 @@ if __name__ == "__main__":
     stackDir = stackDir + "/"
     deepDefocus = DeepDefocus()
     allPSDs = deepDefocus.importCTF(fnDir, dataFlag)
-    deepDefocus.downsampleCTF2(allPSDs, stackDir, subset, dataFlag)
+    deepDefocus.downsampleCTF(allPSDs, stackDir, subset, dataFlag)
 
     exit(0)

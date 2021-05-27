@@ -2,47 +2,45 @@ import numpy as np
 import os
 import sys
 import xmippLib as xmipp
+import pandas as pd
 from time import time
 
 
 def prepareData(stackDir):
-    metadataFile = open(os.path.join(stackDir, "metadata.txt"))
-    metadataLines = metadataFile.read().splitlines()
-    metadataLines.pop(0)
-    Ndim = len(metadataLines)
+    #metadataFile = open(os.path.join(stackDir, "metadata.txt"))
+    #metadataLines = metadataFile.read().splitlines()
+    #metadataLines.pop(0)
+    #Ndim = len(metadataLines)
+
+    df_metadata = pd.read_csv(os.path.join(stackDir, "metadata.csv"))
+    Ndim = df_metadata.shape[0]
     imagMatrix = np.zeros((Ndim, 512, 512, 3), dtype=np.float64)
     defocusVector = []
     i = 0
 
-    # df_metadata_2 = pd.read_csv(os.path.join(stackDir, "metadata.csv"))
-    # print('read the dataframe')
-    # print(df_metadata_2)
-
-    for line in metadataLines:
-        #storedFile = line[39:]  #[88:]
-        storedFile = int(line[88:])
-        #subset = int(line[30:38]) #esto esta "mal" deberia ser [30:39]  =~  [76:87]
-        subset = int(line[76:87])
-        #defocus = int(line[10:21]) #no estoy seguro que lo este cogiendo bien salvo que 9.7d == 10     =~ [10:21] [21:32]
-        defocus_U = int(line[10:21])
-        defocus_V = int(line[21:32])
-        dSinA = int(line[32:43])
-        dCosA = int(line[43:54])
+    for index in df_metadata.index.to_list():
+        storedFile = df_metadata.loc[index, 'FILE']
+        subset = df_metadata.loc[index, 'SUBSET'] #as_type int
+        defocus_U = df_metadata.loc[index, 'DEFOCUS_U'] #INT??
+        defocus_V = df_metadata.loc[index, 'DEFOCUS_V'] #INT??
+        dSinA = df_metadata.loc[index, 'Sin(2*angle)'] #INT??
+        dCosA = df_metadata.loc[index, 'Cos(2*angle)'] #INT??
 
         img1Path = storedFile.replace("_psdAt_%d.xmp" % subset, "_psdAt_1.xmp")
         img2Path = storedFile.replace("_psdAt_%d.xmp" % subset, "_psdAt_2.xmp")
         img3Path = storedFile.replace("_psdAt_%d.xmp" % subset, "_psdAt_3.xmp")
+
         img1 = xmipp.Image(img1Path).getData()
         img2 = xmipp.Image(img2Path).getData()
         img3 = xmipp.Image(img3Path).getData()
+
         imagMatrix[i, :, :, 0] = img1
         imagMatrix[i, :, :, 1] = img2
         imagMatrix[i, :, :, 2] = img3
 
-        #defocusVector.append(defocus)
         defocusVector.append((defocus_U, defocus_V, dSinA, dCosA))
-
         i += 1
+
     imageStackDir = os.path.join(stackDir, "preparedImageStack.npy")
     defocusStackDir = os.path.join(stackDir, "preparedDefocusStack.npy")
     np.save(imageStackDir, imagMatrix)
@@ -50,9 +48,14 @@ def prepareData(stackDir):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: python3 prepareTrainingStack.py <dirOut>")
+        exit(0)
+
     stackDir = sys.argv[1]
     print("Preparing stack...")
     start_time = time()
     prepareData(stackDir)
     elapsed_time = time() - start_time
     print("Time spent preparing the data: %0.10f seconds." % elapsed_time)
+    exit(0)
