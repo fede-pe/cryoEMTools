@@ -7,15 +7,10 @@ from time import time
 
 
 def prepareData(stackDir):
-    #metadataFile = open(os.path.join(stackDir, "metadata.txt"))
-    #metadataLines = metadataFile.read().splitlines()
-    #metadataLines.pop(0)
-    #Ndim = len(metadataLines)
-
     df_metadata = pd.read_csv(os.path.join(stackDir, "metadata.csv"))
     Ndim = df_metadata.shape[0]
     imagMatrix = np.zeros((Ndim, 512, 512, 3), dtype=np.float64)
-    defocusVector = []
+    defocusVector = np.zeros((Ndim, 4), dtype=np.float64)
     i = 0
 
     for index in df_metadata.index.to_list():
@@ -38,11 +33,16 @@ def prepareData(stackDir):
         imagMatrix[i, :, :, 1] = img2
         imagMatrix[i, :, :, 2] = img3
 
-        defocusVector.append((defocus_U, defocus_V, dSinA, dCosA))
+        defocusVector[i, 0] = defocus_U
+        defocusVector[i, 1] = defocus_V
+        defocusVector[i, 2] = dSinA
+        defocusVector[i, 3] = dCosA
+
         i += 1
 
     imageStackDir = os.path.join(stackDir, "preparedImageStack.npy")
     defocusStackDir = os.path.join(stackDir, "preparedDefocusStack.npy")
+
     np.save(imageStackDir, imagMatrix)
     np.save(defocusStackDir, defocusVector)
 
