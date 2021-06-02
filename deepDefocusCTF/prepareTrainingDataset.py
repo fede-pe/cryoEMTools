@@ -62,10 +62,9 @@ class DeepDefocus:
     @staticmethod
     def downsampleCTF(fileList, stackDir, subset, dataFlag):
         if dataFlag == 1:
-            cols = ['ID','DEFOCUS_U', 'DEFOCUS_V', 'Sin(2*angle)', 'Cos(2*angle)', 'Angle', 'kV','FILE']
+            cols = ['ID', 'DEFOCUS_U', 'DEFOCUS_V', 'Sin(2*angle)', 'Cos(2*angle)', 'Angle', 'kV', 'FILE']
             df_metadata = pd.DataFrame(fileList, columns=cols)
             df_metadata.insert(7, 'SUBSET', subset, True)
-            #df_metadata['SUBSET'] = subset
 
             for index in df_metadata.index.to_list():
                 fnRoot = df_metadata.loc[index, 'FILE']

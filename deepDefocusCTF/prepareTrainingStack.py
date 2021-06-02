@@ -15,11 +15,11 @@ def prepareData(stackDir):
 
     for index in df_metadata.index.to_list():
         storedFile = df_metadata.loc[index, 'FILE']
-        subset = df_metadata.loc[index, 'SUBSET'] #as_type int
-        defocus_U = df_metadata.loc[index, 'DEFOCUS_U'] #INT??
-        defocus_V = df_metadata.loc[index, 'DEFOCUS_V'] #INT??
-        dSinA = df_metadata.loc[index, 'Sin(2*angle)'] #INT??
-        dCosA = df_metadata.loc[index, 'Cos(2*angle)'] #INT??
+        subset = df_metadata.loc[index, 'SUBSET']
+        defocus_U = df_metadata.loc[index, 'DEFOCUS_U']
+        defocus_V = df_metadata.loc[index, 'DEFOCUS_V']
+        dSinA = df_metadata.loc[index, 'Sin(2*angle)']
+        dCosA = df_metadata.loc[index, 'Cos(2*angle)']
 
         img1Path = storedFile.replace("_psdAt_%d.xmp" % subset, "_psdAt_1.xmp")
         img2Path = storedFile.replace("_psdAt_%d.xmp" % subset, "_psdAt_2.xmp")
