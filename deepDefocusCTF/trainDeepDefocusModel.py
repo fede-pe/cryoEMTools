@@ -5,6 +5,9 @@ import os
 import sys
 from time import time
 # ----TENSORFLOW INSIDE KERAS
+from tensorflow.python.client import device_lib
+print(device_lib.list_local_devices())
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import tensorflow.keras.callbacks as callbacks
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, BatchNormalization, Dropout, Flatten, Dense
@@ -32,7 +35,7 @@ TEST_SIZE = 0.2
 # ------------------------ MAIN PROGRAM -----------------------------
 
 if __name__ == "__main__":
-    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+    
 
 # ---------------------- UTILS METHODS --------------------------------------
     def make_training_plots(history):
@@ -256,7 +259,7 @@ if __name__ == "__main__":
                           ]
 
 
-        history = model.fit(imagMatrix_train, defocusVector_train, batch_size=BATCH_SIZE, epochs=EPOCHS, verbose='auto',
+        history = model.fit(imagMatrix_train, defocusVector_train, batch_size=BATCH_SIZE, epochs=EPOCHS, verbose=1,
                             validation_split=0.1, callbacks=callbacks_list)
 
         myValLoss = np.zeros(1)
