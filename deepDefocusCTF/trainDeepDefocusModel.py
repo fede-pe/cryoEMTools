@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 #from keras.optimizers import Adam
 #from keras.models import load_model
 
-BATCH_SIZE = 6  # 128 should be by default (The higher the faster it converge)
+BATCH_SIZE = 128  # 128 should be by default (The higher the faster it converge)
 EPOCHS = 100
 LEARNING_RATE = 0.001
 training_Bool = True
