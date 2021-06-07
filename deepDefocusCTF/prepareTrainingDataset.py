@@ -23,7 +23,7 @@ class DeepDefocus:
         print("Opened database successfully: ", dbRoot)
         # id = ID, Enabled = ENABLED, c67 = _xmipp_enhanced_psd, c01 = _defocusU, c02 = _defocusV, C03 = _defocusAngle
         # C65 = _xmipp_ctfVoltage
-        query = "SELECT id, enabled, c67, c01, C02, C03, C65 from Objects"
+        query = "SELECT id, enabled, c60, c01, C02, C03, C58 from Objects"
         print('query: ', query)
         cursor = con.execute(query)
 
@@ -72,6 +72,10 @@ class DeepDefocus:
                 destRoot = stackDir + fnBase.replace("_xmipp_ctf_enhanced_psd.xmp", "_psdAt_%d.xmp" % subset)
                 shutil.copy(fnRoot, destRoot)
                 df_metadata.loc[index, 'FILE'] = destRoot  #Change the name to the new one that is copied in this folder
+
+            if os.path.exists(os.path.join(stackDir, "metadata.csv")):
+                df_prev = pd.read_csv(os.path.join(stackDir, "metadata.csv"))
+                df_metadata = pd.concat([df_prev, df_metadata], ignore_index=True)
 
             df_metadata.to_csv(os.path.join(stackDir, "metadata.csv"), index=False)
             print("Files copied to destiny and metadata generated")

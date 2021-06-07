@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 BATCH_SIZE = 6  # 128 should be by default (The higher the faster it converge)
 EPOCHS = 100
 LEARNING_RATE = 0.001
-training_Bool = False
+training_Bool = True
 testing_Bool = True
 plots_Bool = True
 TEST_SIZE = 0.2
