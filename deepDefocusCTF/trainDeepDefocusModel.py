@@ -211,6 +211,7 @@ if __name__ == "__main__":
         L = Dense(4, name="output", activation="linear")(L)
         return Model(inputLayer, L)
 
+
 # ----------- LOADING DATA -------------------
     if len(sys.argv) < 3:
         print("Usage: python3 trainDeepDefocusModel.py <stackDir> <modelDir>")
