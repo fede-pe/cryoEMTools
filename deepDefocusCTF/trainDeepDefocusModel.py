@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 #from keras.optimizers import Adam
 #from keras.models import load_model
 
-BATCH_SIZE = 6  # 128 should be by default (The higher the faster it converge)
+BATCH_SIZE = 128  # 128 should be by default (The higher the faster it converge)
 EPOCHS = 100
 LEARNING_RATE = 0.001
 training_Bool = True
@@ -211,9 +211,6 @@ if __name__ == "__main__":
         L = Dense(4, name="output", activation="linear")(L)
         return Model(inputLayer, L)
 
-    model = constructModel()
-    model.summary()
-
 # ----------- LOADING DATA -------------------
     if len(sys.argv) < 3:
         print("Usage: python3 trainDeepDefocusModel.py <stackDir> <modelDir>")
@@ -258,7 +255,7 @@ if __name__ == "__main__":
                           ]
 
 
-        history = model.fit(imagMatrix_train, defocusVector_train, batch_size=BATCH_SIZE, epochs=EPOCHS, verbose=1,
+        history = model.fit(imagMatrix_train, defocusVector_train, batch_size=BATCH_SIZE, epochs=EPOCHS, verbose='auto',
                             validation_split=0.1, callbacks=callbacks_list)
 
         myValLoss = np.zeros(1)
