@@ -211,8 +211,6 @@ if __name__ == "__main__":
         L = Dense(4, name="output", activation="linear")(L)
         return Model(inputLayer, L)
 
-    model = constructModel()
-    model.summary()
 
 # ----------- LOADING DATA -------------------
     if len(sys.argv) < 3:
@@ -258,7 +256,7 @@ if __name__ == "__main__":
                           ]
 
 
-        history = model.fit(imagMatrix_train, defocusVector_train, batch_size=BATCH_SIZE, epochs=EPOCHS, verbose=1,
+        history = model.fit(imagMatrix_train, defocusVector_train, batch_size=BATCH_SIZE, epochs=EPOCHS, verbose='auto',
                             validation_split=0.1, callbacks=callbacks_list)
 
         myValLoss = np.zeros(1)
