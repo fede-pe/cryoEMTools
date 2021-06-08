@@ -5,14 +5,18 @@ import os
 import sys
 from time import time
 # ----TENSORFLOW INSIDE KERAS
+os.environ["CUDA_VISIBLE_DEVICES"] = "/device:XLA_GPU:0"
 import tensorflow.keras.callbacks as callbacks
 from tensorflow.keras.models import Model
+from tensorflow.keras import backend
+from tensorflow.keras import regularizers
 from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, BatchNormalization, Dropout, Flatten, Dense
 from tensorflow.keras.optimizers import Adam, SGD
 from tensorflow.keras.models import load_model
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
+import tensorflow as tf
 #from keras.callbacks import TensorBoard, ModelCheckpoint
 #import keras.callbacks as callbacks
 #from keras.models import Model
@@ -20,21 +24,31 @@ import matplotlib.pyplot as plt
 #from keras.optimizers import Adam
 #from keras.models import load_model
 
-BATCH_SIZE = 128  # 128 should be by default (The higher the faster it converge)
+BATCH_SIZE = 4  # 128 should be by default (The higher the faster it converge)
 EPOCHS = 100
 LEARNING_RATE = 0.001
 training_Bool = True
 testing_Bool = True
 plots_Bool = True
-TEST_SIZE = 0.2
+TEST_SIZE = 0.15
 
 
 # ------------------------ MAIN PROGRAM -----------------------------
 
 if __name__ == "__main__":
-    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+
 
 # ---------------------- UTILS METHODS --------------------------------------
+
+    def mae_df(y_true, y_pred):
+        ''' Custom made metric to calculate the mae in the defocus range since it is not scaled '''
+        print(y_pred[:, :2])
+        return backend.abs(backend.mean(backend.square(y_pred[:, :2] - y_true[:, :2]), axis=-1))
+
+    def mae_df_a(y_true, y_pred):
+        ''' Custom made metric to calculate the mae in the defocus range since it is not scaled '''
+        return backend.abs(backend.mean(backend.square(y_pred[:, 2:] - y_true[:, 2:]), axis=-1))
+
     def make_training_plots(history):
         # plot loss during training to CHECK OVERFITTING
         plt.subplot(211)
@@ -47,10 +61,10 @@ if __name__ == "__main__":
         # plot mae during training
         plt.subplot(212)
         plt.title('MAE')
-        plt.plot(history.history['mae'], label='train')
-        plt.plot(history.history['val_mse'], label='validation')
+        plt.plot(history.history['mae_df'], label='train')
+        plt.plot(history.history['val_mae_df'], label='validation')
         plt.xlabel("Epochs")
-        plt.ylabel('MAE')
+        plt.ylabel('MAE_DF')
         plt.legend()
         plt.show()
 
@@ -183,15 +197,43 @@ if __name__ == "__main__":
         L = MaxPooling2D()(L)
         L = Conv2D(16, (5, 5), activation="relu")(L)
         L = BatchNormalization()(L)
-        L = MaxPooling2D()(L)
+        L = MaxPooling2D()(L) #falta el la capa DENSE para el dropout
         L = Dropout(0.2)(L)
-        L = Flatten()(L)
+        L = Flatten()(L) #Here is where we need to put more dense layers
         L = Dense(4, name="output", activation="linear")(L)
 
         model = Model(inputLayer, L)
         model.summary()
-        optimizer = Adam(lr=LEARNING_RATE)  # SGD(lr=LEARNING_RATE, momentum=0.9) this could be used to have less EPOCHS but slow the training
-        model.compile(loss='mean_absolute_error', optimizer=optimizer, metrics=['mae', 'mse'])  #MAE is more robust to outliers
+        optimizer = Adam(lr=LEARNING_RATE)
+        model.compile(loss='mean_absolute_error', optimizer=optimizer, metrics=['mae', 'msle'])  #MAE is more robust to outliers
+
+        return model
+
+
+    def constructModel2():
+        inputLayer = Input(shape=(512, 512, 3), name="input")
+        L = Conv2D(filters=32, kernel_size=(15, 15), activation="relu")(inputLayer)
+        L = BatchNormalization()(L)  # It is used for improving the speed, performance and stability
+        L = MaxPooling2D((3, 3))(L)
+        L = Conv2D(filters=64, kernel_size=(9, 9), activation="relu")(L) #maybe padding = same
+        L = BatchNormalization()(L)
+        L = MaxPooling2D()(L)
+        L = Conv2D(filters=32, kernel_size=(5, 5), activation="relu")(L)
+        L = BatchNormalization()(L)
+        L = MaxPooling2D()(L)
+        L = Flatten()(L)
+        L = Dropout(0.2)(L)
+        L = Dense(128, activation='relu', kernel_initializer='normal')(L)
+        L = Dropout(0.2)(L)
+        L = Dense(64, activation='relu', kernel_initializer='normal')(L)
+        L = Dropout(0.2)(L)
+        L = Dense(4, name="output", activation="linear", kernel_initializer='normal')(L)
+
+        model = Model(inputLayer, L)
+        model.summary()
+        optimizer = Adam(lr=LEARNING_RATE)
+        model.compile(loss='mean_absolute_error', optimizer=optimizer,
+                      metrics=['mae', mae_df, mae_df_a])  # MAE is more robust to outliers
 
         return model
 
@@ -240,7 +282,7 @@ if __name__ == "__main__":
     if training_Bool:
         print("Train mode")
         start_time = time()
-        model = constructModel()
+        model = constructModel2()
 
         elapsed_time = time() - start_time
         print("Time spent preparing the data: %0.10f seconds." % elapsed_time)
@@ -256,8 +298,8 @@ if __name__ == "__main__":
                           ]
 
 
-        history = model.fit(imagMatrix_train, defocusVector_train, batch_size=BATCH_SIZE, epochs=EPOCHS, verbose='auto',
-                            validation_split=0.1, callbacks=callbacks_list)
+        history = model.fit(imagMatrix_train, defocusVector_train, batch_size=BATCH_SIZE, epochs=EPOCHS, verbose=1,
+                            validation_split=0.15, callbacks=callbacks_list)
 
         myValLoss = np.zeros(1)
         myValLoss[0] = history.history['val_loss'][-1]
@@ -274,20 +316,16 @@ if __name__ == "__main__":
 # ----------- TESTING MODEL-------------------
     if testing_Bool:
         loadModelDir = os.path.join(modelDir, 'model.h5')
-        model = load_model(loadModelDir)
+        model = load_model(loadModelDir, custom_objects={'mae_df': mae_df, 'mae_df_a': mae_df_a})
         imagPrediction = model.predict(imagMatrix_test)
         np.savetxt(os.path.join(stackDir, 'imagPrediction.txt'), imagPrediction)
 
         print(np.shape(imagPrediction))
         print(np.shape(defocusVector_test))
 
-        # DEFOCUS_U
-        mae = mean_absolute_error(defocusVector_test[:, 0], imagPrediction[:, 0])
-        print("Defocus U model mean absolute error val_loss: ", mae)
-
-        # DEFOCUS_V
-        mae = mean_absolute_error(defocusVector_test[:, 1], imagPrediction[:, 1])
-        print("Defocus V model mean absolute error val_loss: ", mae)
+        # DEFOCUS
+        mae = mean_absolute_error(defocusVector_test[:, :2], imagPrediction[:, :2])
+        print("Defocus model mean absolute error val_loss: ", mae)
 
         # DEFOCUS_ANGLE
         mae = mean_absolute_error(defocusVector_test[:, 2:], imagPrediction[:, 2:])
@@ -297,13 +335,11 @@ if __name__ == "__main__":
         mae = mean_absolute_error(defocusVector_test, imagPrediction)
         print("Final model mean absolute error val_loss: ", mae)
 
-        loss, mae, mse = model.evaluate(imagMatrix_test, defocusVector_test, verbose=2)
-        print("Testing set Mean Abs Error: {:5.2f} charges".format(mae))
+        #loss, mae, mae_df_v, mae_df_a_v  = model.evaluate(imagMatrix_test, defocusVector_test, verbose=2)
+        #print("Testing set Mean Abs Error: {:5.2f} charges".format(mae))
 
         if plots_Bool:
             make_testing_plots(imagPrediction, defocusVector_test)
-
-
 
 
     exit(0)
