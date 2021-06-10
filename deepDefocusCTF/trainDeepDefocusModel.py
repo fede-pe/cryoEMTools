@@ -4,6 +4,8 @@ import os
 import sys
 from time import time
 # ----TENSORFLOW INSIDE KERAS
+from tensorflow.python.client import device_lib
+print(device_lib.list_local_devices())
 os.environ["CUDA_VISIBLE_DEVICES"] = "/device:XLA_GPU:0"
 import tensorflow.keras.callbacks as callbacks
 from tensorflow.keras.models import Model
@@ -15,7 +17,6 @@ from tensorflow.keras.models import load_model
 from sklearn.metrics import mean_absolute_error
 import matplotlib.pyplot as plt
 from createDeepDefocusModel import DeepDefocusMultiOutputModel
-
 from tensorflow.keras.utils import plot_model
 
 
