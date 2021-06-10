@@ -7,7 +7,7 @@ from time import time
 # ----TENSORFLOW INSIDE KERAS
 from tensorflow.python.client import device_lib
 print(device_lib.list_local_devices())
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+os.environ["CUDA_VISIBLE_DEVICES"] = "/device:XLA_GPU:0"
 import tensorflow.keras.callbacks as callbacks
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, BatchNormalization, Dropout, Flatten, Dense
