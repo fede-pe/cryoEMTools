@@ -1,5 +1,4 @@
 #!/usr/bin/env python2
-import cv2
 import numpy as np
 import os
 import sys
@@ -11,23 +10,22 @@ from tensorflow.keras.models import Model
 from tensorflow.keras import backend
 from tensorflow.keras import regularizers
 from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, BatchNormalization, Dropout, Flatten, Dense
-from tensorflow.keras.optimizers import Adam, SGD
+from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.models import load_model
 from sklearn.metrics import mean_absolute_error
-from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
-import tensorflow as tf
-#from keras.callbacks import TensorBoard, ModelCheckpoint
-#import keras.callbacks as callbacks
-#from keras.models import Model
-#from keras.layers import Input, Conv2D, MaxPooling2D, BatchNormalization, Dropout, Flatten, Dense
-#from keras.optimizers import Adam
-#from keras.models import load_model
+from createDeepDefocusModel import DeepDefocusMultiOutputModel
 
-BATCH_SIZE = 4  # 128 should be by default (The higher the faster it converge)
+from tensorflow.keras.utils import plot_model
+
+
+
+BATCH_SIZE = 128  # 128 should be by default (The higher the faster it converge)
 EPOCHS = 100
-LEARNING_RATE = 0.001
-training_Bool = True
+LEARNING_RATE = 0.0004
+IM_WIDTH = 512
+IM_HEIGHT = 512
+training_Bool = False
 testing_Bool = True
 plots_Bool = True
 TEST_SIZE = 0.15
@@ -37,34 +35,15 @@ TEST_SIZE = 0.15
 
 if __name__ == "__main__":
 
-
-# ---------------------- UTILS METHODS --------------------------------------
-
-    def mae_df(y_true, y_pred):
-        ''' Custom made metric to calculate the mae in the defocus range since it is not scaled '''
-        print(y_pred[:, :2])
-        return backend.abs(backend.mean(backend.square(y_pred[:, :2] - y_true[:, :2]), axis=-1))
-
-    def mae_df_a(y_true, y_pred):
-        ''' Custom made metric to calculate the mae in the defocus range since it is not scaled '''
-        return backend.abs(backend.mean(backend.square(y_pred[:, 2:] - y_true[:, 2:]), axis=-1))
+    # ---------------------- UTILS METHODS --------------------------------------
 
     def make_training_plots(history):
         # plot loss during training to CHECK OVERFITTING
-        plt.subplot(211)
         plt.title('Loss')
         plt.plot(history.history['loss'], 'b+', label='training loss')
         plt.plot(history.history['val_loss'], 'r+', label='validation loss')
         plt.xlabel("Epochs")
         plt.ylabel('Loss')
-        plt.legend()
-        # plot mae during training
-        plt.subplot(212)
-        plt.title('MAE')
-        plt.plot(history.history['mae_df'], label='train')
-        plt.plot(history.history['val_mae_df'], label='validation')
-        plt.xlabel("Epochs")
-        plt.ylabel('MAE_DF')
         plt.legend()
         plt.show()
 
@@ -86,8 +65,6 @@ if __name__ == "__main__":
     def make_testing_plots(imagPrediction, defocusVector):
         # DEFOCUS PLOT
         x = range(1, len(defocusVector[:, 0])+1)
-        print(len(x))
-        print(len(defocusVector[:, 0]))
         plt.subplot(211)
         plt.title('Defocus U')
         plt.scatter(x, defocusVector[:, 0], c='r', label='dU')
@@ -210,48 +187,40 @@ if __name__ == "__main__":
         return model
 
 
-    def constructModel2():
-        inputLayer = Input(shape=(512, 512, 3), name="input")
-        L = Conv2D(filters=32, kernel_size=(15, 15), activation="relu")(inputLayer)
-        L = BatchNormalization()(L)  # It is used for improving the speed, performance and stability
-        L = MaxPooling2D((3, 3))(L)
-        L = Conv2D(filters=64, kernel_size=(9, 9), activation="relu")(L) #maybe padding = same
-        L = BatchNormalization()(L)
-        L = MaxPooling2D()(L)
-        L = Conv2D(filters=32, kernel_size=(5, 5), activation="relu")(L)
-        L = BatchNormalization()(L)
-        L = MaxPooling2D()(L)
-        L = Flatten()(L)
-        L = Dropout(0.2)(L)
-        L = Dense(128, activation='relu', kernel_initializer='normal')(L)
-        L = Dropout(0.2)(L)
-        L = Dense(64, activation='relu', kernel_initializer='normal')(L)
-        L = Dropout(0.2)(L)
-        L = Dense(4, name="output", activation="linear", kernel_initializer='normal')(L)
-
-        model = Model(inputLayer, L)
+    def getModel():
+        model = DeepDefocusMultiOutputModel().assemble_full_model(IM_WIDTH, IM_HEIGHT)
         model.summary()
-        optimizer = Adam(lr=LEARNING_RATE)
-        model.compile(loss='mean_absolute_error', optimizer=optimizer,
-                      metrics=['mae', mae_df, mae_df_a])  # MAE is more robust to outliers
+        plot_model(model, to_file='test.png', show_shapes=True)
+        optimizer = Adam(learning_rate=LEARNING_RATE)
+        model.compile(optimizer=optimizer,
+                      loss={
+                          'defocus_U_output': 'mae',
+                          'defocus_V_output': 'mae',
+                          'defocus_Cosangles_output': 'msle',
+                          'defocus_Sinangles_output': 'msle'},
+                      loss_weights=None, # {
+                          #'defocus_U_output': 0.25,
+                         # 'defocus_V_output': 0.25,
+                         # 'defocus_Cosangles_output': 0.25,
+                         # 'defocus_Sinangles_output': 0.25},
+                      metrics={})
 
         return model
 
 
-    def constructModelBis():
-        inputLayer = Input(shape=(512, 512, 3), name="input")
-        L = Conv2D(16, (15, 15), activation="relu")(inputLayer)
-        L = MaxPooling2D((3, 3))(L)
-        L = Conv2D(16, (9, 9), activation="relu")(L)
-        L = MaxPooling2D()(L)
-        L = Conv2D(32, (5, 5), activation="relu")(L)
-        L = MaxPooling2D()(L)
-        L = Conv2D(64, (5, 5), activation="relu")(L)
-        L = Flatten()(L)
-        L = Dense(256, activation="relu")(L)
-        L = Dropout(0.2)(L)
-        L = Dense(4, name="output", activation="linear")(L)
-        return Model(inputLayer, L)
+    def getModel2():
+        model = DeepDefocusMultiOutputModel().assemble_full_model_original(IM_WIDTH, IM_HEIGHT)
+        model.summary()
+        #plot_model(model, to_file='"deep_defocus_net.png', show_shapes=True)
+        optimizer = Adam(learning_rate=LEARNING_RATE)
+        model.compile(optimizer=optimizer,
+                      loss={'defocus_output': 'mae',
+                            'defocus_angles_output': 'mae'},
+                      loss_weights=None,
+                      metrics={'defocus_output': 'msle',
+                            'defocus_angles_output': 'msle'})
+
+        return model
 
 
 # ----------- LOADING DATA -------------------
@@ -272,33 +241,39 @@ if __name__ == "__main__":
     imagMatrix_train, imagMatrix_test = imagMatrix[:int(n*(1-TEST_SIZE)), :, :, :],  imagMatrix[int(n*(1-TEST_SIZE)):, :, :, :]
     defocusVector_train, defocusVector_test = defocusVector[:int(n*(1-TEST_SIZE)), :], defocusVector[int(n*(1-TEST_SIZE)):, :]
 
-    print(np.shape(imagMatrix_train))
-    print(np.shape(imagMatrix_test))
-    print(np.shape(defocusVector_train))
-    print(np.shape(defocusVector_test))
+    print('Input train matrix: ' + str(np.shape(imagMatrix_train)))
+    print('Input test matrix: ' + str(np.shape(imagMatrix_test)))
+    print('Output train matrix: ' + str(np.shape(defocusVector_train)))
+    print('Output test matrix: ' + str(np.shape(defocusVector_test)))
 
+
+
+    #defocusVector_train_tmp = np.array([defocusVector_train[:,:2], defocusVector_train[:,2:]])
+    defocusVector_train_tmp = [defocusVector_train[:, :2], defocusVector_train[:, 2:]]
+    print('Output train tmp matrix: ' + str(np.shape(defocusVector_train_tmp)))
+    print(defocusVector_train_tmp)
 
 # ----------- TRAINING MODEL-------------------
     if training_Bool:
         print("Train mode")
         start_time = time()
-        model = constructModel2()
+        model = getModel2()
 
         elapsed_time = time() - start_time
         print("Time spent preparing the data: %0.10f seconds." % elapsed_time)
 
         callbacks_list = [callbacks.CSVLogger(os.path.join(modelDir, 'outCSV_06_28_1'), separator=',', append=False),
                           callbacks.TensorBoard(log_dir=os.path.join(modelDir, 'outTB_06_28_1'), histogram_freq=0,
-                                                batch_size=BATCH_SIZE, write_graph=True, write_grads=False,
-                                                write_images=False, embeddings_freq=0, embeddings_layer_names=None,
+                                                write_graph=True, write_grads=False, write_images=False,
+                                                embeddings_freq=0, embeddings_layer_names=None,
                                                 embeddings_metadata=None, embeddings_data=None),
                           callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, verbose=1, mode='auto',
-                                                      min_delta=0.0001, cooldown=0, min_lr=0),  # reduce lr when a metric has stopped improving dynamically
-                          callbacks.EarlyStopping(monitor='val_loss', patience=10)  # The patience parameter is the amount of epochs to check for improvement
+                                                      min_delta=0.0001, cooldown=0, min_lr=0),
+                          callbacks.EarlyStopping(monitor='val_loss', patience=10)
                           ]
 
-
-        history = model.fit(imagMatrix_train, defocusVector_train, batch_size=BATCH_SIZE, epochs=EPOCHS, verbose=1,
+        history = model.fit(imagMatrix_train, defocusVector_train_tmp, steps_per_epoch=len(imagMatrix_train)//BATCH_SIZE,
+                            batch_size=BATCH_SIZE, epochs=EPOCHS, verbose=1,
                             validation_split=0.15, callbacks=callbacks_list)
 
         myValLoss = np.zeros(1)
@@ -312,34 +287,40 @@ if __name__ == "__main__":
             make_training_plots(history)
 
 
-
 # ----------- TESTING MODEL-------------------
     if testing_Bool:
         loadModelDir = os.path.join(modelDir, 'model.h5')
-        model = load_model(loadModelDir, custom_objects={'mae_df': mae_df, 'mae_df_a': mae_df_a})
-        imagPrediction = model.predict(imagMatrix_test)
-        np.savetxt(os.path.join(stackDir, 'imagPrediction.txt'), imagPrediction)
+        model = load_model(loadModelDir)
 
-        print(np.shape(imagPrediction))
-        print(np.shape(defocusVector_test))
+        imagPrediction = model.predict(imagMatrix_test)
+        imagPredictionTmp = np.zeros(shape=(np.shape(imagPrediction)[1], 4))
+        imagPredictionTmp[:, :2] = imagPrediction[0]
+        imagPredictionTmp[:, 2:] = imagPrediction[1]
+
+        np.savetxt(os.path.join(stackDir, 'imagPrediction.txt'), imagPredictionTmp)
 
         # DEFOCUS
-        mae = mean_absolute_error(defocusVector_test[:, :2], imagPrediction[:, :2])
+        mae = mean_absolute_error(defocusVector_test[:, :2], imagPredictionTmp[:, :2])
         print("Defocus model mean absolute error val_loss: ", mae)
 
         # DEFOCUS_ANGLE
-        mae = mean_absolute_error(defocusVector_test[:, 2:], imagPrediction[:, 2:])
+        mae = mean_absolute_error(defocusVector_test[:, 2:], imagPredictionTmp[:, 2:])
         print("Defocus angle model mean absolute error val_loss: ", mae)
 
         # TOTAL ERROR
-        mae = mean_absolute_error(defocusVector_test, imagPrediction)
+        mae = mean_absolute_error(defocusVector_test, imagPredictionTmp)
         print("Final model mean absolute error val_loss: ", mae)
 
-        #loss, mae, mae_df_v, mae_df_a_v  = model.evaluate(imagMatrix_test, defocusVector_test, verbose=2)
-        #print("Testing set Mean Abs Error: {:5.2f} charges".format(mae))
+        print('Test in a different approach')
+        loss, loss_defocus, loss_angle = model.evaluate(imagMatrix_test, [defocusVector_test[:, :2],
+                                                                          defocusVector_test[:, 2:]], verbose=2)
+
+        print("Testing set Total Mean Abs Error: {:5.2f} charges".format(loss))
+        print("Testing set Defocus Mean Abs Error: {:5.2f} charges".format(loss_defocus))
+        print("Testing set Angle Mean Abs Error: {:5.2f} charges".format(loss_angle))
 
         if plots_Bool:
-            make_testing_plots(imagPrediction, defocusVector_test)
+            make_testing_plots(imagPredictionTmp, defocusVector_test)
 
 
     exit(0)
