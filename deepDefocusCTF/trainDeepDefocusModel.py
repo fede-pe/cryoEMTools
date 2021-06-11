@@ -21,7 +21,7 @@ from tensorflow.keras.utils import plot_model
 
 
 
-BATCH_SIZE = 32  # 128 should be by default (The higher the faster it converge)
+BATCH_SIZE = 64  # 128 should be by default (The higher the faster it converge)
 EPOCHS = 100
 LEARNING_RATE = 0.001
 IM_WIDTH = 512
