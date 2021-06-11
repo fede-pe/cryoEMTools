@@ -21,12 +21,12 @@ from tensorflow.keras.utils import plot_model
 
 
 
-BATCH_SIZE = 128  # 128 should be by default (The higher the faster it converge)
+BATCH_SIZE = 32  # 128 should be by default (The higher the faster it converge)
 EPOCHS = 100
-LEARNING_RATE = 0.0004
+LEARNING_RATE = 0.001
 IM_WIDTH = 512
 IM_HEIGHT = 512
-training_Bool = False
+training_Bool = True
 testing_Bool = True
 plots_Bool = True
 TEST_SIZE = 0.15
@@ -218,8 +218,8 @@ if __name__ == "__main__":
                       loss={'defocus_output': 'mae',
                             'defocus_angles_output': 'mae'},
                       loss_weights=None,
-                      metrics={'defocus_output': 'msle',
-                            'defocus_angles_output': 'msle'})
+                      metrics={})#'defocus_output': 'msle',
+                            #'defocus_angles_output': 'msle'})
 
         return model
 
@@ -265,6 +265,7 @@ if __name__ == "__main__":
 
         callbacks_list = [callbacks.CSVLogger(os.path.join(modelDir, 'outCSV_06_28_1'), separator=',', append=False),
                           callbacks.TensorBoard(log_dir=os.path.join(modelDir, 'outTB_06_28_1'), histogram_freq=0,
+                                                batch_size=BATCH_SIZE,
                                                 write_graph=True, write_grads=False, write_images=False,
                                                 embeddings_freq=0, embeddings_layer_names=None,
                                                 embeddings_metadata=None, embeddings_data=None),
@@ -273,7 +274,8 @@ if __name__ == "__main__":
                           callbacks.EarlyStopping(monitor='val_loss', patience=10)
                           ]
 
-        history = model.fit(imagMatrix_train, defocusVector_train_tmp, steps_per_epoch=len(imagMatrix_train)//BATCH_SIZE,
+        print(len(imagMatrix_train))
+        history = model.fit(imagMatrix_train, defocusVector_train_tmp, #steps_per_epoch=len(imagMatrix_train)//BATCH_SIZE,
                             batch_size=BATCH_SIZE, epochs=EPOCHS, verbose=1,
                             validation_split=0.15, callbacks=callbacks_list)
 

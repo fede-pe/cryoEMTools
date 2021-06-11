@@ -40,8 +40,7 @@ class DeepDefocusMultiOutputModel():
         followed by the Dense output layer.        """
         x = self.make_default_hidden_layers(inputs)
         x = Flatten()(x)
-        x = Dense(128)(x)
-        x = Activation("relu")(x)
+        x = Dense(128, activation='relu')(x)
         x = BatchNormalization()(x)
         x = Dropout(0.5)(x)
         x = Dense(1, activation='linear', name='defocus_U_output')(x)
@@ -55,7 +54,7 @@ class DeepDefocusMultiOutputModel():
         followed by the Dense output layer.        """
         x = self.make_default_hidden_layers(inputs)
         x = Flatten()(x)
-        x = Dense(128)(x)
+        x = Dense(128, activation='relu')(x)
         x = Activation("relu")(x)
         x = BatchNormalization()(x)
         x = Dropout(0.5)(x)
@@ -121,10 +120,12 @@ class DeepDefocusMultiOutputModel():
         followed by the Dense output layer.        """
         x = self.make_default_hidden_layers(inputs)
         x = Flatten()(x)
-        x = Dense(128)(x)
-        x = Activation("relu")(x)
+        x = Dense(128, activation='relu')(x)
         x = BatchNormalization()(x)
-        x = Dropout(0.5)(x)
+        x = Dropout(0.2)(x)
+        x = Dense(64, activation='relu')(x)
+        x = BatchNormalization()(x)
+        x = Dropout(0.2)(x)
         x = Dense(2, activation='linear', name='defocus_output')(x)
 
         return x
@@ -137,10 +138,12 @@ class DeepDefocusMultiOutputModel():
         followed by the Dense output layer.        """
         x = self.make_default_hidden_layers(inputs)
         x = Flatten()(x)
-        x = Dense(128)(x)
-        x = Activation("relu")(x)
+        x = Dense(128, activation='relu')(x)
         x = BatchNormalization()(x)
-        x = Dropout(0.5)(x)
+        x = Dropout(0.2)(x)
+        x = Dense(64, activation='relu')(x)
+        x = BatchNormalization()(x)
+        x = Dropout(0.2)(x)
         x = Dense(2, activation='linear', name='defocus_angles_output')(x)
 
         return x
