@@ -21,12 +21,12 @@ from tensorflow.keras.utils import plot_model
 
 
 
-BATCH_SIZE = 128  # 128 should be by default (The higher the faster it converge)
+BATCH_SIZE = 64  # 128 should be by default (The higher the faster it converge)
 EPOCHS = 100
 LEARNING_RATE = 0.0004
 IM_WIDTH = 512
 IM_HEIGHT = 512
-training_Bool = False
+training_Bool = True
 testing_Bool = True
 plots_Bool = True
 TEST_SIZE = 0.15
@@ -218,8 +218,8 @@ if __name__ == "__main__":
                       loss={'defocus_output': 'mae',
                             'defocus_angles_output': 'mae'},
                       loss_weights=None,
-                      metrics={'defocus_output': 'msle',
-                            'defocus_angles_output': 'msle'})
+                      metrics={})#'defocus_output': 'msle',
+                            #'defocus_angles_output': 'msle'})
 
         return model
 
