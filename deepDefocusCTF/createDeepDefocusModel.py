@@ -17,7 +17,7 @@ class DeepDefocusMultiOutputModel():
 
         Conv2D -> BatchNormalization -> Pooling -> Dropout
         """
-        x = Conv2D(filters=16, kernel_size=(12, 12), padding="same", activation='relu')(inputs)
+        x = Conv2D(filters=16, kernel_size=(15, 15), padding="same", activation='relu')(inputs)
         x = BatchNormalization(axis=-1)(x)
         x = MaxPooling2D(pool_size=(3, 3))(x)
         x = Dropout(0.2)(x)
@@ -25,7 +25,7 @@ class DeepDefocusMultiOutputModel():
         x = BatchNormalization(axis=-1)(x)
         x = MaxPooling2D(pool_size=(2, 2))(x)
         x = Dropout(0.2)(x)
-        x = Conv2D(32, (3, 3), padding="same", activation='relu')(x)
+        x = Conv2D(32, (5, 5), padding="same", activation='relu')(x)
         x = BatchNormalization(axis=-1)(x)
         x = MaxPooling2D(pool_size=(2, 2))(x)
         x = Dropout(0.2)(x)
@@ -140,7 +140,7 @@ class DeepDefocusMultiOutputModel():
         x = Flatten()(x)
         x = Dense(128, activation='relu')(x)
         x = BatchNormalization()(x)
-        x = Dropout(0.2)(x)
+        x = Dropout(0.5)(x)
         x = Dense(64, activation='relu')(x)
         x = BatchNormalization()(x)
         x = Dropout(0.2)(x)

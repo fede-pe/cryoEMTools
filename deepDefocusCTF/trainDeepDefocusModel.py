@@ -237,17 +237,20 @@ if __name__ == "__main__":
     imagMatrix = np.load(imageStackDir)
     defocusVector = np.load(defocusStackDir)
 
+    # Normalized data
+    min = imagMatrix.min()
+    max = imagMatrix.max()
+    imagMatrix_Norm = (imagMatrix - min) / (max-min)
+
     # split into train and test
     n = len(defocusVector)
-    imagMatrix_train, imagMatrix_test = imagMatrix[:int(n*(1-TEST_SIZE)), :, :, :],  imagMatrix[int(n*(1-TEST_SIZE)):, :, :, :]
+    imagMatrix_train, imagMatrix_test = imagMatrix_Norm[:int(n*(1-TEST_SIZE)), :, :, :],  imagMatrix_Norm[int(n*(1-TEST_SIZE)):, :, :, :]
     defocusVector_train, defocusVector_test = defocusVector[:int(n*(1-TEST_SIZE)), :], defocusVector[int(n*(1-TEST_SIZE)):, :]
 
     print('Input train matrix: ' + str(np.shape(imagMatrix_train)))
     print('Input test matrix: ' + str(np.shape(imagMatrix_test)))
     print('Output train matrix: ' + str(np.shape(defocusVector_train)))
     print('Output test matrix: ' + str(np.shape(defocusVector_test)))
-
-
 
     #defocusVector_train_tmp = np.array([defocusVector_train[:,:2], defocusVector_train[:,2:]])
     defocusVector_train_tmp = [defocusVector_train[:, :2], defocusVector_train[:, 2:]]
