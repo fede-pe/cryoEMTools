@@ -238,9 +238,9 @@ if __name__ == "__main__":
     defocusVector = np.load(defocusStackDir)
 
     # Normalized data
-    min = imagMatrix.min()
-    max = imagMatrix.max()
-    imagMatrix_Norm = (imagMatrix - min) / (max-min)
+    std = imagMatrix.std()
+    mean = imagMatrix.mean()
+    imagMatrix_Norm = (imagMatrix - mean) / std
 
     # split into train and test
     n = len(defocusVector)
