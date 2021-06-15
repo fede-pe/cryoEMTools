@@ -1,6 +1,7 @@
+import numpy as np
 from tensorflow.keras.models import Model
 import tensorflow as tf
-from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, BatchNormalization, Dropout, Flatten, Dense, Activation, Add, Concatenate
+from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, BatchNormalization, Dropout, Flatten, Dense, Lambda, Concatenate, Reshape
 from tensorflow.keras.optimizers import Adam
 import tensorflow.keras.callbacks as callbacks
 
@@ -33,67 +34,6 @@ class DeepDefocusMultiOutputModel():
         return x
 
 
-    def build_defocus_U_branch(self, inputs):
-        """
-        Used to build the defocus in U and V branch of our multi-regression network.
-        This branch is composed of three Conv -> BN -> Pool -> Dropout blocks,
-        followed by the Dense output layer.        """
-        x = self.make_default_hidden_layers(inputs)
-        x = Flatten()(x)
-        x = Dense(128, activation='relu')(x)
-        x = BatchNormalization()(x)
-        x = Dropout(0.5)(x)
-        x = Dense(1, activation='linear', name='defocus_U_output')(x)
-
-        return x
-
-    def build_defocus_V_branch(self, inputs):
-        """
-        Used to build the defocus in V branch of our multi-regression network.
-        This branch is composed of three Conv -> BN -> Pool -> Dropout blocks,
-        followed by the Dense output layer.        """
-        x = self.make_default_hidden_layers(inputs)
-        x = Flatten()(x)
-        x = Dense(128, activation='relu')(x)
-        x = Activation("relu")(x)
-        x = BatchNormalization()(x)
-        x = Dropout(0.5)(x)
-        x = Dense(1, activation='linear', name='defocus_V_output')(x)
-
-        return x
-
-
-    def build_defocus_Cosangle_branch(self, inputs):
-        """
-        Used to build the angle branch (cos and sin) of our multi-regression network.
-        This branch is composed of three Conv -> BN -> Pool -> Dropout blocks,
-        followed by the Dense output layer.        """
-        x = self.make_default_hidden_layers(inputs)
-        x = Flatten()(x)
-        x = Dense(128)(x)
-        x = Activation("relu")(x)
-        x = BatchNormalization()(x)
-        x = Dropout(0.5)(x)
-        x = Dense(1, activation='tanh', name='defocus_Cosangles_output')(x)
-
-        return x
-
-    def build_defocus_Sinangle_branch(self, inputs):
-        """
-        Used to build the angle branch (cos and sin) of our multi-regression network.
-        This branch is composed of three Conv -> BN -> Pool -> Dropout blocks,
-        followed by the Dense output layer.        """
-        x = self.make_default_hidden_layers(inputs)
-        x = Flatten()(x)
-        x = Dense(128)(x)
-        x = Activation("relu")(x)
-        x = BatchNormalization()(x)
-        x = Dropout(0.5)(x)
-        x = Dense(1, activation='linear', name='defocus_Sinangles_output')(x)
-
-        return x
-
-
     def assemble_full_model(self, width, height):
         """
         Used to assemble our multi-output model CNN.
@@ -113,27 +53,8 @@ class DeepDefocusMultiOutputModel():
         return model
 
 
+
     def build_defocus_branch(self, inputs):
-        """
-        Used to build the defocus in V branch of our multi-regression network.
-        This branch is composed of three Conv -> BN -> Pool -> Dropout blocks,
-        followed by the Dense output layer.        """
-        x = self.make_default_hidden_layers(inputs)
-        x = Flatten()(x)
-        x = Dense(128, activation='relu')(x)
-        x = BatchNormalization()(x)
-        x = Dropout(0.2)(x)
-        x = Dense(64, activation='relu')(x)
-        x = BatchNormalization()(x)
-        x = Dropout(0.2)(x)
-        x = Dense(32, activation='relu')(x)
-        x = BatchNormalization()(x)
-        x = Dropout(0.2)(x)
-        x = Dense(2, activation='linear', name='defocus_output')(x)
-
-        return x
-
-    def build_defocus_branch_Fede(self, inputs):
         """
         Used to build the defocus in V branch of our multi-regression network.
         This branch is composed of three Conv -> BN -> Pool -> Dropout blocks,
@@ -149,8 +70,7 @@ class DeepDefocusMultiOutputModel():
         L = BatchNormalization()(L)
         L = MaxPooling2D()(L) #falta el la capa DENSE para el dropout
         L = Dropout(0.2)(L)
-        L = Flatten()(L) #Here is where we need to put more dense layers
-        L = Dense(2, activation='linear', name='defocus_output')(L)
+
 
         return L
 
@@ -169,16 +89,51 @@ class DeepDefocusMultiOutputModel():
 
         return x
 
+    def assemble_model_defocus(self, width, height):
+        """
+        Used to assemble our multi-output model CNN.
+        """
+        input_shape = (height, width, 3)
+        inputs = Input(shape=input_shape, name='input')
+
+
+        input1 = Reshape((height, width, 1))(inputs[:, :, :, 0])
+        input2 = Reshape((height, width, 1))(inputs[:, :, :, 1])
+        input3 = Reshape((height, width, 1))(inputs[:, :, :, 2])
+
+        defocus_branch_at_1 = self.build_defocus_branch(input1)
+        defocus_branch_at_2 = self.build_defocus_branch(input2)
+        defocus_branch_at_3 = self.build_defocus_branch(input3)
+
+        #print(np.shape(inputs))
+        #print(np.shape(input1))
+        #exit()
+
+        concatted = Concatenate()([defocus_branch_at_1, defocus_branch_at_2, defocus_branch_at_3])
+
+        L = Flatten()(concatted)
+        L = Dense(128, activation='relu')(L)
+        L = Dropout(0.2)(L)
+        L = Dense(64, activation='relu')(L)
+        L = Dropout(0.2)(L)
+        L = Dense(2, activation='linear', name='defocus_output')(L)
+
+        model = Model(inputs=inputs, outputs=[L],
+                      name="deep_defocus_net")
+
+        return model
+
     def assemble_full_model_original(self, width, height):
         """
         Used to assemble our multi-output model CNN.
         """
         input_shape = (height, width, 3)
         inputs = Input(shape=input_shape, name='input')
-        defocus_branch = self.build_defocus_branch_Fede(inputs)
+
+        defocus_branch = self.build_defocus_branch(inputs)
         defocus_angles_branch = self.build_defocus_angle_branch(inputs)
 
-        #concatted = Concatenate()([defocus_branch, defocus_angles_branch])
+        # concatted = Concatenate()([defocus_branch, defocus_angles_branch])
 
         model = Model(inputs=inputs, outputs=[defocus_branch, defocus_angles_branch],
                       name="deep_defocus_net")

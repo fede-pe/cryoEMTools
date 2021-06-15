@@ -78,16 +78,16 @@ if __name__ == "__main__":
         plt.show()
 
         # DEFOCUS ANGLE PLOT
-        plt.subplot(211)
-        plt.title('Sin(2*angle)')
-        plt.scatter(x, defocusVector[:, 2], c='r', label='Sin')
-        plt.scatter(x, imagPrediction[:, 2], c='b', label='Sin_pred')
-        plt.subplot(212)
-        plt.title('Cos(2*angle)')
-        plt.scatter(x, defocusVector[:, 3], c='r', label='Cos')
-        plt.scatter(x, imagPrediction[:, 3], c='b', label='Cos_pred')
-        plt.legend()
-        plt.show()
+        #plt.subplot(211)
+        #plt.title('Sin(2*angle)')
+        #plt.scatter(x, defocusVector[:, 2], c='r', label='Sin')
+        #plt.scatter(x, imagPrediction[:, 2], c='b', label='Sin_pred')
+        #plt.subplot(212)
+        #plt.title('Cos(2*angle)')
+        #plt.scatter(x, defocusVector[:, 3], c='r', label='Cos')
+        #plt.scatter(x, imagPrediction[:, 3], c='b', label='Cos_pred')
+        #plt.legend()
+        #plt.show()
 
         # DEFOCUS PREDICTED VS REAL
         plt.subplot(211)
@@ -113,27 +113,27 @@ if __name__ == "__main__":
         plt.show()
 
         # DEFOCUS ANGLE PREDICTED VS REAL !OJO NO VA MUY BIEN ESTE PLOT
-        plt.subplot(211)
-        plt.title('Sin ( 2 * angle)')
-        plt.scatter(defocusVector[:, 2], imagPrediction[:, 2])
-        plt.xlabel('True Values [Sin]')
-        plt.ylabel('Predictions [Sin]')
-        plt.axis('equal')
-        plt.axis('square')
-        plt.xlim([0, plt.xlim()[1]])
-        plt.ylim([0, plt.ylim()[1]])
-        _ = plt.plot([-100, 100], [-100, 100])
-        plt.subplot(212)
-        plt.title('Cos (2 * angle)')
-        plt.scatter(defocusVector[:, 3], imagPrediction[:, 3])
-        plt.xlabel('True Values [Cos]')
-        plt.ylabel('Predictions [Cos]')
-        plt.axis('equal')
-        plt.axis('square')
-        plt.xlim([0, plt.xlim()[1]])
-        plt.ylim([0, plt.ylim()[1]])
-        _ = plt.plot([-100, 100], [-100, 100])
-        plt.show()
+        #plt.subplot(211)
+        #plt.title('Sin ( 2 * angle)')
+        #plt.scatter(defocusVector[:, 2], imagPrediction[:, 2])
+        #plt.xlabel('True Values [Sin]')
+        #plt.ylabel('Predictions [Sin]')
+        #plt.axis('equal')
+        #plt.axis('square')
+        #plt.xlim([0, plt.xlim()[1]])
+        #plt.ylim([0, plt.ylim()[1]])
+        #_ = plt.plot([-100, 100], [-100, 100])
+        #plt.subplot(212)
+        #plt.title('Cos (2 * angle)')
+        #plt.scatter(defocusVector[:, 3], imagPrediction[:, 3])
+        #plt.xlabel('True Values [Cos]')
+        #plt.ylabel('Predictions [Cos]')
+        #plt.axis('equal')
+        #plt.axis('square')
+        #plt.xlim([0, plt.xlim()[1]])
+        #plt.ylim([0, plt.ylim()[1]])
+        #_ = plt.plot([-100, 100], [-100, 100])
+        #plt.show()
 
         # DEFOCUS ERROR
         plt.subplot(211)
@@ -150,18 +150,18 @@ if __name__ == "__main__":
         plt.show()
 
         # DEFOCUS ANGLE ERROR
-        plt.subplot(211)
-        plt.title('Sin(2*Angle)')
-        error = imagPrediction[:, 2] - defocusVector[:, 2]
-        plt.hist(error, bins=25)
-        plt.xlabel("Prediction Error")
-        _ = plt.ylabel("Count")
-        plt.subplot(212)
-        plt.title('Cos(2*Angle)')
-        error = imagPrediction[:, 3] - defocusVector[:, 3]
-        plt.hist(error, bins=25)
-        plt.xlabel("Prediction Error")
-        plt.show()
+        #plt.subplot(211)
+        #plt.title('Sin(2*Angle)')
+        #error = imagPrediction[:, 2] - defocusVector[:, 2]
+        #plt.hist(error, bins=25)
+        #plt.xlabel("Prediction Error")
+        #_ = plt.ylabel("Count")
+        #plt.subplot(212)
+        #plt.title('Cos(2*Angle)')
+        #error = imagPrediction[:, 3] - defocusVector[:, 3]
+        #plt.hist(error, bins=25)
+        #plt.xlabel("Prediction Error")
+        #plt.show()
 
 
 # ----------- MODEL ARCHITECTURE  -------------------
@@ -223,6 +223,17 @@ if __name__ == "__main__":
 
         return model
 
+    def getModelDefocus():
+        model = DeepDefocusMultiOutputModel().assemble_model_defocus(IM_WIDTH, IM_HEIGHT)
+        model.summary()
+        # plot_model(model, to_file='"deep_defocus_net.png', show_shapes=True)
+        optimizer = Adam(learning_rate=LEARNING_RATE)
+        model.compile(optimizer=optimizer,
+                      loss={'defocus_output': 'mae'},
+                      loss_weights=None,
+                      metrics={})
+        return model
+
 
 # ----------- LOADING DATA -------------------
     if len(sys.argv) < 3:
@@ -245,23 +256,23 @@ if __name__ == "__main__":
     # split into train and test
     n = len(defocusVector)
     imagMatrix_train, imagMatrix_test = imagMatrix_Norm[:int(n*(1-TEST_SIZE)), :, :, :],  imagMatrix_Norm[int(n*(1-TEST_SIZE)):, :, :, :]
-    defocusVector_train, defocusVector_test = defocusVector[:int(n*(1-TEST_SIZE)), :], defocusVector[int(n*(1-TEST_SIZE)):, :]
+    defocusVector_train, defocusVector_test = defocusVector[:int(n*(1-TEST_SIZE)), :2], defocusVector[int(n*(1-TEST_SIZE)):, :2]
 
     print('Input train matrix: ' + str(np.shape(imagMatrix_train)))
     print('Input test matrix: ' + str(np.shape(imagMatrix_test)))
     print('Output train matrix: ' + str(np.shape(defocusVector_train)))
     print('Output test matrix: ' + str(np.shape(defocusVector_test)))
 
-    #defocusVector_train_tmp = np.array([defocusVector_train[:,:2], defocusVector_train[:,2:]])
-    defocusVector_train_tmp = [defocusVector_train[:, :2], defocusVector_train[:, 2:]]
-    print('Output train tmp matrix: ' + str(np.shape(defocusVector_train_tmp)))
-    print(defocusVector_train_tmp)
+    # For applying two branches one for the defocus and the other for the angle
+    #defocusVector_train_tmp = [defocusVector_train[:, :2], defocusVector_train[:, 2:]]
+    #print('Output train tmp matrix: ' + str(np.shape(defocusVector_train_tmp)))
+
 
 # ----------- TRAINING MODEL-------------------
     if training_Bool:
         print("Train mode")
         start_time = time()
-        model = getModel2()
+        model = getModelDefocus()
 
         elapsed_time = time() - start_time
         print("Time spent preparing the data: %0.10f seconds." % elapsed_time)
@@ -278,7 +289,7 @@ if __name__ == "__main__":
                           ]
 
         print(len(imagMatrix_train))
-        history = model.fit(imagMatrix_train, defocusVector_train_tmp, #steps_per_epoch=len(imagMatrix_train)//BATCH_SIZE,
+        history = model.fit(imagMatrix_train, defocusVector_train, #steps_per_epoch=len(imagMatrix_train)//BATCH_SIZE,
                             batch_size=BATCH_SIZE, epochs=EPOCHS, verbose=1,
                             validation_split=0.15, callbacks=callbacks_list)
 
@@ -299,34 +310,33 @@ if __name__ == "__main__":
         model = load_model(loadModelDir)
 
         imagPrediction = model.predict(imagMatrix_test)
-        imagPredictionTmp = np.zeros(shape=(np.shape(imagPrediction)[1], 4))
-        imagPredictionTmp[:, :2] = imagPrediction[0]
-        imagPredictionTmp[:, 2:] = imagPrediction[1]
+        # imagPredictionTmp = np.zeros(shape=(np.shape(imagPrediction)[1], 4))
+        # imagPredictionTmp[:, :2] = imagPrediction[0]
+        # imagPredictionTmp[:, 2:] = imagPrediction[1]
 
-        np.savetxt(os.path.join(stackDir, 'imagPrediction.txt'), imagPredictionTmp)
+        np.savetxt(os.path.join(stackDir, 'imagPrediction.txt'), imagPrediction)
 
         # DEFOCUS
-        mae = mean_absolute_error(defocusVector_test[:, :2], imagPredictionTmp[:, :2])
-        print("Defocus model mean absolute error val_loss: ", mae)
+        #mae = mean_absolute_error(defocusVector_test[:, :2], imagPredictionTmp[:, :2])
+        #print("Defocus model mean absolute error val_loss: ", mae)
 
         # DEFOCUS_ANGLE
-        mae = mean_absolute_error(defocusVector_test[:, 2:], imagPredictionTmp[:, 2:])
-        print("Defocus angle model mean absolute error val_loss: ", mae)
+        #mae = mean_absolute_error(defocusVector_test[:, 2:], imagPredictionTmp[:, 2:])
+        #print("Defocus angle model mean absolute error val_loss: ", mae)
 
         # TOTAL ERROR
-        mae = mean_absolute_error(defocusVector_test, imagPredictionTmp)
+        mae = mean_absolute_error(defocusVector_test, imagPrediction)
         print("Final model mean absolute error val_loss: ", mae)
 
         print('Test in a different approach')
-        loss, loss_defocus, loss_angle = model.evaluate(imagMatrix_test, [defocusVector_test[:, :2],
-                                                                          defocusVector_test[:, 2:]], verbose=2)
+        loss = model.evaluate(imagMatrix_test, defocusVector_test, verbose=2)
 
         print("Testing set Total Mean Abs Error: {:5.2f} charges".format(loss))
-        print("Testing set Defocus Mean Abs Error: {:5.2f} charges".format(loss_defocus))
-        print("Testing set Angle Mean Abs Error: {:5.2f} charges".format(loss_angle))
+        #print("Testing set Defocus Mean Abs Error: {:5.2f} charges".format(loss_defocus))
+        #print("Testing set Angle Mean Abs Error: {:5.2f} charges".format(loss_angle))
 
         if plots_Bool:
-            make_testing_plots(imagPredictionTmp, defocusVector_test)
+            make_testing_plots(imagPrediction, defocusVector_test)
 
 
     exit(0)
