@@ -68,11 +68,7 @@ class DeepDefocusMultiOutputModel():
         L = Conv2D(16, (3, 3), activation="relu", padding="valid")(L)
         L = BatchNormalization()(L)
         L = MaxPooling2D()(L)
-        L = Dropout(0.2)(L)
-
         L = Flatten()(L)
-
-        print(np.shape(L))
 
         return L
 
@@ -91,11 +87,7 @@ class DeepDefocusMultiOutputModel():
         L = Conv2D(16, (3, 3), activation="relu", padding="valid")(L)
         L = BatchNormalization()(L)
         L = MaxPooling2D()(L)
-        L = Dropout(0.2)(L)
-
         L = Flatten()(L)
-
-        print(np.shape(L))
 
         return L
 
@@ -114,11 +106,7 @@ class DeepDefocusMultiOutputModel():
         L = Conv2D(16, (3, 3), activation="relu", padding="valid")(L)
         L = BatchNormalization()(L)
         L = MaxPooling2D()(L)
-        L = Dropout(0.2)(L)
-
         L = Flatten()(L)
-
-        print(np.shape(L))
 
         return L
 

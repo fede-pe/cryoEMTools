@@ -23,7 +23,7 @@ from tensorflow.keras.utils import plot_model
 
 BATCH_SIZE = 64  # 128 should be by default (The higher the faster it converge)
 EPOCHS = 100
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.0001
 IM_WIDTH = 512
 IM_HEIGHT = 512
 training_Bool = True
@@ -165,52 +165,8 @@ if __name__ == "__main__":
 
 
 # ----------- MODEL ARCHITECTURE  -------------------
-    def constructModel():
-        inputLayer = Input(shape=(512, 512, 3), name="input")
-        L = Conv2D(16, (15, 15), activation="relu")(inputLayer)
-        L = BatchNormalization()(L)  # It is used for improving the speed, performance and stability
-        L = MaxPooling2D((3, 3))(L)
-        L = Conv2D(16, (9, 9), activation="relu")(L)
-        L = BatchNormalization()(L)
-        L = MaxPooling2D()(L)
-        L = Conv2D(16, (5, 5), activation="relu")(L)
-        L = BatchNormalization()(L)
-        L = MaxPooling2D()(L) #falta el la capa DENSE para el dropout
-        L = Dropout(0.2)(L)
-        L = Flatten()(L) #Here is where we need to put more dense layers
-        L = Dense(4, name="output", activation="linear")(L)
-
-        model = Model(inputLayer, L)
-        model.summary()
-        optimizer = Adam(lr=LEARNING_RATE)
-        model.compile(loss='mean_absolute_error', optimizer=optimizer, metrics=['mae', 'msle'])  #MAE is more robust to outliers
-
-        return model
-
-
     def getModel():
         model = DeepDefocusMultiOutputModel().assemble_full_model(IM_WIDTH, IM_HEIGHT)
-        model.summary()
-        plot_model(model, to_file='test.png', show_shapes=True)
-        optimizer = Adam(learning_rate=LEARNING_RATE)
-        model.compile(optimizer=optimizer,
-                      loss={
-                          'defocus_U_output': 'mae',
-                          'defocus_V_output': 'mae',
-                          'defocus_Cosangles_output': 'msle',
-                          'defocus_Sinangles_output': 'msle'},
-                      loss_weights=None, # {
-                          #'defocus_U_output': 0.25,
-                         # 'defocus_V_output': 0.25,
-                         # 'defocus_Cosangles_output': 0.25,
-                         # 'defocus_Sinangles_output': 0.25},
-                      metrics={})
-
-        return model
-
-
-    def getModel2():
-        model = DeepDefocusMultiOutputModel().assemble_full_model_original(IM_WIDTH, IM_HEIGHT)
         model.summary()
         #plot_model(model, to_file='"deep_defocus_net.png', show_shapes=True)
         optimizer = Adam(learning_rate=LEARNING_RATE)
