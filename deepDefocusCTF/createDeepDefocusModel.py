@@ -34,7 +34,7 @@ class DeepDefocusMultiOutputModel():
         return x
 
 
-    def build_defocus_branch(self, inputs):
+    def build_defocus_branch_Fede(self, inputs):
         """
         Used to build the defocus in V branch of our multi-regression network.
         This branch is composed of three Conv -> BN -> Pool -> Dropout blocks,
@@ -49,10 +49,80 @@ class DeepDefocusMultiOutputModel():
         L = Conv2D(16, (5, 5), activation="relu")(L)
         L = BatchNormalization()(L)
         L = MaxPooling2D()(L)
-        #L = Dropout(0.2)(L)
+        L = Dropout(0.2)(L)
 
         return L
 
+    def build_defocus_branch_at1(self, inputs):
+        """
+        Used to build the defocus in V branch of our multi-regression network.
+        This branch is composed of three Conv -> BN -> Pool -> Dropout blocks,
+        followed by the Dense output layer.        """
+
+        L = Conv2D(16, (12, 12), activation="relu", padding="valid")(inputs)
+        L = BatchNormalization()(L)  # It is used for improving the speed, performance and stability
+        L = MaxPooling2D((3, 3))(L)
+        L = Conv2D(16, (6, 6), activation="relu", padding="valid")(L)
+        L = BatchNormalization()(L)
+        L = MaxPooling2D()(L)
+        L = Conv2D(16, (3, 3), activation="relu", padding="valid")(L)
+        L = BatchNormalization()(L)
+        L = MaxPooling2D()(L)
+        L = Dropout(0.2)(L)
+
+        L = Flatten()(L)
+
+        print(np.shape(L))
+
+        return L
+
+    def build_defocus_branch_at2(self, inputs):
+        """
+        Used to build the defocus in V branch of our multi-regression network.
+        This branch is composed of three Conv -> BN -> Pool -> Dropout blocks,
+        followed by the Dense output layer.        """
+
+        L = Conv2D(16, (15, 15), activation="relu", padding="valid")(inputs)
+        L = BatchNormalization()(L)  # It is used for improving the speed, performance and stability
+        L = MaxPooling2D((3, 3))(L)
+        L = Conv2D(16, (10, 10), activation="relu", padding="valid")(L)
+        L = BatchNormalization()(L)
+        L = MaxPooling2D()(L)
+        L = Conv2D(16, (3, 3), activation="relu", padding="valid")(L)
+        L = BatchNormalization()(L)
+        L = MaxPooling2D()(L)
+        L = Dropout(0.2)(L)
+
+        L = Flatten()(L)
+
+        print(np.shape(L))
+
+        return L
+
+    def build_defocus_branch_at3(self, inputs):
+        """
+        Used to build the defocus in V branch of our multi-regression network.
+        This branch is composed of three Conv -> BN -> Pool -> Dropout blocks,
+        followed by the Dense output layer.        """
+
+        L = Conv2D(16, (20, 20), activation="relu", padding="valid")(inputs)
+        L = BatchNormalization()(L)  # It is used for improving the speed, performance and stability
+        L = MaxPooling2D((3, 3))(L)
+        L = Conv2D(16, (15, 15), activation="relu", padding="valid")(L)
+        L = BatchNormalization()(L)
+        L = MaxPooling2D()(L)
+        L = Conv2D(16, (3, 3), activation="relu", padding="valid")(L)
+        L = BatchNormalization()(L)
+        L = MaxPooling2D()(L)
+        L = Dropout(0.2)(L)
+
+        L = Flatten()(L)
+
+        print(np.shape(L))
+
+        return L
+
+    # ESTA NO FUNCIONA
     def build_defocus_branch2(self, inputs):
         """
         Used to build the defocus in V branch of our multi-regression network.
@@ -102,9 +172,9 @@ class DeepDefocusMultiOutputModel():
         input2 = Reshape((height, width, 1))(inputs[:, :, :, 1])
         input3 = Reshape((height, width, 1))(inputs[:, :, :, 2])
 
-        defocus_branch_at_1 = self.build_defocus_branch2(input1)
-        defocus_branch_at_2 = self.build_defocus_branch2(input2)
-        defocus_branch_at_3 = self.build_defocus_branch2(input3)
+        defocus_branch_at_1 = self.build_defocus_branch_at1(input1)
+        defocus_branch_at_2 = self.build_defocus_branch_at2(input2)
+        defocus_branch_at_3 = self.build_defocus_branch_at3(input3)
         concatted = Concatenate()([defocus_branch_at_1, defocus_branch_at_2, defocus_branch_at_3])
 
         L = Flatten()(concatted)
