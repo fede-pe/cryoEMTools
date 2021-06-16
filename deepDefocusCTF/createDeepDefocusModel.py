@@ -69,7 +69,7 @@ class DeepDefocusMultiOutputModel():
         L = Conv2D(16, (5, 5), activation="relu")(L)
         L = BatchNormalization()(L)
         L = MaxPooling2D()(L) #falta el la capa DENSE para el dropout
-        L = Dropout(0.2)(L)
+        #L = Dropout(0.2)(L)
 
 
         return L
@@ -115,6 +115,8 @@ class DeepDefocusMultiOutputModel():
         L = Dense(128, activation='relu')(L)
         L = Dropout(0.2)(L)
         L = Dense(64, activation='relu')(L)
+        L = Dropout(0.2)(L)
+        L = Dense(32, activation='relu')(L)
         L = Dropout(0.2)(L)
         L = Dense(2, activation='linear', name='defocus_output')(L)
 
