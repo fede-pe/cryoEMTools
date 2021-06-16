@@ -34,26 +34,6 @@ class DeepDefocusMultiOutputModel():
         return x
 
 
-    def assemble_full_model(self, width, height):
-        """
-        Used to assemble our multi-output model CNN.
-        """
-        input_shape = (height, width, 3)
-        inputs = Input(shape=input_shape, name='input')
-        defocus_U_branch = self.build_defocus_U_branch(inputs)
-        defocus_V_branch = self.build_defocus_V_branch(inputs)
-        defocus_Cosangles_branch = self.build_defocus_Cosangle_branch(inputs)
-        defocus_Sinangles_branch = self.build_defocus_Sinangle_branch(inputs)
-
-
-        model = Model(inputs=inputs, outputs=[defocus_U_branch, defocus_V_branch,
-                                              defocus_Cosangles_branch, defocus_Sinangles_branch],
-                      name="deep_defocus_net")
-
-        return model
-
-
-
     def build_defocus_branch(self, inputs):
         """
         Used to build the defocus in V branch of our multi-regression network.
@@ -68,9 +48,31 @@ class DeepDefocusMultiOutputModel():
         L = MaxPooling2D()(L)
         L = Conv2D(16, (5, 5), activation="relu")(L)
         L = BatchNormalization()(L)
-        L = MaxPooling2D()(L) #falta el la capa DENSE para el dropout
+        L = MaxPooling2D()(L)
         #L = Dropout(0.2)(L)
 
+        return L
+
+    def build_defocus_branch2(self, inputs):
+        """
+        Used to build the defocus in V branch of our multi-regression network.
+        This branch is composed of three Conv -> BN -> Pool -> Dropout blocks,
+        followed by the Dense output layer.        """
+
+        L = Conv2D(16, (3, 3), activation="relu")(inputs)
+        L = BatchNormalization()(L)  # It is used for improving the speed, performance and stability
+        L = MaxPooling2D((2, 2))(L)
+        L = Dropout(0.2)(L)
+
+        L = Conv2D(32, (3, 3), activation="relu")(L)
+        L = BatchNormalization()(L)
+        L = MaxPooling2D(pool_size=(2, 2))(L)
+        L = Dropout(0.2)(L)
+
+        L = Conv2D(32, (3, 3), activation="relu")(L)
+        L = BatchNormalization()(L)
+        L = MaxPooling2D(pool_size=(2, 2))(L)
+        L = Dropout(0.2)(L)
 
         return L
 
@@ -96,19 +98,13 @@ class DeepDefocusMultiOutputModel():
         input_shape = (height, width, 3)
         inputs = Input(shape=input_shape, name='input')
 
-
         input1 = Reshape((height, width, 1))(inputs[:, :, :, 0])
         input2 = Reshape((height, width, 1))(inputs[:, :, :, 1])
         input3 = Reshape((height, width, 1))(inputs[:, :, :, 2])
 
-        defocus_branch_at_1 = self.build_defocus_branch(input1)
-        defocus_branch_at_2 = self.build_defocus_branch(input2)
-        defocus_branch_at_3 = self.build_defocus_branch(input3)
-
-        #print(np.shape(inputs))
-        #print(np.shape(input1))
-        #exit()
-
+        defocus_branch_at_1 = self.build_defocus_branch2(input1)
+        defocus_branch_at_2 = self.build_defocus_branch2(input2)
+        defocus_branch_at_3 = self.build_defocus_branch2(input3)
         concatted = Concatenate()([defocus_branch_at_1, defocus_branch_at_2, defocus_branch_at_3])
 
         L = Flatten()(concatted)
@@ -125,7 +121,7 @@ class DeepDefocusMultiOutputModel():
 
         return model
 
-    def assemble_full_model_original(self, width, height):
+    def assemble_full_model(self, width, height):
         """
         Used to assemble our multi-output model CNN.
         """
