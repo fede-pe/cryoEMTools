@@ -59,7 +59,7 @@ class DeepDefocusMultiOutputModel():
         This branch is composed of three Conv -> BN -> Pool -> Dropout blocks,
         followed by the Dense output layer.        """
 
-        L = Conv2D(16, (12, 12), activation="relu", padding="valid")(inputs)
+        L = Conv2D(32, (12, 12), activation="relu", padding="valid")(inputs)
         L = BatchNormalization()(L)  # It is used for improving the speed, performance and stability
         L = MaxPooling2D((2, 2))(L)
         L = Conv2D(16, (6, 6), activation="relu", padding="valid")(L)
@@ -69,7 +69,7 @@ class DeepDefocusMultiOutputModel():
         L = BatchNormalization()(L)
         L = MaxPooling2D()(L)
         L = Flatten()(L)
-        L = Dropout(0.1)(L)
+        #L = Dropout(0.1)(L)
 
 
         return L
@@ -90,7 +90,7 @@ class DeepDefocusMultiOutputModel():
         L = BatchNormalization()(L)
         L = MaxPooling2D()(L)
         L = Flatten()(L)
-        L = Dropout(0.1)(L)
+        #L = Dropout(0.1)(L)
 
         return L
 
@@ -110,7 +110,7 @@ class DeepDefocusMultiOutputModel():
         L = BatchNormalization()(L)
         L = MaxPooling2D()(L)
         L = Flatten()(L)
-        L = Dropout(0.1)(L)
+        #L = Dropout(0.1)(L)
 
         return L
 
@@ -170,10 +170,11 @@ class DeepDefocusMultiOutputModel():
         concatted = Concatenate()([defocus_branch_at_1, defocus_branch_at_2, defocus_branch_at_3])
 
         L = Flatten()(concatted)
+        L = Dropout(0.3)(L)
         L = Dense(128, activation='relu')(L)
-        L = Dropout(0.2)(L)
+        #L = Dropout(0.2)(L)
         L = Dense(64, activation='relu')(L)
-        L = Dropout(0.2)(L)
+        #L = Dropout(0.2)(L)
         L = Dense(32, activation='relu')(L)
         L = Dropout(0.2)(L)
         L = Dense(2, activation='linear', name='defocus_output')(L)
@@ -190,7 +191,7 @@ class DeepDefocusMultiOutputModel():
         input_shape = (height, width, 3)
         inputs = Input(shape=input_shape, name='input')
 
-        defocus_branch = self.build_defocus_branch(inputs)
+        defocus_branch = self.build_defocus_branch_Fede(inputs)
         defocus_angles_branch = self.build_defocus_angle_branch(inputs)
 
         # concatted = Concatenate()([defocus_branch, defocus_angles_branch])
