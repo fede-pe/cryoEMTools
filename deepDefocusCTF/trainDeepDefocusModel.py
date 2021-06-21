@@ -10,15 +10,17 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "/device:XLA_GPU:0"
 import tensorflow.keras.callbacks as callbacks
 from tensorflow.keras.models import Model
 from tensorflow.keras import backend
-from tensorflow.keras import regularizers
 from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, BatchNormalization, Dropout, Flatten, Dense
 from tensorflow.keras.optimizers import Adam
+import xmippLib as xmipp
 from tensorflow.keras.models import load_model
 from sklearn.metrics import mean_absolute_error
 import matplotlib.pyplot as plt
 from createDeepDefocusModel import DeepDefocusMultiOutputModel
 from tensorflow.keras.utils import plot_model
-
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import math
+from sklearn.model_selection import train_test_split
 
 
 BATCH_SIZE = 64  # 128 should be by default (The higher the faster it converge)
@@ -37,6 +39,64 @@ TEST_SIZE = 0.15
 if __name__ == "__main__":
 
     # ---------------------- UTILS METHODS --------------------------------------
+    def applyTransform(imag_array, M, shape):
+        '''Apply a transformation(M) to a np array(imag) and return it in a given shape'''
+        imag = xmipp.Image()
+        imag.setData(imag_array)
+        imag = imag.applyWarpAffine(list(M.flatten()), shape, True)
+        return imag.getData()
+
+
+    def rotation(imag, angle, shape, P):
+        '''Rotate a np.array and return also the transformation matrix
+        #imag: np.array
+        #angle: angle in degrees
+        #shape: output shape
+        #P: transform matrix (further transformation in addition to the rotation)'''
+        (hsrc, wsrc) = imag.shape
+        angle *= math.pi / 180
+        T = np.asarray([[1, 0, -wsrc / 2], [0, 1, -hsrc / 2], [0, 0, 1]])
+        R = np.asarray([[math.cos(angle), math.sin(angle), 0], [-math.sin(angle), math.cos(angle), 0], [0, 0, 1]])
+        M = np.matmul(np.matmul(np.linalg.inv(T), np.matmul(R, T)), P)
+
+        transformed = applyTransform(imag, M, shape)
+        return transformed, M
+
+
+    def train_set_data_generator(X_train, Y_train, rotation_angle=90):
+        X_train_set_generated = np.zeros((len(X_train)*4, IM_HEIGHT, IM_WIDTH, 3))
+        Y_train_set_generated = np.zeros((len(Y_train)*4, 2))
+        P = np.identity(3)
+
+        for i, j in zip(range(len(X_train)-1), range(0, len(X_train_set_generated)-1, 4)):
+
+            for n in range(4):
+                X_train_set_generated[j + n, :, :, 0], _ = rotation(X_train[i, :, :, 0], rotation_angle*n,
+                                                                    X_train[i, :, :, 0].shape, P)
+                X_train_set_generated[j + n, :, :, 1], _ = rotation(X_train[i, :, :, 1], rotation_angle*n,
+                                                                    X_train[i, :, :, 1].shape, P)
+                X_train_set_generated[j + n, :, :, 2], _ = rotation(X_train[i, :, :, 2], rotation_angle*n,
+                                                                    X_train[i, :, :, 2].shape, P)
+                Y_train_set_generated[j + n, :] = Y_train[i, :]
+
+        return X_train_set_generated, Y_train_set_generated
+
+    def test_set_data_generator(X_test,Y_test, rotation_angle=90):
+        X_test_set_generated = np.zeros((len(X_test) * 4, IM_HEIGHT, IM_WIDTH, 3))
+        Y_test_set_generated = np.zeros((len(Y_test) * 4, 2))
+        P = np.identity(3)
+
+        for i, j in zip(range(len(X_test) - 1), range(0, len(X_test_set_generated) - 1, 4)):
+            for n in range(4):
+                X_train_set_generated[j + n, :, :, 0], _ = rotation(X_test[i, :, :, 0], rotation_angle * n,
+                                                                    X_test[i, :, :, 0].shape, P)
+                X_train_set_generated[j + n, :, :, 1], _ = rotation(X_test[i, :, :, 1], rotation_angle * n,
+                                                                    X_test[i, :, :, 1].shape, P)
+                X_train_set_generated[j + n, :, :, 2], _ = rotation(X_test[i, :, :, 2], rotation_angle * n,
+                                                                    X_test[i, :, :, 2].shape, P)
+                Y_train_set_generated[j + n, :] = Y_test[i, :]
+
+        return X_test_set_generated, Y_test_set_generated
 
     def make_training_plots(history):
         # plot loss during training to CHECK OVERFITTING
@@ -208,20 +268,28 @@ if __name__ == "__main__":
     std = imagMatrix.std()
     mean = imagMatrix.mean()
     imagMatrix_Norm = (imagMatrix - mean) / std
+    print('Input matrix: ' + str(np.shape(imagMatrix_Norm)))
+    print('Output matrix: ' + str(np.shape(defocusVector)))
 
-    # split into train and test
-    n = len(defocusVector)
-    imagMatrix_train, imagMatrix_test = imagMatrix_Norm[:int(n*(1-TEST_SIZE)), :, :, :],  imagMatrix_Norm[int(n*(1-TEST_SIZE)):, :, :, :]
-    defocusVector_train, defocusVector_test = defocusVector[:int(n*(1-TEST_SIZE)), :2], defocusVector[int(n*(1-TEST_SIZE)):, :2]
-
-    print('Input train matrix: ' + str(np.shape(imagMatrix_train)))
-    print('Input test matrix: ' + str(np.shape(imagMatrix_test)))
-    print('Output train matrix: ' + str(np.shape(defocusVector_train)))
-    print('Output test matrix: ' + str(np.shape(defocusVector_test)))
+    # DATA GENERATOR
+    print('Generating images...')
+    X_set_generated, Y_set_generated = train_set_data_generator(imagMatrix_Norm, defocusVector[:, :2])
+    print('Input generated matrix: ' + str(np.shape(X_set_generated)))
+    print('Output generated matrix: ' + str(np.shape(Y_set_generated)))
 
     # For applying two branches one for the defocus and the other for the angle
     #defocusVector_train_tmp = [defocusVector_train[:, :2], defocusVector_train[:, 2:]]
     #print('Output train tmp matrix: ' + str(np.shape(defocusVector_train_tmp)))
+
+    # SPLIT INTO TRAIN AND TEST
+    print('Split data into train and test')
+    imagMatrix_train, imagMatrix_test, defocusVector_train, defocusVector_test = \
+        train_test_split(X_set_generated, Y_set_generated, test_size=0.15, random_state=42)
+
+    print('Input train matrix: ' + str(np.shape(imagMatrix_train)))
+    print('Output train matrix: ' + str(np.shape(defocusVector_train)))
+    print('Input test matrix: ' + str(np.shape(imagMatrix_test)))
+    print('Output test matrix: ' + str(np.shape(defocusVector_test)))
 
 
 # ----------- TRAINING MODEL-------------------
@@ -244,8 +312,7 @@ if __name__ == "__main__":
                           callbacks.EarlyStopping(monitor='val_loss', patience=10)
                           ]
 
-        print(len(imagMatrix_train))
-        history = model.fit(imagMatrix_train, defocusVector_train, #steps_per_epoch=len(imagMatrix_train)//BATCH_SIZE,
+        history = model.fit(imagMatrix_train, defocusVector_train,
                             batch_size=BATCH_SIZE, epochs=EPOCHS, verbose=1,
                             validation_split=0.15, callbacks=callbacks_list)
 
@@ -262,14 +329,10 @@ if __name__ == "__main__":
 
 # ----------- TESTING MODEL-------------------
     if testing_Bool:
+
         loadModelDir = os.path.join(modelDir, 'model.h5')
         model = load_model(loadModelDir)
-
         imagPrediction = model.predict(imagMatrix_test)
-        # imagPredictionTmp = np.zeros(shape=(np.shape(imagPrediction)[1], 4))
-        # imagPredictionTmp[:, :2] = imagPrediction[0]
-        # imagPredictionTmp[:, 2:] = imagPrediction[1]
-
         np.savetxt(os.path.join(stackDir, 'imagPrediction.txt'), imagPrediction)
 
         # DEFOCUS
@@ -284,16 +347,13 @@ if __name__ == "__main__":
         mae = mean_absolute_error(defocusVector_test, imagPrediction)
         print("Final model mean absolute error val_loss: ", mae)
 
-        print('Test in a different approach')
         loss = model.evaluate(imagMatrix_test, defocusVector_test, verbose=2)
-
         print("Testing set Total Mean Abs Error: {:5.2f} charges".format(loss))
         #print("Testing set Defocus Mean Abs Error: {:5.2f} charges".format(loss_defocus))
         #print("Testing set Angle Mean Abs Error: {:5.2f} charges".format(loss_angle))
 
         if plots_Bool:
             make_testing_plots(imagPrediction, defocusVector_test)
-
 
     exit(0)
 

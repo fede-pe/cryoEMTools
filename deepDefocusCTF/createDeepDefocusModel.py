@@ -2,9 +2,7 @@ import numpy as np
 from tensorflow.keras.models import Model
 import tensorflow as tf
 from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, BatchNormalization, Dropout, Flatten, Dense, Lambda, Concatenate, Reshape
-from tensorflow.keras.optimizers import Adam
-import tensorflow.keras.callbacks as callbacks
-
+from tensorflow.keras import regularizers
 
 class DeepDefocusMultiOutputModel():
     """
@@ -155,8 +153,9 @@ class DeepDefocusMultiOutputModel():
 
         L = Flatten()(concatted)
         L = Dropout(0.3)(L)
-        L = Dense(32, activation='relu')(L)
-        L = Dropout(0.1)(L)
+        L = Dense(32, activation='relu', kernel_regularizer=regularizers.l1_l2(0.01),
+                  activity_regularizer=regularizers.l2(0.01))(L)
+        #L = Dropout(0.1)(L) #ESTO QUITARLO SI METE MUCHO DROPOUT
         #L = Dense(64, activation='relu')(L)
         #L = Dropout(0.2)(L)
         #L = Dense(32, activation='relu')(L)
