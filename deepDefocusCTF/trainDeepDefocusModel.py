@@ -88,13 +88,13 @@ if __name__ == "__main__":
 
         for i, j in zip(range(len(X_test) - 1), range(0, len(X_test_set_generated) - 1, 4)):
             for n in range(4):
-                X_train_set_generated[j + n, :, :, 0], _ = rotation(X_test[i, :, :, 0], rotation_angle * n,
+                X_test_set_generated[j + n, :, :, 0], _ = rotation(X_test[i, :, :, 0], rotation_angle * n,
                                                                     X_test[i, :, :, 0].shape, P)
-                X_train_set_generated[j + n, :, :, 1], _ = rotation(X_test[i, :, :, 1], rotation_angle * n,
+                X_test_set_generated[j + n, :, :, 1], _ = rotation(X_test[i, :, :, 1], rotation_angle * n,
                                                                     X_test[i, :, :, 1].shape, P)
-                X_train_set_generated[j + n, :, :, 2], _ = rotation(X_test[i, :, :, 2], rotation_angle * n,
+                X_test_set_generated[j + n, :, :, 2], _ = rotation(X_test[i, :, :, 2], rotation_angle * n,
                                                                     X_test[i, :, :, 2].shape, P)
-                Y_train_set_generated[j + n, :] = Y_test[i, :]
+                Y_test_set_generated[j + n, :] = Y_test[i, :]
 
         return X_test_set_generated, Y_test_set_generated
 
@@ -282,9 +282,12 @@ if __name__ == "__main__":
     #print('Output train tmp matrix: ' + str(np.shape(defocusVector_train_tmp)))
 
     # SPLIT INTO TRAIN AND TEST
+    n = len(X_set_generated)
     print('Split data into train and test')
-    imagMatrix_train, imagMatrix_test, defocusVector_train, defocusVector_test = \
-        train_test_split(X_set_generated, Y_set_generated, test_size=0.15, random_state=42)
+    imagMatrix_train, imagMatrix_test = X_set_generated[:int(n*(1-TEST_SIZE)), :, :, :], X_set_generated[int(n*(1-TEST_SIZE)):, :, :, :]
+    defocusVector_train, defocusVector_test = Y_set_generated[:int(n*(1-TEST_SIZE)), :], Y_set_generated[int(n*(1-TEST_SIZE)):, :]
+    # imagMatrix_train, imagMatrix_test, defocusVector_train, defocusVector_test = \
+    #     train_test_split(X_set_generated, Y_set_generated, test_size=0.15, random_state=42)
 
     print('Input train matrix: ' + str(np.shape(imagMatrix_train)))
     print('Output train matrix: ' + str(np.shape(defocusVector_train)))
