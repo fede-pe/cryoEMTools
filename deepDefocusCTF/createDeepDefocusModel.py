@@ -61,11 +61,14 @@ class DeepDefocusMultiOutputModel():
 
         L = Conv2D(16, (12, 12), activation="relu", padding="valid")(inputs)
         L = BatchNormalization()(L)  # It is used for improving the speed, performance and stability
-        L = MaxPooling2D((2, 2))(L)
+        L = MaxPooling2D((3, 3))(L)
         L = Conv2D(8, (6, 6), activation="relu", padding="valid")(L)
         L = BatchNormalization()(L)
         L = MaxPooling2D()(L)
         L = Conv2D(4, (3, 3), activation="relu", padding="valid")(L)
+        L = BatchNormalization()(L)
+        L = MaxPooling2D()(L)
+        L = Conv2D(2, (3, 3), activation="relu", padding="valid")(L)
         L = BatchNormalization()(L)
         L = MaxPooling2D()(L)
         L = Flatten()(L)
@@ -82,11 +85,14 @@ class DeepDefocusMultiOutputModel():
 
         L = Conv2D(16, (15, 15), activation="relu", padding="valid")(inputs)
         L = BatchNormalization()(L)  # It is used for improving the speed, performance and stability
-        L = MaxPooling2D((2, 2))(L)
+        L = MaxPooling2D((3, 3))(L)
         L = Conv2D(8, (10, 10), activation="relu", padding="valid")(L)
         L = BatchNormalization()(L)
         L = MaxPooling2D()(L)
         L = Conv2D(4, (3, 3), activation="relu", padding="valid")(L)
+        L = BatchNormalization()(L)
+        L = MaxPooling2D()(L)
+        L = Conv2D(2, (3, 3), activation="relu", padding="valid")(L)
         L = BatchNormalization()(L)
         L = MaxPooling2D()(L)
         L = Flatten()(L)
@@ -102,42 +108,20 @@ class DeepDefocusMultiOutputModel():
 
         L = Conv2D(16, (20, 20), activation="relu", padding="valid")(inputs)
         L = BatchNormalization()(L)  # It is used for improving the speed, performance and stability
-        L = MaxPooling2D((2, 2))(L)
+        L = MaxPooling2D((3, 3))(L)
         L = Conv2D(8, (15, 15), activation="relu", padding="valid")(L)
         L = BatchNormalization()(L)
         L = MaxPooling2D()(L)
-        L = Conv2D(4, (3, 3), activation="relu", padding="valid")(L)
+        L = Conv2D(4, (7, 7), activation="relu", padding="valid")(L)
+        L = BatchNormalization()(L)
+        L = MaxPooling2D()(L)
+        L = Conv2D(2, (3, 3), activation="relu", padding="valid")(L)
         L = BatchNormalization()(L)
         L = MaxPooling2D()(L)
         L = Flatten()(L)
         #L = Dropout(0.1)(L)
 
         return L
-
-    # ESTA NO FUNCIONA
-    def build_defocus_branch2(self, inputs):
-        """
-        Used to build the defocus in V branch of our multi-regression network.
-        This branch is composed of three Conv -> BN -> Pool -> Dropout blocks,
-        followed by the Dense output layer.        """
-
-        L = Conv2D(16, (3, 3), activation="relu")(inputs)
-        L = BatchNormalization()(L)  # It is used for improving the speed, performance and stability
-        L = MaxPooling2D((2, 2))(L)
-        L = Dropout(0.2)(L)
-
-        L = Conv2D(32, (3, 3), activation="relu")(L)
-        L = BatchNormalization()(L)
-        L = MaxPooling2D(pool_size=(2, 2))(L)
-        L = Dropout(0.2)(L)
-
-        L = Conv2D(32, (3, 3), activation="relu")(L)
-        L = BatchNormalization()(L)
-        L = MaxPooling2D(pool_size=(2, 2))(L)
-        L = Dropout(0.2)(L)
-
-        return L
-
 
     def build_defocus_angle_branch(self, inputs):
         """
@@ -172,7 +156,7 @@ class DeepDefocusMultiOutputModel():
         L = Flatten()(concatted)
         L = Dropout(0.3)(L)
         L = Dense(32, activation='relu')(L)
-        #L = Dropout(0.2)(L)
+        L = Dropout(0.1)(L)
         #L = Dense(64, activation='relu')(L)
         #L = Dropout(0.2)(L)
         #L = Dense(32, activation='relu')(L)
