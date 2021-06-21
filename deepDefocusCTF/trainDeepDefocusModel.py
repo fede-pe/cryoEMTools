@@ -23,7 +23,7 @@ from tensorflow.keras.utils import plot_model
 
 BATCH_SIZE = 64  # 128 should be by default (The higher the faster it converge)
 EPOCHS = 100
-LEARNING_RATE = 0.0001
+LEARNING_RATE = 0.001
 IM_WIDTH = 512
 IM_HEIGHT = 512
 training_Bool = True
