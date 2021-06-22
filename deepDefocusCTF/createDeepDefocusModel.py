@@ -1,8 +1,10 @@
 import numpy as np
 from tensorflow.keras.models import Model
 import tensorflow as tf
-from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, BatchNormalization, Dropout, Flatten, Dense, Lambda, Concatenate, Reshape
+from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, BatchNormalization, Dropout, Flatten, Dense, Lambda, \
+    Concatenate, Reshape
 from tensorflow.keras import regularizers
+
 
 class DeepDefocusMultiOutputModel():
     """
@@ -10,6 +12,7 @@ class DeepDefocusMultiOutputModel():
     and another for the defocus angles. Each branch contains a sequence of Convolutional Layers that is defined
     on the make_default_hidden_layers method.
     """
+
     def make_default_hidden_layers(self, inputs):
         """
         Used to generate a default set of hidden layers. The structure used in this network is defined as:
@@ -30,7 +33,6 @@ class DeepDefocusMultiOutputModel():
         x = Dropout(0.2)(x)
 
         return x
-
 
     def build_defocus_branch_Fede(self, inputs):
         """
@@ -70,8 +72,7 @@ class DeepDefocusMultiOutputModel():
         L = BatchNormalization()(L)
         L = MaxPooling2D()(L)
         L = Flatten()(L)
-        #L = Dropout(0.1)(L)
-
+        # L = Dropout(0.1)(L)
 
         return L
 
@@ -94,7 +95,7 @@ class DeepDefocusMultiOutputModel():
         L = BatchNormalization()(L)
         L = MaxPooling2D()(L)
         L = Flatten()(L)
-        #L = Dropout(0.1)(L)
+        # L = Dropout(0.1)(L)
 
         return L
 
@@ -117,7 +118,7 @@ class DeepDefocusMultiOutputModel():
         L = BatchNormalization()(L)
         L = MaxPooling2D()(L)
         L = Flatten()(L)
-        #L = Dropout(0.1)(L)
+        # L = Dropout(0.1)(L)
 
         return L
 
@@ -130,7 +131,7 @@ class DeepDefocusMultiOutputModel():
         x = Flatten()(x)
         x = Dense(128, activation='relu')(x)
         x = BatchNormalization()(x)
-        x = Dropout(0.3)(x)
+        x = Dropout(0.2)(x)
         x = Dense(2, activation='linear', name='defocus_angles_output')(x)
 
         return x
@@ -154,11 +155,11 @@ class DeepDefocusMultiOutputModel():
         L = Flatten()(concatted)
         L = Dropout(0.3)(L)
         L = Dense(32, activation='relu', kernel_regularizer=regularizers.l1_l2(0.001))(L)
-        #L = Dropout(0.1)(L) #ESTO QUITARLO SI METE MUCHO DROPOUT
-        #L = Dense(64, activation='relu')(L)
-        #L = Dropout(0.2)(L)
-        #L = Dense(32, activation='relu')(L)
-        #L = Dropout(0.2)(L)
+        # L = Dropout(0.1)(L) #ESTO QUITARLO SI METE MUCHO DROPOUT
+        # L = Dense(64, activation='relu')(L)
+        # L = Dropout(0.2)(L)
+        # L = Dense(32, activation='relu')(L)
+        # L = Dropout(0.2)(L)
         L = Dense(2, activation='linear', name='defocus_output')(L)
 
         model = Model(inputs=inputs, outputs=[L],
@@ -172,12 +173,9 @@ class DeepDefocusMultiOutputModel():
         """
         input_shape = (height, width, 3)
         inputs = Input(shape=input_shape, name='input')
-
         defocus_branch = self.build_defocus_branch_Fede(inputs)
         defocus_angles_branch = self.build_defocus_angle_branch(inputs)
-
         # concatted = Concatenate()([defocus_branch, defocus_angles_branch])
-
         model = Model(inputs=inputs, outputs=[defocus_branch, defocus_angles_branch],
                       name="deep_defocus_net")
 
