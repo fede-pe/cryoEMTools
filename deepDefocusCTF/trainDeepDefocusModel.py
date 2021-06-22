@@ -26,7 +26,7 @@ from sklearn.model_selection import train_test_split
 BATCH_SIZE = 64  # 128 should be by default (The higher the faster it converge)
 EPOCHS = 100
 LEARNING_RATE = 0.001
-IM_WIDTH = 512
+IM_WIDTH = 512  
 IM_HEIGHT = 512
 training_Bool = True
 testing_Bool = True
@@ -101,8 +101,8 @@ if __name__ == "__main__":
     def make_training_plots(history):
         # plot loss during training to CHECK OVERFITTING
         plt.title('Loss')
-        plt.plot(history.history['loss'], 'b+', label='training loss')
-        plt.plot(history.history['val_loss'], 'r+', label='validation loss')
+        plt.plot(history.history['loss'], 'b', label='training loss')
+        plt.plot(history.history['val_loss'], 'r', label='validation loss')
         plt.xlabel("Epochs")
         plt.ylabel('Loss')
         plt.legend()
