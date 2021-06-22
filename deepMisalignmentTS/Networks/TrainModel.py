@@ -1,8 +1,12 @@
-#!/usr/bin/env python2
+
+""" This module trains an validate the different models to solve the misalignment detection problem. """
+
 import numpy as np
 import os
 import sys
 from time import time
+
+from CreateModel import scratchModel
 
 batch_size = 128  # Number of boxes per batch
 
@@ -17,41 +21,11 @@ if __name__ == "__main__":
 
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
-    import keras.callbacks as callbacks
-    from keras.models import Model, load_model
-    from keras.layers import Input, Conv3D, MaxPool3D, BatchNormalization, Dropout, Flatten, Dense, GlobalAveragePooling3D
-    from keras.optimizers import Adam
+    import tensorflow.keras.callbacks as callbacks
+    from tensorflow.keras.models import load_model
+    from tensorflow.keras.optimizers import Adam
 
-
-    def constructModel():
-        inputLayer = Input(shape=(32, 32, 32, 1), name="input")
-
-        L = Conv3D(filters=8, kernel_size=3, activation="relu")(inputLayer)
-        L = MaxPool3D(pool_size=2)(L)
-        L = BatchNormalization()(L)
-
-        L = Conv3D(filters=16, kernel_size=3, activation="relu")(L)
-        L = MaxPool3D(pool_size=2)(L)
-        L = BatchNormalization()(L)
-
-        L = Conv3D(filters=32, kernel_size=3, activation="relu")(L)
-        L = MaxPool3D(pool_size=2)(L)
-        L = BatchNormalization()(L)
-
-        # L = Conv3D(filters=64, kernel_size=3, activation="relu")(L)
-        # L = MaxPool3D(pool_size=2)(L)
-        # L = BatchNormalization()(L)
-
-        # L = Flatten()(L)
-        L = GlobalAveragePooling3D()(L)
-        L = Dense(units=512, activation="relu")(L)
-        L = Dropout(0.2)(L)
-
-        L = Dense(units=6, name="output", activation="softmax")(L)
-
-        return Model(inputLayer, L, name="3dDNNmisali")
-
-    model = constructModel()
+    model = scratchModel
     model.summary()
 
     print("Loading data...")
