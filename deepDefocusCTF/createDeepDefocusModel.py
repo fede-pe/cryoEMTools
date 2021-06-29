@@ -154,7 +154,7 @@ class DeepDefocusMultiOutputModel():
 
         L = Flatten()(concatted)
         L = Dropout(0.3)(L)
-        L = Dense(32, activation='relu')(L) # kernel_regularizer=regularizers.l2(0.001)
+        L = Dense(32, activation='relu', kernel_regularizer=regularizers.l1_l2(0.01))(L) # 
         # L = Dropout(0.1)(L) #ESTO QUITARLO SI METE MUCHO DROPOUT
         # L = Dense(64, activation='relu')(L)
         # L = Dropout(0.2)(L)

@@ -6,7 +6,7 @@ from time import time
 import math
 import xmippLib as xmipp
 from tensorflow.python.client import device_lib
-# print(device_lib.list_local_devices())
+print(device_lib.list_local_devices())
 os.environ["CUDA_VISIBLE_DEVICES"] = "/device:XLA_GPU:0"
 import tensorflow.keras.callbacks as callbacks
 from tensorflow.keras.optimizers import Adam
@@ -300,10 +300,10 @@ if __name__ == "__main__":
                                                 write_graph=True, write_grads=False, write_images=False,
                                                 embeddings_freq=0, embeddings_layer_names=None,
                                                 embeddings_metadata=None, embeddings_data=None),
-                          callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=4, verbose=1,
+                          callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, verbose=1,
                                                       mode='auto',
                                                       min_delta=0.0001, cooldown=0, min_lr=0),
-                          callbacks.EarlyStopping(monitor='val_loss', patience=8)
+                          callbacks.EarlyStopping(monitor='val_loss', patience=10)
                           ]
 
         history = model.fit(imagMatrix_train, defocusVector_train,
