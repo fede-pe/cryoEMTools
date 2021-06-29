@@ -6,7 +6,7 @@ from time import time
 import math
 import xmippLib as xmipp
 from tensorflow.python.client import device_lib
-# print(device_lib.list_local_devices())
+print(device_lib.list_local_devices())
 os.environ["CUDA_VISIBLE_DEVICES"] = "/device:XLA_GPU:0"
 import tensorflow.keras.callbacks as callbacks
 from tensorflow.keras.optimizers import Adam
@@ -22,8 +22,8 @@ EPOCHS = 100
 LEARNING_RATE = 0.001
 IM_WIDTH = 512
 IM_HEIGHT = 512
-training_Bool = True
-testing_Bool = True
+training_Bool = False
+testing_Bool = False
 plots_Bool = True
 TEST_SIZE = 0.15
 
@@ -251,10 +251,41 @@ if __name__ == "__main__":
 
     mean_def_U = defocusVector[:, 0].mean()
     std_def_U = defocusVector[:, 0].std()
+    min_def_U = defocusVector[:, 0].min()
+    max_def_U = defocusVector[:, 0].max()
+
     mean_def_V = defocusVector[:, 1].mean()
     std_def_V = defocusVector[:, 1].std()
+    min_def_V = defocusVector[:, 1].min()
+    max_def_V = defocusVector[:, 1].max()
+
     defocusVector_Norm = np.zeros((len(defocusVector), 2))
 
+    # ---------------- STATISTICS ------------------------
+    print('STATISTICS')
+    print('Defocus U')
+    print('Mean: ' + str(mean_def_U))
+    print('Std: ' + str(std_def_U))
+    print('Min: ' + str(min_def_U))
+    print('Max: ' + str(max_def_U))
+    print('Defocus V')
+    print('Mean: ' + str(mean_def_V))
+    print('Std: ' + str(std_def_V))
+    print('Min: ' + str(min_def_V))
+    print('Max: ' + str(max_def_V))
+
+    # Histogram plot
+    plt.style.use('ggplot')
+    plt.subplot(211)
+    plt.title('Defocus U')
+    plt.hist(defocusVector[:, 0], bins=50, label='dU', color='b')
+    plt.subplot(212)
+    plt.title('Defocus V')
+    plt.hist(defocusVector[:, 1], bins=50, label='dV', color='c')
+    plt.show()
+
+
+    # ------------------ NORMALIZING DATA -----------------------------------
     defocusVector_Norm[:, 0] = (defocusVector[:, 0] - mean_def_U) / std_def_U
     defocusVector_Norm[:, 1] = (defocusVector[:, 1] - mean_def_V) / std_def_V
 
@@ -276,6 +307,7 @@ if __name__ == "__main__":
     print('Split data into train and test')
     # imagMatrix_train, imagMatrix_test = X_set_generated[:int(n*(1-TEST_SIZE)), :, :, :], X_set_generated[int(n*(1-TEST_SIZE)):, :, :, :]
     # defocusVector_train, defocusVector_test = Y_set_generated[:int(n*(1-TEST_SIZE)), :], Y_set_generated[int(n*(1-TEST_SIZE)):, :]
+
     # Funciona solo con cierta cantidad de datos luego te quedas sin memoria RAM
     imagMatrix_train, imagMatrix_test, defocusVector_train, defocusVector_test = \
         train_test_split(X_set_generated, Y_set_generated, test_size=0.15, random_state=42)
