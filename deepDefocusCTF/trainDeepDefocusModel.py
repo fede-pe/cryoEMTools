@@ -259,10 +259,13 @@ if __name__ == "__main__":
     min_def_V = defocusVector[:, 1].min()
     max_def_V = defocusVector[:, 1].max()
 
+    corr = np.corrcoef(defocusVector[:, 0], defocusVector[:, 1])
+
     defocusVector_Norm = np.zeros((len(defocusVector), 2))
 
     # ---------------- STATISTICS ------------------------
     print('STATISTICS')
+    print('Correlation: ' + str(corr))
     print('Defocus U')
     print('Mean: ' + str(mean_def_U))
     print('Std: ' + str(std_def_U))
@@ -284,6 +287,17 @@ if __name__ == "__main__":
     plt.hist(defocusVector[:, 1], bins=50, label='dV', color='c')
     plt.show()
 
+    # Correlation plot
+    plt.title('Pearson correlation = ' + "{:.2f}".format(corr[0, 1]))
+    plt.scatter(defocusVector[:, 0], defocusVector[:, 1])
+    plt.xlabel('[defocus U]')
+    plt.ylabel('[defocus V]')
+    plt.axis('equal')
+    plt.axis('square')
+    plt.xlim([0, plt.xlim()[1]])
+    plt.ylim([0, plt.ylim()[1]])
+    _ = plt.plot([-100, 100], [-100, 100])
+    plt.show()
 
     # ------------------ NORMALIZING DATA -----------------------------------
     defocusVector_Norm[:, 0] = (defocusVector[:, 0] - mean_def_U) / std_def_U
