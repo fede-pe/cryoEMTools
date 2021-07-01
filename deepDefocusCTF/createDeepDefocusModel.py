@@ -154,7 +154,7 @@ class DeepDefocusMultiOutputModel():
 
         L = Flatten()(concatted)
         L = Dropout(0.3)(L)
-        L = Dense(32, activation='relu', kernel_regularizer=regularizers.l1_l2(0.01))(L) # 
+        L = Dense(32, activation='relu', kernel_regularizer=regularizers.l1_l2(0.01))(L)
         # L = Dropout(0.1)(L) #ESTO QUITARLO SI METE MUCHO DROPOUT
         # L = Dense(64, activation='relu')(L)
         # L = Dropout(0.2)(L)
@@ -166,6 +166,24 @@ class DeepDefocusMultiOutputModel():
                       name="deep_defocus_net")
 
         return model
+
+    def assemble_model_defocus_Fede(self, width, height):
+        """
+        Used to assemble our multi-output model CNN.
+        """
+        input_shape = (height, width, 3)
+        inputs = Input(shape=input_shape, name='input')
+
+        defocus_branch = self.build_defocus_branch_Fede(inputs
+                                                        )
+        L = Flatten()(defocus_branch)
+        L = Dense(2, activation='linear', name='defocus_output')(L)
+
+        model = Model(inputs=inputs, outputs=[L],
+                      name="deep_defocus_net_Fede")
+
+        return model
+
 
     def assemble_full_model(self, width, height):
         """

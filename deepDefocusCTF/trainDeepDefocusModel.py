@@ -22,8 +22,8 @@ EPOCHS = 100
 LEARNING_RATE = 0.001
 IM_WIDTH = 512
 IM_HEIGHT = 512
-training_Bool = False
-testing_Bool = False
+training_Bool = True
+testing_Bool = True
 plots_Bool = True
 TEST_SIZE = 0.15
 
@@ -251,17 +251,19 @@ if __name__ == "__main__":
 
     mean_def_U = defocusVector[:, 0].mean()
     std_def_U = defocusVector[:, 0].std()
+    median_def_U = np.median(defocusVector[:, 0])
     min_def_U = defocusVector[:, 0].min()
     max_def_U = defocusVector[:, 0].max()
 
     mean_def_V = defocusVector[:, 1].mean()
     std_def_V = defocusVector[:, 1].std()
+    median_def_V = np.median(defocusVector[:, 1])
     min_def_V = defocusVector[:, 1].min()
     max_def_V = defocusVector[:, 1].max()
 
     corr = np.corrcoef(defocusVector[:, 0], defocusVector[:, 1])
 
-    defocusVector_Norm = np.zeros((len(defocusVector), 2))
+    #defocusVector_Norm = np.zeros((len(defocusVector), 2))
 
     # ---------------- STATISTICS ------------------------
     print('STATISTICS')
@@ -269,11 +271,13 @@ if __name__ == "__main__":
     print('Defocus U')
     print('Mean: ' + str(mean_def_U))
     print('Std: ' + str(std_def_U))
+    print('Median: ' + str(median_def_U))
     print('Min: ' + str(min_def_U))
     print('Max: ' + str(max_def_U))
     print('Defocus V')
     print('Mean: ' + str(mean_def_V))
     print('Std: ' + str(std_def_V))
+    print('Median: ' + str(median_def_V))
     print('Min: ' + str(min_def_V))
     print('Max: ' + str(max_def_V))
 
@@ -288,7 +292,7 @@ if __name__ == "__main__":
     plt.show()
 
     # Correlation plot
-    plt.title('Pearson correlation = ' + "{:.2f}".format(corr[0, 1]))
+    plt.title('Pearson correlation = ' + "{:.5f}".format(corr[0, 1]))
     plt.scatter(defocusVector[:, 0], defocusVector[:, 1])
     plt.xlabel('[defocus U]')
     plt.ylabel('[defocus V]')
@@ -300,15 +304,15 @@ if __name__ == "__main__":
     plt.show()
 
     # ------------------ NORMALIZING DATA -----------------------------------
-    defocusVector_Norm[:, 0] = (defocusVector[:, 0] - mean_def_U) / std_def_U
-    defocusVector_Norm[:, 1] = (defocusVector[:, 1] - mean_def_V) / std_def_V
+    #defocusVector_Norm[:, 0] = (defocusVector[:, 0] - mean_def_U) / std_def_U
+    #defocusVector_Norm[:, 1] = (defocusVector[:, 1] - mean_def_V) / std_def_V
 
-    print('Input matrix: ' + str(np.shape(imagMatrix_Norm)))
-    print('Output matrix: ' + str(np.shape(defocusVector_Norm)))
+    #print('Input matrix: ' + str(np.shape(imagMatrix_Norm)))
+    #print('Output matrix: ' + str(np.shape(defocusVector_Norm)))
 
     # DATA GENERATOR
     print('Generating images...')
-    X_set_generated, Y_set_generated = data_generator(imagMatrix_Norm, defocusVector_Norm)
+    X_set_generated, Y_set_generated = data_generator(imagMatrix_Norm, defocusVector[:, :2])
     print('Input generated matrix: ' + str(np.shape(X_set_generated)))
     print('Output generated matrix: ' + str(np.shape(Y_set_generated)))
 
@@ -340,7 +344,7 @@ if __name__ == "__main__":
         elapsed_time = time() - start_time
         print("Time spent preparing the data: %0.10f seconds." % elapsed_time)
 
-        callbacks_list = [callbacks.CSVLogger(os.path.join(modelDir, 'outCSV_06_28_1'), separator=',', append=False),
+        callbacks_list = [callbacks.CSVLogger(os.path.join(modelDir, 'outCSV_06_28_1.csv'), separator=',', append=False),
                           callbacks.TensorBoard(log_dir=os.path.join(modelDir, 'outTB_06_28_1'), histogram_freq=0,
                                                 batch_size=BATCH_SIZE,
                                                 write_graph=True, write_grads=False, write_images=False,
@@ -382,15 +386,16 @@ if __name__ == "__main__":
         # print("Defocus angle model mean absolute error val_loss: ", mae)
 
         # TOTAL ERROR
-        defocusVector_test_rescaled = np.zeros((len(defocusVector_test), 2))
-        imagPrediction_rescaled = np.zeros((len(imagPrediction), 2))
+        # RESCALE
+        #defocusVector_test_rescaled = np.zeros((len(defocusVector_test), 2))
+        #imagPrediction_rescaled = np.zeros((len(imagPrediction), 2))
 
-        defocusVector_test_rescaled[:, 0] = (defocusVector_test[:, 0] * std_def_U) + mean_def_U
-        defocusVector_test_rescaled[:, 1] = (defocusVector_test[:, 1] * std_def_V) + mean_def_V
-        imagPrediction_rescaled[:, 0] = (imagPrediction[:, 0] * std_def_U) + mean_def_U
-        imagPrediction_rescaled[:, 1] = (imagPrediction[:, 1] * std_def_V) + mean_def_V
+        #defocusVector_test_rescaled[:, 0] = (defocusVector_test[:, 0] * std_def_U) + mean_def_U
+        #defocusVector_test_rescaled[:, 1] = (defocusVector_test[:, 1] * std_def_V) + mean_def_V
+        #imagPrediction_rescaled[:, 0] = (imagPrediction[:, 0] * std_def_U) + mean_def_U
+        #imagPrediction_rescaled[:, 1] = (imagPrediction[:, 1] * std_def_V) + mean_def_V
 
-        mae = mean_absolute_error(defocusVector_test_rescaled, imagPrediction_rescaled)
+        mae = mean_absolute_error(defocusVector_test, imagPrediction)
         print("Final model mean absolute error val_loss: ", mae)
 
         # MSE
@@ -400,6 +405,6 @@ if __name__ == "__main__":
         # print("Testing set Angle Mean Abs Error: {:5.2f} charges".format(loss_angle))
 
         if plots_Bool:
-            make_testing_plots(imagPrediction_rescaled, defocusVector_test_rescaled)
+            make_testing_plots(imagPrediction, defocusVector_test)
 
     exit(0)
