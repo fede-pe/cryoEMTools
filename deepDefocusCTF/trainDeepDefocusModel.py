@@ -251,26 +251,33 @@ if __name__ == "__main__":
 
     mean_def_U = defocusVector[:, 0].mean()
     std_def_U = defocusVector[:, 0].std()
+    median_def_U = np.median(defocusVector[:, 0])
     min_def_U = defocusVector[:, 0].min()
     max_def_U = defocusVector[:, 0].max()
 
     mean_def_V = defocusVector[:, 1].mean()
     std_def_V = defocusVector[:, 1].std()
+    median_def_V = np.median(defocusVector[:, 1])
     min_def_V = defocusVector[:, 1].min()
     max_def_V = defocusVector[:, 1].max()
+
+    corr = np.corrcoef(defocusVector[:, 0], defocusVector[:, 1])
 
     defocusVector_Norm = np.zeros((len(defocusVector), 2))
 
     # ---------------- STATISTICS ------------------------
     print('STATISTICS')
+    print('Correlation: ' + str(corr))
     print('Defocus U')
     print('Mean: ' + str(mean_def_U))
     print('Std: ' + str(std_def_U))
+    print('Median: ' + str(median_def_U))
     print('Min: ' + str(min_def_U))
     print('Max: ' + str(max_def_U))
     print('Defocus V')
     print('Mean: ' + str(mean_def_V))
     print('Std: ' + str(std_def_V))
+    print('Median: ' + str(median_def_V))
     print('Min: ' + str(min_def_V))
     print('Max: ' + str(max_def_V))
 
@@ -282,6 +289,18 @@ if __name__ == "__main__":
     plt.subplot(212)
     plt.title('Defocus V')
     plt.hist(defocusVector[:, 1], bins=50, label='dV', color='c')
+    plt.show()
+
+    # Correlation plot
+    plt.title('Pearson correlation = ' + "{:.5f}".format(corr[0, 1]))
+    plt.scatter(defocusVector[:, 0], defocusVector[:, 1])
+    plt.xlabel('[defocus U]')
+    plt.ylabel('[defocus V]')
+    plt.axis('equal')
+    plt.axis('square')
+    plt.xlim([0, plt.xlim()[1]])
+    plt.ylim([0, plt.ylim()[1]])
+    _ = plt.plot([-100, 100], [-100, 100])
     plt.show()
 
 
