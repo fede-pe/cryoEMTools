@@ -18,7 +18,9 @@ def prepareData(stackDir):
 
         # Complete misalignmentInfoList vector.
         for i, line in enumerate(metadataLines):
-            misalignmentInfoVector = [float(line["maxDistance"]),
+            misalignmentInfoVector = [float(line["centroidX"]),
+                                      float(line["centroidY"]),
+                                      float(line["maxDistance"]),
                                       float(line["totalDistance"]),
                                       float(line["hullArea"]),
                                       float(line["hullPerimeter"]),
