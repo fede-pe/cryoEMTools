@@ -6,9 +6,23 @@ import os
 import sys
 from time import time
 
+import tensorflow.keras.callbacks as callbacks
+from tensorflow.keras.models import load_model
+from tensorflow.keras.optimizers import Adam
+
 from CreateModel import scratchModel
 
 batch_size = 128  # Number of boxes per batch
+
+def normalizeInputDataStream(inputSubtomoStream):
+    """ Method to normalize the input subtomo data stream to """
+    std = inputSubtomoStream.std()
+    mean = inputSubtomoStream.mean()
+
+    normalizedInputDataStream = (inputSubtomoStream - mean) / std
+
+    return normalizedInputDataStream
+
 
 if __name__ == "__main__":
 
@@ -21,22 +35,22 @@ if __name__ == "__main__":
 
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
-    import tensorflow.keras.callbacks as callbacks
-    from tensorflow.keras.models import load_model
-    from tensorflow.keras.optimizers import Adam
-
-    model = scratchModel
-    model.summary()
-
     print("Loading data...")
     start_time = time()
     inputSubtomoStream = np.load(os.path.join(stackDir, "inputDataStream.npy"))
     misalignmentInfoVector = np.load(os.path.join(stackDir, "misalignmentInfoList.npy"))
+
+    # Normalize input subtomo data stream to N(0,1)
+    normalizedInputSubtomoStream = normalizeInputDataStream(inputSubtomoStream)
+
     elapsed_time = time() - start_time
     print("Time spent preparing the data: %0.10f seconds." % elapsed_time)
 
     print("Input subtomograms dimensions: ", np.shape(inputSubtomoStream))
     print("Input misalignment dimensions: ", np.shape(misalignmentInfoVector))
+
+    model = scratchModel
+    model.summary()
 
     print("Train model")
     start_time = time()
