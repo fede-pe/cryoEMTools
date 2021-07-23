@@ -6,6 +6,7 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Conv3D, MaxPool3D, BatchNormalization, Dropout, Flatten, Dense, \
     GlobalAveragePooling3D
 
+
 def scratchModel():
     inputLayer = Input(shape=(32, 32, 32, 1), name="input")
 
