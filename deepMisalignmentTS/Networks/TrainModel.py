@@ -24,6 +24,44 @@ def normalizeInputDataStream(inputSubtomoStream):
     return normalizedInputDataStream
 
 
+def statisticsFromInputDataStream(misalignmentInfoVector, variable, verbose=False):
+    """ This method calculates and outputs the statistics of the selected feature from the input information list.
+     Variable indicates the column number of the feature in the information matrix. """
+
+    mean = misalignmentInfoVector[:, variable].mean()
+    std = misalignmentInfoVector[:, variable].std()
+    median = np.median(misalignmentInfoVector[:, variable])
+    min = misalignmentInfoVector[:, variable].min()
+    max = misalignmentInfoVector[:, variable].max()
+
+    if verbose:
+        if variable == 0:
+            print('----- STATISTICS CENTROID X')
+        if variable == 1:
+            print('----- STATISTICS CENTROID Y')
+        if variable == 2:
+            print('----- STATISTICS MAX DISTANCE')
+        if variable == 3:
+            print('----- STATISTICS TOTAL DISTANCE')
+        if variable == 4:
+            print('----- STATISTICS HULL AREA')
+        if variable == 5:
+            print('----- STATISTICS HULL PERIMETER')
+        if variable == 6:
+            print('----- STATISTICS PCA X')
+        if variable == 7:
+            print('----- STATISTICS PCA Y')
+
+        print('Mean: ' + str(mean))
+        print('Std: ' + str(std))
+        print('Median: ' + str(median))
+        print('Min: ' + str(min))
+        print('Max: ' + str(max))
+        print('\n')
+
+    return mean, std, median, min, max
+
+
 if __name__ == "__main__":
 
     # Check no program arguments missing
@@ -42,6 +80,10 @@ if __name__ == "__main__":
 
     # Normalize input subtomo data stream to N(0,1)
     normalizedInputSubtomoStream = normalizeInputDataStream(inputSubtomoStream)
+
+    # Get statistics
+    for i in range(len(misalignmentInfoVector[0,:])):
+        _, _, _, _, _ = statisticsFromInputDataStream(misalignmentInfoVector, i, verbose=True)
 
     elapsed_time = time() - start_time
     print("Time spent preparing the data: %0.10f seconds." % elapsed_time)
