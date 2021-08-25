@@ -1,4 +1,3 @@
-
 """ This module trains an validate the different models to solve the misalignment detection problem. """
 
 import numpy as np
@@ -13,6 +12,7 @@ from tensorflow.keras.optimizers import Adam
 from CreateModel import scratchModel
 
 batch_size = 128  # Number of boxes per batch
+
 
 def normalizeInputDataStream(inputSubtomoStream):
     """ Method to normalize the input subtomo data stream to """
@@ -82,7 +82,7 @@ if __name__ == "__main__":
     normalizedInputSubtomoStream = normalizeInputDataStream(inputSubtomoStream)
 
     # Get statistics
-    for i in range(len(misalignmentInfoVector[0,:])):
+    for i in range(len(misalignmentInfoVector[0, :])):
         _, _, _, _, _ = statisticsFromInputDataStream(misalignmentInfoVector, i, verbose=True)
 
     elapsed_time = time() - start_time
@@ -143,5 +143,6 @@ if __name__ == "__main__":
     print("Time spent testing the model: %0.10f seconds." % elapsed_time)
 
     from sklearn.metrics import mean_absolute_error
+
     mae = mean_absolute_error(misalignmentInfoVector, imagPrediction)
     print("Final model mean absolute error val_loss: %f", mae)
