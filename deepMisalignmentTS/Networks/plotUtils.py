@@ -33,7 +33,6 @@ def plotCorrelationVariables(misalignmentInfoVector, variable1, variable2, count
     title2 = utils.getTitleFromVariable(variable2)
 
     # Correlation plot
-    # TODO: Fix subplot composition
     plt.subplot(2, 1, counter)
 
     plt.title('Pearson correlation = ' + "{:.5f}".format(corr[0, 1]))
@@ -43,10 +42,6 @@ def plotCorrelationVariables(misalignmentInfoVector, variable1, variable2, count
     plt.ylabel(title2)
 
     plt.axis('equal')
-    plt.axis('square')
-
-    plt.xlim([0, plt.xlim()[1]])
-    plt.ylim([0, plt.ylim()[1]])
 
     return plt
 
