@@ -11,6 +11,7 @@ from tensorflow.keras.optimizers import Adam
 
 from CreateModel import scratchModel
 import plotUtils
+import utils
 
 batch_size = 128  # Number of boxes per batch
 
@@ -36,24 +37,10 @@ def statisticsFromInputDataStream(misalignmentInfoVector, variable, verbose=Fals
     max = misalignmentInfoVector[:, variable].max()
 
     if verbose:
-        if variable == 0:
-            print('----- STATISTICS CENTROID X')
-        elif variable == 1:
-            print('----- STATISTICS CENTROID Y')
-        elif variable == 2:
-            print('----- STATISTICS MAX DISTANCE')
-        elif variable == 3:
-            print('----- STATISTICS TOTAL DISTANCE')
-        elif variable == 4:
-            print('----- STATISTICS HULL AREA')
-        elif variable == 5:
-            print('----- STATISTICS HULL PERIMETER')
-        elif variable == 6:
-            print('----- STATISTICS PCA X')
-        elif variable == 7:
-            print('----- STATISTICS PCA Y')
-        else:
-            raise Exception("Variable %d code is out of range" % variable)
+        title = utils.getTitleFromVariable(variable)
+        title = "------------------ " + title + " statistics:"
+
+        print(title)
 
         print('Mean: ' + str(mean))
         print('Std: ' + str(std))
