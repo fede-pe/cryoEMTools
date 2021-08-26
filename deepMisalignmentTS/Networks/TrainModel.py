@@ -16,42 +16,6 @@ import utils
 batch_size = 128  # Number of boxes per batch
 
 
-def normalizeInputDataStream(inputSubtomoStream):
-    """ Method to normalize the input subtomo data stream to """
-    std = inputSubtomoStream.std()
-    mean = inputSubtomoStream.mean()
-
-    normalizedInputDataStream = (inputSubtomoStream - mean) / std
-
-    return normalizedInputDataStream
-
-
-def statisticsFromInputDataStream(misalignmentInfoVector, variable, verbose=False):
-    """ This method calculates and outputs the statistics of the selected variable from the input information list.
-     Variable indicates the column number of the feature in the information matrix. """
-
-    mean = misalignmentInfoVector[:, variable].mean()
-    std = misalignmentInfoVector[:, variable].std()
-    median = np.median(misalignmentInfoVector[:, variable])
-    min = misalignmentInfoVector[:, variable].min()
-    max = misalignmentInfoVector[:, variable].max()
-
-    if verbose:
-        title = utils.getTitleFromVariable(variable)
-        title = "------------------ " + title + " statistics:"
-
-        print(title)
-
-        print('Mean: ' + str(mean))
-        print('Std: ' + str(std))
-        print('Median: ' + str(median))
-        print('Min: ' + str(min))
-        print('Max: ' + str(max))
-        print('\n')
-
-    return mean, std, median, min, max
-
-
 if __name__ == "__main__":
 
     # Check no program arguments missing
@@ -69,11 +33,11 @@ if __name__ == "__main__":
     misalignmentInfoVector = np.load(os.path.join(stackDir, "misalignmentInfoList.npy"))
 
     # Normalize input subtomo data stream to N(0,1)
-    normalizedInputSubtomoStream = normalizeInputDataStream(inputSubtomoStream)
+    normalizedInputSubtomoStream = utils.normalizeInputDataStream(inputSubtomoStream)
 
     for i in range(len(misalignmentInfoVector[0, :])):
         # Get statistics
-        _, _, _, _, _ = statisticsFromInputDataStream(misalignmentInfoVector, i, verbose=True)
+        _, _, _, _, _ = utils.statisticsFromInputDataStream(misalignmentInfoVector, i, verbose=True)
 
         # Plot variable info histogram
         plotUtils.plotHistogramVariable(misalignmentInfoVector, variable=i)
