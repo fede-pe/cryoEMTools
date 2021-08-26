@@ -5,6 +5,18 @@ problem. """
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Conv3D, MaxPool3D, BatchNormalization, Dropout, Flatten, Dense, \
     GlobalAveragePooling3D
+from tensorflow.keras.optimizers import Adam
+
+
+def compileModel(model, learningRate):
+    optimizer = Adam(lr=learningRate)
+
+    model.summary()
+
+    model.compile(optimizer=optimizer,
+                  loss='mean_absolute_error')
+
+    return model
 
 
 def scratchModel():
