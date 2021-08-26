@@ -22,7 +22,7 @@ LEARNING_RATE = 0.001 # Learning rate
 if __name__ == "__main__":
 
     # Check no program arguments missing
-    if len(sys.argv) < 3:
+    if len(sys.argv) < 2:
         print("Usage: scipion python batch_deepDefocus.py <stackDir>")
         sys.exit()
     stackDir = sys.argv[1]
@@ -44,13 +44,17 @@ if __name__ == "__main__":
         _, _, _, _, _ = utils.statisticsFromInputDataStream(misalignmentInfoVector, i, verbose=True)
 
         # Plot variable info histogram
-        plotUtils.plotHistogramVariable(misalignmentInfoVector, variable=i)
+        pltHist = plotUtils.plotHistogramVariable(misalignmentInfoVector, variable=i)
+
+    pltHist.show()
 
     # Plot correlation between two variables
     # Centroid X and PCA X
-    plotUtils.plotCorrelationVariables(misalignmentInfoVector, variable1=0, variable2=6)
+    _ = plotUtils.plotCorrelationVariables(misalignmentInfoVector, variable1=0, variable2=6, counter=1)
     # Centroid Y and PCA Y
-    plotUtils.plotCorrelationVariables(misalignmentInfoVector, variable1=0, variable2=6)
+    pltCorr = plotUtils.plotCorrelationVariables(misalignmentInfoVector, variable1=1, variable2=7, counter=2)
+
+    pltCorr.show()
 
     # ------------------------------------------------------------ SPLIT DATA
     normISS_train, normISS_test, misalignmentInfoVector_train, misalignmentInfoVector_test = \

@@ -20,8 +20,10 @@ def plotHistogramVariable(misalignmentInfoVector, variable):
 
     plt.hist(misalignmentInfoVector[:, variable], bins=50, color='b')
 
+    return plt
 
-def plotCorrelationVariables(misalignmentInfoVector, variable1, variable2):
+
+def plotCorrelationVariables(misalignmentInfoVector, variable1, variable2, counter):
     """ This method plots the correlation between the two selected variables from the input information list.
      Variable1 and variable2 indicate the column number of the feature in the information matrix. """
 
@@ -31,6 +33,9 @@ def plotCorrelationVariables(misalignmentInfoVector, variable1, variable2):
     title2 = utils.getTitleFromVariable(variable2)
 
     # Correlation plot
+    # TODO: Fix subplot composition
+    plt.subplot(2, 1, counter)
+
     plt.title('Pearson correlation = ' + "{:.5f}".format(corr[0, 1]))
     plt.scatter(misalignmentInfoVector[:, variable1], misalignmentInfoVector[:, variable2])
 
@@ -43,9 +48,7 @@ def plotCorrelationVariables(misalignmentInfoVector, variable1, variable2):
     plt.xlim([0, plt.xlim()[1]])
     plt.ylim([0, plt.ylim()[1]])
 
-    _ = plt.plot([-100, 100], [-100, 100])
-
-    plt.show()
+    return plt
 
 
 def plotTraining(history, epochs):
