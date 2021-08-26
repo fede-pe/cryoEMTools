@@ -8,6 +8,7 @@ from time import time
 import tensorflow.keras.callbacks as callbacks
 from tensorflow.keras.models import load_model
 from tensorflow.keras.optimizers import Adam
+from sklearn.model_selection import train_test_split
 
 from CreateModel import scratchModel
 import plotUtils
@@ -27,6 +28,7 @@ if __name__ == "__main__":
 
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
+    # ------------------------------------------------------------ PREPROCESS DATA
     print("Loading data...")
     start_time = time()
     inputSubtomoStream = np.load(os.path.join(stackDir, "inputDataStream.npy"))
@@ -35,6 +37,7 @@ if __name__ == "__main__":
     # Normalize input subtomo data stream to N(0,1)
     normalizedInputSubtomoStream = utils.normalizeInputDataStream(inputSubtomoStream)
 
+    # ------------------------------------------------------------ PRODUCE SIDE INFO
     for i in range(len(misalignmentInfoVector[0, :])):
         # Get statistics
         _, _, _, _, _ = utils.statisticsFromInputDataStream(misalignmentInfoVector, i, verbose=True)
@@ -48,12 +51,19 @@ if __name__ == "__main__":
     # Centroid Y and PCA Y
     plotUtils.plotCorrelationVariables(misalignmentInfoVector, variable1=0, variable2=6)
 
+    # ------------------------------------------------------------ SPLIT DATA
+    normISS_train, normISS_test, misalignmentInfoVector_train, misalignmentInfoVector_test = \
+        train_test_split(normalizedInputSubtomoStream, misalignmentInfoVector, test_size=0.15, random_state=42)
+
+    print('Input train matrix: ' + str(np.shape(normISS_train)))
+    print('Output train matrix: ' + str(np.shape(misalignmentInfoVector_train)))
+    print('Input test matrix: ' + str(np.shape(normISS_test)))
+    print('Output test matrix: ' + str(np.shape(misalignmentInfoVector_test)))
+
     elapsed_time = time() - start_time
     print("Time spent preparing the data: %0.10f seconds." % elapsed_time)
 
-    print("Input subtomograms dimensions: ", np.shape(inputSubtomoStream))
-    print("Input misalignment dimensions: ", np.shape(misalignmentInfoVector))
-
+    # ------------------------------------------------------------ TRAIN MODEL
     model = scratchModel
     model.summary()
 
