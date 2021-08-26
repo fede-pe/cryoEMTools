@@ -1,4 +1,5 @@
 """ This module trains an validate the different models to solve the misalignment detection problem. """
+import datetime
 
 import numpy as np
 import os
@@ -7,14 +8,14 @@ from time import time
 
 import tensorflow.keras.callbacks as callbacks
 from tensorflow.keras.models import load_model
-from tensorflow.keras.optimizers import Adam
 from sklearn.model_selection import train_test_split
 
-from CreateModel import scratchModel
+from CreateModel import compileModel, scratchModel
 import plotUtils
 import utils
 
-batch_size = 128  # Number of boxes per batch
+BATCH_SIZE = 128  # Number of boxes per batch
+LEARNING_RATE = 0.001
 
 
 if __name__ == "__main__":
@@ -64,17 +65,20 @@ if __name__ == "__main__":
     print("Time spent preparing the data: %0.10f seconds." % elapsed_time)
 
     # ------------------------------------------------------------ TRAIN MODEL
-    model = scratchModel
-    model.summary()
-
     print("Train model")
     start_time = time()
-    optimizer = Adam(lr=0.0001)
-    model.compile(loss='mean_absolute_error', optimizer='Adam')
-    callbacks_list = [callbacks.CSVLogger("./outCSV_06_28_1", separator=',', append=False),
-                      callbacks.TensorBoard(log_dir='./outTB_06_28_1',
+
+    model = compileModel(model=scratchModel(), learningRate=LEARNING_RATE)
+
+    dateAndTime = str(datetime.datetime.now())
+
+    callbacks_list = [callbacks.CSVLogger("./outCSV_" + dateAndTime + '.log',
+                                          separator=',',
+                                          append=False),
+
+                      callbacks.TensorBoard(log_dir='./outTB_' + dateAndTime,
                                             histogram_freq=0,
-                                            batch_size=128,
+                                            batch_size=BATCH_SIZE,
                                             write_graph=True,
                                             write_grads=False,
                                             write_images=False,
@@ -82,6 +86,7 @@ if __name__ == "__main__":
                                             embeddings_layer_names=None,
                                             embeddings_metadata=None,
                                             embeddings_data=None),
+
                       callbacks.ReduceLROnPlateau(monitor='val_loss',
                                                   factor=0.1,
                                                   patience=5,
@@ -89,11 +94,15 @@ if __name__ == "__main__":
                                                   mode='auto',
                                                   min_delta=0.0001,
                                                   cooldown=0,
-                                                  min_lr=0)]
+                                                  min_lr=0),
+
+                      callbacks.EarlyStopping(monitor='val_loss',
+                                              patience=10)
+                      ]
 
     history = model.fit(inputSubtomoStream,
                         misalignmentInfoVector,
-                        batch_size=128,
+                        batch_size=BATCH_SIZE,
                         epochs=100,
                         verbose=1,
                         validation_split=0.1,
