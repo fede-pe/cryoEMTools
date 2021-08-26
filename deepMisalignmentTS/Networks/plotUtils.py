@@ -39,3 +39,36 @@ def plotCorrelationVariables(misalignmentInfoVector, variable1, variable2):
     plt.ylim([0, plt.ylim()[1]])
     _ = plt.plot([-100, 100], [-100, 100])
     plt.show()
+
+
+def plotTraining(history, epochs):
+    """ This method generates training post from the history of the model."""
+    # Loss plot
+    plt.title('Loss')
+
+    plt.plot(history.history['loss'], 'b', label='training loss')
+    plt.plot(history.history['val_loss'], 'r', label='validation loss')
+
+    plt.xlabel("Epochs")
+    plt.ylabel('Loss')
+
+    plt.legend()
+    plt.show()
+
+    # Learning rate plot
+    plt.plot(history.epoch, history.history["lr"], "bo-")
+
+    plt.xlabel("Epoch")
+    plt.ylabel("Learning Rate", color='b')
+
+    plt.tick_params('y', colors='b')
+    plt.gca().set_xlim(0, epochs - 1)
+    plt.grid(True)
+
+    ax2 = plt.gca().twinx()
+    ax2.plot(history.epoch, history.history["val_loss"], "r^-")
+    ax2.set_ylabel('Validation Loss', color='r')
+    ax2.tick_params('y', colors='r')
+
+    plt.title("Reduce LR on Plateau", fontsize=14)
+    plt.show()
