@@ -124,14 +124,26 @@ if __name__ == "__main__":
     # ------------------------------------------------------------ TEST MODEL
     print("Test model")
     start_time = time()
-    loadModelDir = os.path.join(modelDir, 'model.txt')
+
+    loadModelDir = os.path.join(modelDir, 'model.h5')
     model = load_model(loadModelDir)
-    imagPrediction = model.predict(inputSubtomoStream)
-    np.savetxt(os.path.join(stackDir, 'imagPrediction.txt'), imagPrediction)
+
+    misalignmentInfoVector_prediction = model.predict(normISS_test)
+    np.savetxt(os.path.join(stackDir, 'model_prediction.txt'), misalignmentInfoVector_prediction)
+
     elapsed_time = time() - start_time
     print("Time spent testing the model: %0.10f seconds." % elapsed_time)
 
     from sklearn.metrics import mean_absolute_error
 
-    mae = mean_absolute_error(misalignmentInfoVector, imagPrediction)
+    mae = mean_absolute_error(misalignmentInfoVector_test, misalignmentInfoVector_prediction)
     print("Final model mean absolute error val_loss: %f", mae)
+
+    loss = model.evaluate(misalignmentInfoVector_prediction, misalignmentInfoVector_test, verbose=2)
+    print("Testing set Total Mean Abs Error: {:5.2f} charges".format(loss))
+
+    for i in range(len(misalignmentInfoVector[0, :])):
+        # Plot results from testing
+        _, _, _, _, _ = plotUtils.plotTesting(misalignmentInfoVector_test, misalignmentInfoVector_prediction, i)
+
+
