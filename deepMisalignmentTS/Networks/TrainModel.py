@@ -15,17 +15,17 @@ import plotUtils
 import utils
 
 BATCH_SIZE = 128  # Number of boxes per batch
-LEARNING_RATE = 0.001
+EPOCHS = 100 # Number of epochs
+LEARNING_RATE = 0.001 # Learning rate
 
 
 if __name__ == "__main__":
 
     # Check no program arguments missing
     if len(sys.argv) < 3:
-        print("Usage: scipion python batch_deepDefocus.py <stackDir> <modelDir>")
+        print("Usage: scipion python batch_deepDefocus.py <stackDir>")
         sys.exit()
     stackDir = sys.argv[1]
-    modelDir = sys.argv[2]
 
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
@@ -100,21 +100,28 @@ if __name__ == "__main__":
                                               patience=10)
                       ]
 
-    history = model.fit(inputSubtomoStream,
-                        misalignmentInfoVector,
+    history = model.fit(normISS_train,
+                        misalignmentInfoVector_train,
                         batch_size=BATCH_SIZE,
                         epochs=100,
                         verbose=1,
                         validation_split=0.1,
                         callbacks=callbacks_list)
 
+    modelDir = os.path.join(stackDir, dateAndTime)
+
     myValLoss = np.zeros(1)
     myValLoss[0] = history.history['val_loss'][-1]
     np.savetxt(os.path.join(modelDir, 'model.txt'), myValLoss)
+
     model.save(os.path.join(modelDir, 'model.h5'))
     elapsed_time = time() - start_time
+
     print("Time spent training the model: %0.10f seconds." % elapsed_time)
 
+    plotUtils.plotTraining(history, EPOCHS)
+
+    # ------------------------------------------------------------ TEST MODEL
     print("Test model")
     start_time = time()
     loadModelDir = os.path.join(modelDir, 'model.txt')
