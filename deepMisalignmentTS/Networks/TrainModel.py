@@ -15,23 +15,35 @@ import plotUtils
 import utils
 
 BATCH_SIZE = 128  # Number of boxes per batch
-EPOCHS = 100  # Number of epochs
+EPOCHS = 10  # Number of epochs
 LEARNING_RATE = 0.001  # Learning rate
 
 
 if __name__ == "__main__":
 
     # Check no program arguments missing
-    if len(sys.argv) < 3:
-        print("Usage: scipion python batch_deepDefocus.py <stackDir> <generatePlots 0/1>")
+    if len(sys.argv) < 4:
+        print("Usage: scipion python batch_deepDefocus.py <stackDir> <generatePlots 0/1> <verboseOutput 0/1>")
         sys.exit()
+
+    # Path with the input stack of data
     stackDir = sys.argv[1]
+
+    # Generate output plots
     if sys.argv[2] == "0":
         generatePlots = False
     elif sys.argv[2] == "1":
         generatePlots = True
     else:
         raise Exception("Invalid option for <generatePlots 0/1>. This option only accepts 0 or 1 input values.")
+
+    # Verbose output
+    if sys.argv[2] == "0":
+        verboseOutput = False
+    elif sys.argv[2] == "1":
+        verboseOutput = True
+    else:
+        raise Exception("Invalid option for <verboseOutput 0/1>. This option only accepts 0 or 1 input values.")
 
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
@@ -47,7 +59,7 @@ if __name__ == "__main__":
     # ------------------------------------------------------------ PRODUCE SIDE INFO
     for i in range(len(misalignmentInfoVector[0, :])):
         # Get statistics
-        _, _, _, _, _ = utils.statisticsFromInputDataStream(misalignmentInfoVector, i, verbose=False)
+        _, _, _, _, _ = utils.statisticsFromInputDataStream(misalignmentInfoVector, i, verbose=verboseOutput)
 
         # Plot variable info histogram
         pltHist = plotUtils.plotHistogramVariable(misalignmentInfoVector, variable=i)
