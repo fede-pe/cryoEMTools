@@ -18,7 +18,6 @@ BATCH_SIZE = 128  # Number of boxes per batch
 EPOCHS = 10  # Number of epochs
 LEARNING_RATE = 0.001  # Learning rate
 
-
 if __name__ == "__main__":
 
     # Check no program arguments missing
@@ -95,34 +94,45 @@ if __name__ == "__main__":
     model = compileModel(model=scratchModel(), learningRate=LEARNING_RATE)
 
     dateAndTime = str(datetime.datetime.now())
+    dateAndTimeVector = dateAndTime.split(' ')
+    dateAndTime = dateAndTimeVector[0] + "_" + dateAndTimeVector[1]
 
-    callbacks_list = [callbacks.CSVLogger("./outCSV_" + dateAndTime + '.log',
-                                          separator=',',
-                                          append=False),
+    callbacks_list = [
+        callbacks.CSVLogger(
+            os.path.join(stackDir, dateAndTime + "/outCSV_" + dateAndTime + '.log'),
+            separator=',',
+            append=False
+        ),
 
-                      callbacks.TensorBoard(log_dir='./outTB_' + dateAndTime,
-                                            histogram_freq=0,
-                                            batch_size=BATCH_SIZE,
-                                            write_graph=True,
-                                            write_grads=False,
-                                            write_images=False,
-                                            embeddings_freq=0,
-                                            embeddings_layer_names=None,
-                                            embeddings_metadata=None,
-                                            embeddings_data=None),
+        callbacks.TensorBoard(
+            log_dir=os.path.join(stackDir,  dateAndTime + "/outTB_" + dateAndTime),
+            histogram_freq=0,
+            batch_size=BATCH_SIZE,
+            write_graph=True,
+            write_grads=False,
+            write_images=False,
+            embeddings_freq=0,
+            embeddings_layer_names=None,
+            embeddings_metadata=None,
+            embeddings_data=None
+        ),
 
-                      callbacks.ReduceLROnPlateau(monitor='val_loss',
-                                                  factor=0.1,
-                                                  patience=5,
-                                                  verbose=1,
-                                                  mode='auto',
-                                                  min_delta=0.0001,
-                                                  cooldown=0,
-                                                  min_lr=0),
+        callbacks.ReduceLROnPlateau(
+            monitor='val_loss',
+            factor=0.1,
+            patience=5,
+            verbose=1,
+            mode='auto',
+            min_delta=0.0001,
+            cooldown=0,
+            min_lr=0
+        ),
 
-                      callbacks.EarlyStopping(monitor='val_loss',
-                                              patience=10)
-                      ]
+        callbacks.EarlyStopping(
+            monitor='val_loss',
+            patience=10
+        )
+    ]
 
     history = model.fit(normISS_train,
                         misalignmentInfoVector_train,
@@ -169,5 +179,3 @@ if __name__ == "__main__":
     for i in range(len(misalignmentInfoVector[0, :])):
         # Plot results from testing
         _, _, _, _, _ = plotUtils.plotTesting(misalignmentInfoVector_test, misalignmentInfoVector_prediction, i)
-
-
