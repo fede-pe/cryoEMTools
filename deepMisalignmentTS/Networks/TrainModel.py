@@ -15,8 +15,8 @@ import plotUtils
 import utils
 
 BATCH_SIZE = 128  # Number of boxes per batch
-EPOCHS = 100 # Number of epochs
-LEARNING_RATE = 0.001 # Learning rate
+EPOCHS = 100  # Number of epochs
+LEARNING_RATE = 0.001  # Learning rate
 
 
 if __name__ == "__main__":
@@ -26,10 +26,12 @@ if __name__ == "__main__":
         print("Usage: scipion python batch_deepDefocus.py <stackDir> <generatePlots 0/1>")
         sys.exit()
     stackDir = sys.argv[1]
-    if sys.argv[2] == 0:
+    if sys.argv[2] == "0":
         generatePlots = False
-    else:
+    elif sys.argv[2] == "1":
         generatePlots = True
+    else:
+        raise Exception("Invalid option for <generatePlots 0/1>. This option only accepts 0 or 1 input values.")
 
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
