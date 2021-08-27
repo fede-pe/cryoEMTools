@@ -137,7 +137,7 @@ if __name__ == "__main__":
     history = model.fit(normISS_train,
                         misalignmentInfoVector_train,
                         batch_size=BATCH_SIZE,
-                        epochs=100,
+                        epochs=EPOCHS,
                         verbose=1,
                         validation_split=0.1,
                         callbacks=callbacks_list)
@@ -153,7 +153,8 @@ if __name__ == "__main__":
 
     print("Time spent training the model: %0.10f seconds." % elapsed_time)
 
-    plotUtils.plotTraining(history, EPOCHS)
+    if generatePlots:
+        plotUtils.plotTraining(history, EPOCHS)
 
     # ------------------------------------------------------------ TEST MODEL
     print("Test model")
@@ -178,4 +179,5 @@ if __name__ == "__main__":
 
     for i in range(len(misalignmentInfoVector[0, :])):
         # Plot results from testing
-        _, _, _, _, _ = plotUtils.plotTesting(misalignmentInfoVector_test, misalignmentInfoVector_prediction, i)
+        if generatePlots:
+            _, _, _, _, _ = plotUtils.plotTesting(misalignmentInfoVector_test, misalignmentInfoVector_prediction, i)
