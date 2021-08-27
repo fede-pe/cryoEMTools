@@ -22,10 +22,14 @@ LEARNING_RATE = 0.001 # Learning rate
 if __name__ == "__main__":
 
     # Check no program arguments missing
-    if len(sys.argv) < 2:
-        print("Usage: scipion python batch_deepDefocus.py <stackDir>")
+    if len(sys.argv) < 3:
+        print("Usage: scipion python batch_deepDefocus.py <stackDir> <generatePlots 0/1>")
         sys.exit()
     stackDir = sys.argv[1]
+    if sys.argv[2] == 0:
+        generatePlots = False
+    else:
+        generatePlots = True
 
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
@@ -41,12 +45,13 @@ if __name__ == "__main__":
     # ------------------------------------------------------------ PRODUCE SIDE INFO
     for i in range(len(misalignmentInfoVector[0, :])):
         # Get statistics
-        _, _, _, _, _ = utils.statisticsFromInputDataStream(misalignmentInfoVector, i, verbose=True)
+        _, _, _, _, _ = utils.statisticsFromInputDataStream(misalignmentInfoVector, i, verbose=False)
 
         # Plot variable info histogram
         pltHist = plotUtils.plotHistogramVariable(misalignmentInfoVector, variable=i)
 
-    pltHist.show()
+    if generatePlots:
+        pltHist.show()
 
     # Plot correlation between two variables
     # Centroid X and PCA X
@@ -54,7 +59,8 @@ if __name__ == "__main__":
     # Centroid Y and PCA Y
     pltCorr = plotUtils.plotCorrelationVariables(misalignmentInfoVector, variable1=1, variable2=7, counter=2)
 
-    pltCorr.show()
+    if generatePlots:
+        pltCorr.show()
 
     # ------------------------------------------------------------ SPLIT DATA
     normISS_train, normISS_test, misalignmentInfoVector_train, misalignmentInfoVector_test = \
