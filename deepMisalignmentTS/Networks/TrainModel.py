@@ -99,13 +99,13 @@ if __name__ == "__main__":
 
     callbacks_list = [
         callbacks.CSVLogger(
-            os.path.join(stackDir, dateAndTime + "/outCSV_" + dateAndTime + '.log'),
+            os.path.join(stackDir, "outputLog_" + dateAndTime + "/outCSV_" + dateAndTime + '.log'),
             separator=',',
             append=False
         ),
 
         callbacks.TensorBoard(
-            log_dir=os.path.join(stackDir,  dateAndTime + "/outTB_" + dateAndTime),
+            log_dir=os.path.join(stackDir, "outputLog_" + dateAndTime + "/outTB_" + dateAndTime),
             histogram_freq=0,
             batch_size=BATCH_SIZE,
             write_graph=True,
@@ -142,13 +142,11 @@ if __name__ == "__main__":
                         validation_split=0.1,
                         callbacks=callbacks_list)
 
-    modelDir = os.path.join(stackDir, dateAndTime)
-
     myValLoss = np.zeros(1)
     myValLoss[0] = history.history['val_loss'][-1]
-    np.savetxt(os.path.join(modelDir, 'model.txt'), myValLoss)
+    np.savetxt(os.path.join(stackDir, "outputLog_" + dateAndTime + '/model.txt'), myValLoss)
 
-    model.save(os.path.join(modelDir, 'model.h5'))
+    model.save(os.path.join(stackDir, "outputLog_" + dateAndTime + '/model.h5'))
     elapsed_time = time() - start_time
 
     print("Time spent training the model: %0.10f seconds." % elapsed_time)
@@ -160,7 +158,7 @@ if __name__ == "__main__":
     print("Test model")
     start_time = time()
 
-    loadModelDir = os.path.join(modelDir, 'model.h5')
+    loadModelDir = os.path.join(stackDir, "outputLog_" + dateAndTime + '/model.h5')
     model = load_model(loadModelDir)
 
     misalignmentInfoVector_prediction = model.predict(normISS_test)
