@@ -96,7 +96,8 @@ class TrackerDisplacement:
 
                 hull = self.getConvexHull(vectorMisalignment2D)
 
-                hullArea = [hull.area]
+                # For 2-Dimensional convex hulls volume attribute equals to the area.
+                hullArea = [hull.volume]
                 hullPerimeter = self.getHullPerimeter(hull)
 
                 pca = self.getPCA(vectorMisalignment2D)[0]
