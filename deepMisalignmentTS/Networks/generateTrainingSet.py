@@ -8,6 +8,10 @@ import sys
 import csv
 import glob
 
+import numpy as np
+import xmippLib as xmipp
+from time import time
+
 
 def addSubtomosToOutput(pathPatternToSubtomoFiles, alignmentFlag):
     """ This methods add to the output metadata file (or creates it if it does not exist) the imported subtomos form
@@ -55,6 +59,46 @@ def addSubtomosToOutput(pathPatternToSubtomoFiles, alignmentFlag):
         lastIndex += 1
 
 
+def generateNetworkVectors():
+    """ This method generates the vectors associated to the metadata files for posteriorly training and testing the
+    network. """
+
+    fileName = 'misalignmentMetadata.txt'
+    filePrefix = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), 'trainingSet')
+    filePath = os.path.join(filePrefix, fileName)
+
+    with open(filePath) as f:
+        metadataLines = csv.DictReader(f, delimiter='\t')
+
+        # fieldNames = ['subTomoPath', 'alignmentToggle']
+
+        Ndim = 0
+        misalignmentInfoList = []
+        subtomoPathList = []
+
+        # Complete misalignmentInfoList vector.
+        for i, line in enumerate(metadataLines):
+            misalignmentInfoList.append(int(line["alignmentToggle"]))
+
+            subtomoPathList.append(line["subTomoPath"])
+
+            Ndim += 1
+
+        inputDataStream = np.zeros((Ndim, 32, 32, 32), dtype=np.float64)
+
+        # Complete inputDataStream matrix (it is only possible to iterate over the csvReader once and it is necessary
+        # to know the Ndim a priori.
+        for i, subtomoPath in enumerate(subtomoPathList):
+            subtomoVol = xmipp.Image(subtomoPath).getData()
+            inputDataStream[i, :, :, :] = subtomoVol
+
+        inputDataStreamPath = os.path.join(filePrefix, "inputDataStream.npy")
+        misalignmentInfoPath = os.path.join(filePrefix, "misalignmentInfoList.npy")
+
+        np.save(inputDataStreamPath, inputDataStream)
+        np.save(misalignmentInfoPath, misalignmentInfoList)
+
+
 # ----------------------------------- Main ------------------------------------------------
 if __name__ == "__main__":
     if len(sys.argv) != 4 or sys.argv[2] != "0" or sys.argv[2] != "1" or sys.argv[3] != "0" or sys.argv[3] != "1":
@@ -69,4 +113,17 @@ if __name__ == "__main__":
     pathPatternToSubtomoFiles = sys.argv[1]
     alignmentFlag = sys.argv[2]
     generateNetworkInputFlag = sys.argv[3]
+
+    addSubtomosToOutput(pathPatternToSubtomoFiles, alignmentFlag)
+
+    if generateNetworkInputFlag == 1:
+        print("Preparing stack...")
+        start_time = time()
+
+        generateNetworkVectors()
+
+        elapsed_time = time() - start_time
+        print("Time spent preparing the data: %0.10f seconds." % elapsed_time)
+
+
 
