@@ -118,10 +118,12 @@ if __name__ == "__main__":
 
     else:
         print("2 options usage:\n\n"
-              "python generateTrainingSet.py <pathPatternToSubtomoFiles> <alignmentFlag 1/0> "
+              ""
+              "Option 1: Add subtomos to the dataset indicating if they are aligned or not:\n"
+              "python generateDataset.py <pathPatternToSubtomoFiles> <alignmentFlag 1/0> \n"
               "<pathPatternToSubtomoFiles>: Regex path to the subtomo volume files.\n"
               "<alignmentFlag 1/0>: Flag to set the imported subtomos as aligned (1) or misaligned (0). \n\n"
               ""
-              "python generateTrainingSet.py\n"
-              "If no options are entered the program will create the output vectors for posteriorly train and test"
-              "the network.")
+              "Option 2: If no options are entered the program will create the output vectors for posteriorly train "
+              "and test the network:\n"
+              "python generateDataset.py")
