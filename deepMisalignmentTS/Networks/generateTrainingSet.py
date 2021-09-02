@@ -1,4 +1,3 @@
-
 """ Module to save the obtained subtomos and its misalignment information to posteriorly train and test the network.
 Also, it generates the output numpy vectors to input the network. """
 
@@ -101,22 +100,8 @@ def generateNetworkVectors():
 
 # ----------------------------------- Main ------------------------------------------------
 if __name__ == "__main__":
-    if len(sys.argv) != 4 or sys.argv[2] != "0" or sys.argv[2] != "1" or sys.argv[3] != "0" or sys.argv[3] != "1":
-        print("Usage: python generateTrainingSet.py <pathPatternToSubtomoFiles> <alignmentFlag 1/0> "
-              "<generateNetworkInputFlag 1/0>\n"
-              "<pathPatternToSubtomoFiles>: Path to the folder containing the subtomo volume files.\n"
-              "<alignmentFlag 1/0>: Flag to set the imported subtomos as aligned (1) or misaligned (0). \n"
-              "<generateNetworkInputFlag 1/0>: Generate the output numpy vectors to input the network for training and "
-              "testing.\n")
-        exit()
 
-    pathPatternToSubtomoFiles = sys.argv[1]
-    alignmentFlag = sys.argv[2]
-    generateNetworkInputFlag = sys.argv[3]
-
-    addSubtomosToOutput(pathPatternToSubtomoFiles, alignmentFlag)
-
-    if generateNetworkInputFlag == 1:
+    if len(sys.argv) == 1:
         print("Preparing stack...")
         start_time = time()
 
@@ -125,5 +110,18 @@ if __name__ == "__main__":
         elapsed_time = time() - start_time
         print("Time spent preparing the data: %0.10f seconds." % elapsed_time)
 
+    elif len(sys.argv) == 3 and (sys.argv[3] != "0" or sys.argv[3] != "1"):
+        pathPatternToSubtomoFiles = sys.argv[1]
+        alignmentFlag = sys.argv[2]
 
+        addSubtomosToOutput(pathPatternToSubtomoFiles, alignmentFlag)
 
+    else:
+        print("2 options usage:\n\n"
+              "python generateTrainingSet.py <pathPatternToSubtomoFiles> <alignmentFlag 1/0> "
+              "<pathPatternToSubtomoFiles>: Regex path to the subtomo volume files.\n"
+              "<alignmentFlag 1/0>: Flag to set the imported subtomos as aligned (1) or misaligned (0). \n\n"
+              ""
+              "python generateTrainingSet.py\n"
+              "If no options are entered the program will create the output vectors for posteriorly train and test"
+              "the network.")
