@@ -57,6 +57,8 @@ def addSubtomosToOutput(pathPatternToSubtomoFiles, alignmentFlag):
         os.symlink(file, os.path.join(filePrefix, "subtomo%s.mrc" % str(lastIndex).zfill(8)))
         lastIndex += 1
 
+    print("Added %d subtomos to dataset." % len(glob.glob(pathPatternToSubtomoFiles)))
+
 
 def generateNetworkVectors():
     """ This method generates the vectors associated to the metadata files for posteriorly training and testing the
@@ -110,11 +112,17 @@ if __name__ == "__main__":
         elapsed_time = time() - start_time
         print("Time spent preparing the data: %0.10f seconds." % elapsed_time)
 
-    elif len(sys.argv) == 3 and (sys.argv[3] != "0" or sys.argv[3] != "1"):
+    elif len(sys.argv) == 3 and (sys.argv[2] != "0" or sys.argv[2] != "1"):
+        print("Adding subtomos to dataset...")
+        start_time = time()
+
         pathPatternToSubtomoFiles = sys.argv[1]
         alignmentFlag = sys.argv[2]
 
         addSubtomosToOutput(pathPatternToSubtomoFiles, alignmentFlag)
+
+        elapsed_time = time() - start_time
+        print("Time spent collecting data: %0.10f seconds." % elapsed_time)
 
     else:
         print("2 options usage:\n\n"
