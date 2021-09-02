@@ -19,7 +19,7 @@ def addSubtomosToOutput(pathPatternToSubtomoFiles, alignmentFlag):
     fieldNames = ['subTomoPath', 'alignmentToggle']
 
     fileName = 'misalignmentMetadata.txt'
-    filePrefix = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), 'trainingSet')
+    filePrefix = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), '../trainingSet')
     filePath = os.path.join(filePrefix, fileName)
 
     # Search for the last subtomo saved
@@ -63,7 +63,7 @@ def generateNetworkVectors():
     network. """
 
     fileName = 'misalignmentMetadata.txt'
-    filePrefix = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), 'trainingSet')
+    filePrefix = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), '../trainingSet')
     filePath = os.path.join(filePrefix, fileName)
 
     with open(filePath) as f:
