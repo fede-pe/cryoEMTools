@@ -26,8 +26,8 @@ def produceClassesDistributionInfo(misalignmentInfoVector):
         elif subtomo == 1:
             numberOfAlignedSubtomos += 1
 
-    print("Classes distribution:\n\n"
-          "Aligned: %d (%.3f%%)\n\n"
-          "Misaligned: %d (%.3f%%)\n\n\n"
+    print("\nClasses distribution:\n"
+          "Aligned: %d (%.3f%%)\n"
+          "Misaligned: %d (%.3f%%)\n\n"
           % (numberOfAlignedSubtomos, (numberOfAlignedSubtomos / totalSubtomos) * 100,
              numberOfMisalignedSubtomos, (numberOfMisalignedSubtomos / totalSubtomos) * 100))

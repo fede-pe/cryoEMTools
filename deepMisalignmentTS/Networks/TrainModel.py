@@ -15,26 +15,18 @@ import plotUtils
 import utils
 
 BATCH_SIZE = 128  # Number of boxes per batch
-EPOCHS = 10  # Number of epochs
+EPOCHS = 2  # Number of epochs
 LEARNING_RATE = 0.001  # Learning rate
 
 if __name__ == "__main__":
 
     # Check no program arguments missing
     if len(sys.argv) < 4:
-        print("Usage: scipion python batch_deepDefocus.py <stackDir> <generatePlots 0/1> <verboseOutput 0/1>")
+        print("Usage: scipion python batch_deepDefocus.py <stackDir> <verboseOutput 0/1> <generatePlots 0/1>")
         sys.exit()
 
     # Path with the input stack of data
     stackDir = sys.argv[1]
-
-    # Generate output plots
-    if sys.argv[2] == "0":
-        generatePlots = False
-    elif sys.argv[2] == "1":
-        generatePlots = True
-    else:
-        raise Exception("Invalid option for <generatePlots 0/1>. This option only accepts 0 or 1 input values.")
 
     # Verbose output
     if sys.argv[2] == "0":
@@ -43,6 +35,14 @@ if __name__ == "__main__":
         verboseOutput = True
     else:
         raise Exception("Invalid option for <verboseOutput 0/1>. This option only accepts 0 or 1 input values.")
+
+    # Generate output plots
+    if sys.argv[3] == "0":
+        generatePlots = False
+    elif sys.argv[3] == "1":
+        generatePlots = True
+    else:
+        raise Exception("Invalid option for <generatePlots 0/1>. This option only accepts 0 or 1 input values.")
 
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
@@ -56,24 +56,26 @@ if __name__ == "__main__":
     normalizedInputSubtomoStream = utils.normalizeInputDataStream(inputSubtomoStream)
 
     # ------------------------------------------------------------ PRODUCE SIDE INFO
-    for i in range(len(misalignmentInfoVector[0, :])):
-        # Get statistics
-        _, _, _, _, _ = utils.statisticsFromInputDataStream(misalignmentInfoVector, i, verbose=verboseOutput)
+    # Output classes distribution info
+    if verboseOutput:
+        utils.produceClassesDistributionInfo(misalignmentInfoVector)
 
-        # Plot variable info histogram
-        pltHist = plotUtils.plotHistogramVariable(misalignmentInfoVector, variable=i)
+    # Plot classes distribution info histogram
+    if generatePlots:
+        plotUtils.plotClassesDistribution(misalignmentInfoVector)
 
     # ------------------------------------------------------------ SPLIT DATA
     normISS_train, normISS_test, misalignmentInfoVector_train, misalignmentInfoVector_test = \
         train_test_split(normalizedInputSubtomoStream, misalignmentInfoVector, test_size=0.15, random_state=42)
 
+    print("Data objects dimensions")
     print('Input train matrix: ' + str(np.shape(normISS_train)))
     print('Output train matrix: ' + str(np.shape(misalignmentInfoVector_train)))
     print('Input test matrix: ' + str(np.shape(normISS_test)))
-    print('Output test matrix: ' + str(np.shape(misalignmentInfoVector_test)))
+    print('Output test matrix: ' + str(np.shape(misalignmentInfoVector_test)) + '\n\n')
 
     elapsed_time = time() - start_time
-    print("Time spent preparing the data: %0.10f seconds." % elapsed_time)
+    print("Time spent preparing the data: %0.10f seconds.\n\n" % elapsed_time)
 
     # ------------------------------------------------------------ TRAIN MODEL
     print("Train model")
