@@ -2,6 +2,8 @@
 
 from matplotlib import pyplot as plt
 import numpy as np
+import pandas as pd
+import seaborn as sn
 
 
 def plotClassesDistribution(misalignmentInfoVector):
@@ -66,46 +68,42 @@ def plotTraining(history, epochs):
     plt.show()
 
 
-def plotTesting(misalignmentInfoVector_prediction, misalignmentInfoVector_test, model):
+def plotTesting(misalignmentInfoVector_prediction, misalignmentInfoVector_test):
     """ This method generates testing post from the history of the model.
     Variable indicates the column number of the feature in the information matrix."""
 
     title = "Prediction confusion matrix"
+    classes = ["Misaligned", "Aligned"]
 
-    # confusionMatrix = np.zeros((2, 2))
-    #
-    # for i in range(misalignmentInfoVector_prediction):
-    #     prediction = misalignmentInfoVector_prediction[i]
-    #     test = misalignmentInfoVector_test[i]
-    #
-    #     # True negative
-    #     if prediction == 0 and test == 0:
-    #         confusionMatrix[0][0] += 1
-    #
-    #     # False negative
-    #     elif prediction == 0 and test == 1:
-    #         confusionMatrix[0][1] += 1
-    #
-    #     # True positive
-    #     elif prediction == 1 and test == 1:
-    #         confusionMatrix[1][1] += 1
-    #
-    #     # False positive
-    #     elif prediction == 0 and test == 1:
-    #         confusionMatrix[0][1] += 1
+    confusionMatrix = np.zeros((2, 2))
 
-    from sklearn.metrics import plot_confusion_matrix
+    for i in range(len(misalignmentInfoVector_prediction)):
+        prediction = misalignmentInfoVector_prediction[i]
+        test = misalignmentInfoVector_test[i]
 
-    disp = plot_confusion_matrix(model,
-                                 misalignmentInfoVector_test,
-                                 misalignmentInfoVector_prediction)
+        # True negative
+        if prediction == 0 and test == 0:
+            confusionMatrix[0][0] += 1
 
-    disp.ax_.set_title(title)
+        # False negative
+        elif prediction == 0 and test == 1:
+            confusionMatrix[0][1] += 1
 
+        # True positive
+        elif prediction == 1 and test == 1:
+            confusionMatrix[1][1] += 1
+
+        # False positive
+        elif prediction == 0 and test == 1:
+            confusionMatrix[0][1] += 1
+
+    df_cm = pd.DataFrame(confusionMatrix,
+                         index=[i for i in classes],
+                         columns=[i for i in classes])
+
+    plt.figure(figsize=(10, 7))
     plt.title(title)
 
-    plt.scatter(x, misalignmentInfoVector_test[:, variable], c='r', label=title)
-    plt.scatter(x, misalignmentInfoVector_prediction[:, variable], c='b', label=title + "_pred")
+    sn.heatmap(df_cm, annot=True)
 
-    plt.legend()
     plt.show()
