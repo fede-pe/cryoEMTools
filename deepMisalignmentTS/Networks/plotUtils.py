@@ -1,9 +1,7 @@
-
 """ Module containing plotting functions of the datasets and results. """
 
-import numpy as np
 from matplotlib import pyplot as plt
-import utils
+import numpy as np
 
 
 def plotClassesDistribution(misalignmentInfoVector):
@@ -23,7 +21,6 @@ def plotClassesDistribution(misalignmentInfoVector):
 
     classes = ["Aligned", "Misaligned"]
     classesHeight = [numberOfAlignedSubtomos, numberOfMisalignedSubtomos]
-
 
     # Histogram plot
     plt.style.use('ggplot')
@@ -69,16 +66,43 @@ def plotTraining(history, epochs):
     plt.show()
 
 
-def plotTesting(misalignmentInfoVector_test, misalignmentInfoVector_prediction, variable):
+def plotTesting(misalignmentInfoVector_prediction, misalignmentInfoVector_test, model):
     """ This method generates testing post from the history of the model.
     Variable indicates the column number of the feature in the information matrix."""
 
-    title = utils.getTitleFromVariable(variable)
+    title = "Prediction confusion matrix"
 
-    x = range(1, len(misalignmentInfoVector_test[:, variable]) + 1)
+    # confusionMatrix = np.zeros((2, 2))
+    #
+    # for i in range(misalignmentInfoVector_prediction):
+    #     prediction = misalignmentInfoVector_prediction[i]
+    #     test = misalignmentInfoVector_test[i]
+    #
+    #     # True negative
+    #     if prediction == 0 and test == 0:
+    #         confusionMatrix[0][0] += 1
+    #
+    #     # False negative
+    #     elif prediction == 0 and test == 1:
+    #         confusionMatrix[0][1] += 1
+    #
+    #     # True positive
+    #     elif prediction == 1 and test == 1:
+    #         confusionMatrix[1][1] += 1
+    #
+    #     # False positive
+    #     elif prediction == 0 and test == 1:
+    #         confusionMatrix[0][1] += 1
 
-    plt.subplot(3, 3, (variable+1))
-    plt.title('Defocus U')
+    from sklearn.metrics import plot_confusion_matrix
+
+    disp = plot_confusion_matrix(model,
+                                 misalignmentInfoVector_test,
+                                 misalignmentInfoVector_prediction)
+
+    disp.ax_.set_title(title)
+
+    plt.title(title)
 
     plt.scatter(x, misalignmentInfoVector_test[:, variable], c='r', label=title)
     plt.scatter(x, misalignmentInfoVector_prediction[:, variable], c='b', label=title + "_pred")
