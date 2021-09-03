@@ -63,18 +63,6 @@ if __name__ == "__main__":
         # Plot variable info histogram
         pltHist = plotUtils.plotHistogramVariable(misalignmentInfoVector, variable=i)
 
-    if generatePlots:
-        pltHist.show()
-
-    # Plot correlation between two variables
-    # Centroid X and PCA X
-    _ = plotUtils.plotCorrelationVariables(misalignmentInfoVector, variable1=0, variable2=6, counter=1)
-    # Centroid Y and PCA Y
-    pltCorr = plotUtils.plotCorrelationVariables(misalignmentInfoVector, variable1=1, variable2=7, counter=2)
-
-    if generatePlots:
-        pltCorr.show()
-
     # ------------------------------------------------------------ SPLIT DATA
     normISS_train, normISS_test, misalignmentInfoVector_train, misalignmentInfoVector_test = \
         train_test_split(normalizedInputSubtomoStream, misalignmentInfoVector, test_size=0.15, random_state=42)
