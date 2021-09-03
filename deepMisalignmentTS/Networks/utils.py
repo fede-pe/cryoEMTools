@@ -1,8 +1,6 @@
 
 """ Module containing functions to parse and process datasets and results. """
 
-import numpy as np
-
 
 def normalizeInputDataStream(inputSubtomoStream):
     """ Method to normalize the input subtomo data stream to """
@@ -12,3 +10,24 @@ def normalizeInputDataStream(inputSubtomoStream):
     normalizedInputDataStream = (inputSubtomoStream - mean) / std
 
     return normalizedInputDataStream
+
+
+def produceClassesDistributionInfo(misalignmentInfoVector):
+    """ This method output information of the classes distributions from the dataset between aligned and misaligned
+    subtomos. """
+
+    totalSubtomos = len(misalignmentInfoVector)
+    numberOfMisalignedSubtomos = 0
+    numberOfAlignedSubtomos = 0
+
+    for subtomo in misalignmentInfoVector:
+        if subtomo == 0:
+            numberOfMisalignedSubtomos += 1
+        elif subtomo == 1:
+            numberOfAlignedSubtomos += 1
+
+    print("Classes distribution:\n\n"
+          "Aligned: %d (%.3f%%)\n\n"
+          "Misaligned: %d (%.3f%%)\n\n\n"
+          % (numberOfAlignedSubtomos, (numberOfAlignedSubtomos / totalSubtomos) * 100,
+             numberOfMisalignedSubtomos, (numberOfMisalignedSubtomos / totalSubtomos) * 100))
