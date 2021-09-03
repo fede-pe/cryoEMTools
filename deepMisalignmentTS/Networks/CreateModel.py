@@ -43,6 +43,6 @@ def scratchModel():
     L = Dense(units=256, activation="relu")(L)
     L = Dropout(0.2)(L)
 
-    L = Dense(units=8, name="output", activation="softmax")(L)
+    L = Dense(units=1, name="output", activation="softmax")(L)
 
     return Model(inputLayer, L, name="3dDNNmisali")

@@ -9,6 +9,7 @@ from time import time
 import tensorflow.keras.callbacks as callbacks
 from tensorflow.keras.models import load_model
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_absolute_error
 
 from CreateModel import compileModel, scratchModel
 import plotUtils
@@ -152,20 +153,28 @@ if __name__ == "__main__":
     model = load_model(loadModelDir)
 
     misalignmentInfoVector_prediction = model.predict(normISS_test)
-    np.savetxt(os.path.join(stackDir, 'model_prediction.txt'), misalignmentInfoVector_prediction)
+    
+    # Convert the set of probabilities from the previous command into the set of predicted classes
+    misalignmentInfoVector_predictionClasses = np.argmax(misalignmentInfoVector_prediction, axis=1)
+    
+    np.savetxt(os.path.join(stackDir, 'model_prediction.txt'),
+               misalignmentInfoVector_predictionClasses)
 
     elapsed_time = time() - start_time
     print("Time spent testing the model: %0.10f seconds." % elapsed_time)
 
-    from sklearn.metrics import mean_absolute_error
+    mae = mean_absolute_error(misalignmentInfoVector_test, misalignmentInfoVector_predictionClasses)
+    print("Final model mean absolute error val_loss: %f" % mae)
 
-    mae = mean_absolute_error(misalignmentInfoVector_test, misalignmentInfoVector_prediction)
-    print("Final model mean absolute error val_loss: %f", mae)
-
-    loss = model.evaluate(misalignmentInfoVector_prediction, misalignmentInfoVector_test, verbose=2)
+    loss = model.evaluate(normISS_test,
+                          misalignmentInfoVector_test,
+                          verbose=2)
     print("Testing set Total Mean Abs Error: {:5.2f} charges".format(loss))
 
     for i in range(len(misalignmentInfoVector[0, :])):
         # Plot results from testing
         if generatePlots:
-            _, _, _, _, _ = plotUtils.plotTesting(misalignmentInfoVector_test, misalignmentInfoVector_prediction, i)
+            _, _, _, _, _ = plotUtils.plotTesting(
+                misalignmentInfoVector_test,
+                misalignmentInfoVector_predictionClasses, i
+            )
