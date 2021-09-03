@@ -6,6 +6,35 @@ from matplotlib import pyplot as plt
 import utils
 
 
+def plotClassesDistribution(misalignmentInfoVector):
+    """ This method plots and histogram of the classes distributions from the dataset between aligned and misaligned
+    subtomos. """
+
+    title = "Classes distribution"
+
+    numberOfMisalignedSubtomos = 0
+    numberOfAlignedSubtomos = 0
+
+    for subtomo in misalignmentInfoVector:
+        if subtomo == 0:
+            numberOfMisalignedSubtomos += 1
+        elif subtomo == 1:
+            numberOfAlignedSubtomos += 1
+
+    classes = ["Aligned", "Misaligned"]
+    classesHeight = [numberOfAlignedSubtomos, numberOfMisalignedSubtomos]
+
+
+    # Histogram plot
+    plt.style.use('ggplot')
+
+    plt.title(title)
+
+    plt.bar(classes, classesHeight, color='r')
+
+    plt.show()
+
+
 def plotHistogramVariable(misalignmentInfoVector, variable):
     """ This method plots and histogram of the selected variable from the input information list.
      Variable indicates the column number of the feature in the information matrix. """
