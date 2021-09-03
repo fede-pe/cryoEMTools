@@ -35,46 +35,6 @@ def plotClassesDistribution(misalignmentInfoVector):
     plt.show()
 
 
-def plotHistogramVariable(misalignmentInfoVector, variable):
-    """ This method plots and histogram of the selected variable from the input information list.
-     Variable indicates the column number of the feature in the information matrix. """
-
-    title = utils.getTitleFromVariable(variable)
-
-    # Histogram plot
-    plt.style.use('ggplot')
-
-    plt.subplot(3, 3, (variable+1))
-    plt.title(title)
-
-    plt.hist(misalignmentInfoVector[:, variable], bins=50, color='b')
-
-    return plt
-
-
-def plotCorrelationVariables(misalignmentInfoVector, variable1, variable2, counter):
-    """ This method plots the correlation between the two selected variables from the input information list.
-     Variable1 and variable2 indicate the column number of the feature in the information matrix. """
-
-    corr = np.corrcoef(misalignmentInfoVector[:, variable1], misalignmentInfoVector[:, variable2])
-
-    title1 = utils.getTitleFromVariable(variable1)
-    title2 = utils.getTitleFromVariable(variable2)
-
-    # Correlation plot
-    plt.subplot(2, 1, counter)
-
-    plt.title('Pearson correlation = ' + "{:.5f}".format(corr[0, 1]))
-    plt.scatter(misalignmentInfoVector[:, variable1], misalignmentInfoVector[:, variable2])
-
-    plt.xlabel(title1)
-    plt.ylabel(title2)
-
-    plt.axis('equal')
-
-    return plt
-
-
 def plotTraining(history, epochs):
     """ This method generates training post from the history of the model."""
 
