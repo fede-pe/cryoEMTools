@@ -16,7 +16,7 @@ import plotUtils
 import utils
 
 BATCH_SIZE = 128  # Number of boxes per batch
-EPOCHS = 2  # Number of epochs
+EPOCHS = 100  # Number of epochs
 LEARNING_RATE = 0.001  # Learning rate
 
 if __name__ == "__main__":
@@ -146,7 +146,7 @@ if __name__ == "__main__":
         plotUtils.plotTraining(history, EPOCHS)
 
     # ------------------------------------------------------------ TEST MODEL
-    print("Test model")
+    print("\n\nTest model...\n")
     start_time = time()
 
     loadModelDir = os.path.join(stackDir, "outputLog_" + dateAndTime + '/model.h5')
@@ -161,20 +161,18 @@ if __name__ == "__main__":
                misalignmentInfoVector_predictionClasses)
 
     elapsed_time = time() - start_time
-    print("Time spent testing the model: %0.10f seconds." % elapsed_time)
+    print("Time spent testing the model: %0.10f seconds.\n" % elapsed_time)
 
     mae = mean_absolute_error(misalignmentInfoVector_test, misalignmentInfoVector_predictionClasses)
-    print("Final model mean absolute error val_loss: %f" % mae)
+    print("Final model mean absolute error val_loss: %f\n" % mae)
 
     loss = model.evaluate(normISS_test,
                           misalignmentInfoVector_test,
                           verbose=2)
-    print("Testing set Total Mean Abs Error: {:5.2f} charges".format(loss))
+    print("\nTesting set total mean absolute error: {:5.2f}\n".format(loss))
 
-    for i in range(len(misalignmentInfoVector[0, :])):
-        # Plot results from testing
-        if generatePlots:
-            _, _, _, _, _ = plotUtils.plotTesting(
+    # Plot results from testing
+    plotUtils.plotTesting(
                 misalignmentInfoVector_test,
-                misalignmentInfoVector_predictionClasses, i
+                misalignmentInfoVector_predictionClasses
             )
