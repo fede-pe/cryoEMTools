@@ -15,8 +15,9 @@ from CreateModel import compileModel, scratchModel
 import plotUtils
 import utils
 
+SUBTOMO_SIZE = 32  # Dimensions of the subtomos (cubic, SUBTOMO_SIZE x SUBTOMO_SIZE x SUBTOMO_SIZE shape)
 BATCH_SIZE = 128  # Number of boxes per batch
-EPOCHS = 100  # Number of epochs
+EPOCHS = 2  # Number of epochs
 LEARNING_RATE = 0.001  # Learning rate
 
 if __name__ == "__main__":
@@ -59,11 +60,45 @@ if __name__ == "__main__":
     # ------------------------------------------------------------ PRODUCE SIDE INFO
     # Output classes distribution info
     if verboseOutput:
-        utils.produceClassesDistributionInfo(misalignmentInfoVector)
+        alignedSubtomosRatio = utils.produceClassesDistributionInfo(misalignmentInfoVector, True)
+    else:
+        alignedSubtomosRatio = utils.produceClassesDistributionInfo(misalignmentInfoVector, False)
 
     # Plot classes distribution info histogram
     if generatePlots:
         plotUtils.plotClassesDistribution(misalignmentInfoVector)
+
+    # ------------------------------------------------------------ DATA AUGMENTATION
+    # Augmentation ratio of the input data
+    foldAugmentation = int(0.5 / alignedSubtomosRatio)
+
+    print("===============================================================")
+    print(alignedSubtomosRatio)
+    print(foldAugmentation)
+
+    generatedSubtomos = []
+
+    for i in range(normalizedInputSubtomoStream.shape[0]):
+        # Use data augmentation only for properly aligned subtomos (the least usual case)
+        if misalignmentInfoVector[i] == 1:
+            newSubtomos = utils.dataAugmentationSubtomo(normalizedInputSubtomoStream[i, :, :, :],
+                                                        foldAugmentation - 1,
+                                                        (SUBTOMO_SIZE, SUBTOMO_SIZE, SUBTOMO_SIZE))
+
+            generatedSubtomos.append(newSubtomos)
+
+    print("----------------before")
+    print(len(generatedSubtomos))
+    print(normalizedInputSubtomoStream.shape)
+    print(misalignmentInfoVector.shape)
+
+    for subtomo in generatedSubtomos:
+        np.append(normalizedInputSubtomoStream, subtomo)
+        np.append(misalignmentInfoVector, 1)
+
+    print("----------------after")
+    print(normalizedInputSubtomoStream.shape)
+    print(misalignmentInfoVector.shape)
 
     # ------------------------------------------------------------ SPLIT DATA
     normISS_train, normISS_test, misalignmentInfoVector_train, misalignmentInfoVector_test = \
@@ -153,10 +188,10 @@ if __name__ == "__main__":
     model = load_model(loadModelDir)
 
     misalignmentInfoVector_prediction = model.predict(normISS_test)
-    
+
     # Convert the set of probabilities from the previous command into the set of predicted classes
     misalignmentInfoVector_predictionClasses = np.argmax(misalignmentInfoVector_prediction, axis=1)
-    
+
     np.savetxt(os.path.join(stackDir, 'model_prediction.txt'),
                misalignmentInfoVector_predictionClasses)
 
@@ -173,6 +208,6 @@ if __name__ == "__main__":
 
     # Plot results from testing
     plotUtils.plotTesting(
-                misalignmentInfoVector_test,
-                misalignmentInfoVector_predictionClasses
-            )
+        misalignmentInfoVector_test,
+        misalignmentInfoVector_predictionClasses
+    )
