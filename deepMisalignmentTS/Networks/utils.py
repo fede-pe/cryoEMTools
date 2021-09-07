@@ -5,16 +5,17 @@ from math import cos, sin
 
 import xmippLib as xmipp
 
-Z_ROTATION_180 = np.asarray([[cos(np.deg2rad(180)), -sin(np.deg2rad(180)), 0, 0],
-                             [sin(np.deg2rad(180)), cos(np.deg2rad(180)), 0, 0],
-                             [0, 0, 1, 0],
-                             [0, 0, 0, 1]])
+Z_ROTATION_180 = np.asarray([[cos(np.deg2rad(180)), -sin(np.deg2rad(180)), 0],
+                             [sin(np.deg2rad(180)), cos(np.deg2rad(180)), 0],
+                             [0, 0, 1]])
 
-Y_ROTATION_180 = np.asarray([[cos(np.deg2rad(180)), 0, sin(np.deg2rad(180)), 0],
-                             [0, 1, 0, 0],
-                             [-sin(np.deg2rad(180)), 0, cos(np.deg2rad(180)), 0],
-                             [0, 0, 0, 1]])
+Y_ROTATION_180 = np.asarray([[cos(np.deg2rad(180)), 0, sin(np.deg2rad(180))],
+                             [0, 1, 0],
+                             [-sin(np.deg2rad(180)), 0, cos(np.deg2rad(180))]])
 
+Z_Y_ROTATION_180 = np.matmul(Z_ROTATION_180, Y_ROTATION_180)
+
+_MATRICES = [Z_ROTATION_180, Y_ROTATION_180, Z_Y_ROTATION_180]
 
 def normalizeInputDataStream(inputSubtomoStream):
     """ Method to normalize the input subtomo data stream to """
@@ -50,55 +51,54 @@ def produceClassesDistributionInfo(misalignmentInfoVector, verbose=True):
     return numberOfAlignedSubtomos / totalSubtomos
 
 
-def dataAugmentationSubtomo(subtomo, foldAugmentation, shape):
+def dataAugmentationSubtomo(subtomo, aligment, foldAugmentation, shape):
     """ This methods takes a subtomo used as a reference and returns a rotated version of this for data augmentation.
     Given a subtomo there is only 3 possible transformation (the combination of 180º rotations in Y and Z axis) in order
     to match the missing wedge between the input and the output subtomo.
     :param subtomo: input reference subtomo.
+    :param aligment: alignment/misalignment toggle of the subtomo
     :param foldAugmentation: number of subtomos generated per each input reference.
-    :param shape: otuput shape of the subtomos.
+    :param shape: output shape of the subtomos.
     """
 
-    matrices = [Z_ROTATION_180, Y_ROTATION_180, np.matmul(Z_ROTATION_180, Y_ROTATION_180)]
+    # There is a maximum of 3 possible transformations
+    if foldAugmentation > 2:
+        foldAugmentation = 2
+
+    # Subtomo data augmentation
     outputSubtomos = []
 
-    rotM = np.asarray([[cos(np.deg2rad(180)), -sin(np.deg2rad(180)), 0],
-                       [sin(np.deg2rad(180)), cos(np.deg2rad(180)), 0],
-                       [0, 0, 1]])
+    inputSubtomo = xmipp.Image()
 
-    np.asarray([[cos(np.deg2rad(180)), -sin(np.deg2rad(180)), 0, 0],
-                [sin(np.deg2rad(180)), cos(np.deg2rad(180)), 0, 0],
-                [0, 0, 1, 0],
-                [0, 0, 0, 1]])
-
-    subtomoTest = subtomo[16, :, :]
-
-    imagTest = xmipp.Image()
-    imagTest.setData(subtomoTest)
-
-    imagTest.write("/home/fede/cryoEMTools/deepMisalignmentTS/Networks/imageTestIn.mrc")
-
-    resultImageTest = imagTest.applyWarpAffine(list(rotM.flatten()), subtomoTest.shape, False, 0)
-
-    resultImageTest.write("/home/fede/cryoEMTools/deepMisalignmentTS/Networks/imageTestOut.mrc")
-
-    print(subtomo.shape)
-    print(subtomo)
+    outputSubtomo = np.zeros(shape)
 
     for i in range(foldAugmentation):
-        M = matrices[i]
+        for slice in range(shape[2]):
+            inputSubtomo.setData(subtomo[slice])
 
-        print(M)
-        print(list(M.flatten()))
+            outputSubtomoImage = inputSubtomo.applyWarpAffine(list(_MATRICES[i].flatten()),
+                                                              shape,
+                                                              True)
 
-        imag = xmipp.Image()
-        imag.setData(subtomo)
-        imag.write("/home/fede/cryoEMTools/deepMisalignmentTS/Networks/testIn.mrc")
+            outputSubtomo[slice] = outputSubtomoImage.getData()
 
-        resultSubtomo = imag.applyWarpAffine(list(M.flatten()), subtomo.shape, False, 0)
+        outputSubtomos.append(outputSubtomo)
 
-        resultSubtomo.write("/home/fede/cryoEMTools/deepMisalignmentTS/Networks/testOut.mrc")
+    # Testing the transformation
+    outputSubtomoImage.setData(outputSubtomo)
 
-        outputSubtomos.append(resultSubtomo.getData())
+    inputSubtomo.setData(subtomo)
 
-    return outputSubtomos
+    inputFilePath = "/home/fede/cryoEMTools/deepMisalignmentTS/Networks/testIn.mrc"
+    outputFilePath = "/home/fede/cryoEMTools/deepMisalignmentTS/Networks/testOut.mrc"
+
+    inputSubtomo.write(inputFilePath)
+    outputSubtomoImage.write(outputFilePath)
+
+    # Alignment data augmentation
+    outputMisalignment = []
+
+    for i in range(foldAugmentation):
+        outputMisalignment.append(aligment)
+
+    return outputSubtomos, outputMisalignment
