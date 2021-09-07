@@ -72,39 +72,60 @@ if __name__ == "__main__":
     # Augmentation ratio of the input data
     foldAugmentation = int(0.5 / alignedSubtomosRatio)
 
-    print("===============================================================")
-    print(alignedSubtomosRatio)
-    print(foldAugmentation)
-
     generatedSubtomos = []
+    generatedMisalignment = []
 
     for i in range(normalizedInputSubtomoStream.shape[0]):
-        # Use data augmentation only for properly aligned subtomos (the least usual case)
-        if misalignmentInfoVector[i] == 1:
-            newSubtomos = utils.dataAugmentationSubtomo(normalizedInputSubtomoStream[i, :, :, :],
-                                                        foldAugmentation - 1,
-                                                        (SUBTOMO_SIZE, SUBTOMO_SIZE, SUBTOMO_SIZE))
+        alignment = misalignmentInfoVector[i]
 
-            generatedSubtomos.append(newSubtomos)
+        # Use data augmentation only for properly aligned subtomos (the least numbered group in the dataset)
+        if alignment == 1:
+            newSubtomos, newMisalignment = utils.dataAugmentationSubtomo(normalizedInputSubtomoStream[i, :, :, :],
+                                                                         alignment,
+                                                                         foldAugmentation - 1,
+                                                                         (SUBTOMO_SIZE, SUBTOMO_SIZE, SUBTOMO_SIZE))
 
-    print("----------------before")
-    print(len(generatedSubtomos))
-    print(normalizedInputSubtomoStream.shape)
-    print(misalignmentInfoVector.shape)
+            # generatedSubtomos.append(newSubtomos)
 
-    for subtomo in generatedSubtomos:
-        np.append(normalizedInputSubtomoStream, subtomo)
-        np.append(misalignmentInfoVector, 1)
+            for subtomo in newSubtomos:
+                generatedSubtomos.append(subtomo)
 
-    print("----------------after")
-    print(normalizedInputSubtomoStream.shape)
-    print(misalignmentInfoVector.shape)
+            for misalignment in newMisalignment:
+                generatedMisalignment.append(misalignment)
+
+    generatedSubtomosArray = np.zeros((len(generatedSubtomos),
+                                       SUBTOMO_SIZE,
+                                       SUBTOMO_SIZE,
+                                       SUBTOMO_SIZE),
+                                      dtype=np.float64)
+
+    for i, subtomo in enumerate(generatedSubtomos):
+        generatedSubtomosArray[i, :, :, :] = subtomo[:, :, :]
+
+    generatedMisalignmentArray = np.zeros((len(generatedMisalignment)))
+
+    for i, misalignment in enumerate(generatedMisalignment):
+        generatedMisalignmentArray[i] = misalignment
+
+    print("Data augmentation:")
+    print("Number of new subtomos generated: %d\n" % len(generatedSubtomos))
+
+    print("Data structure shapes BEFORE augmentation:")
+    print("Input subtomo stream: " + str(normalizedInputSubtomoStream.shape))
+    print("Input misalignment info vector: " + str(misalignmentInfoVector.shape) + "\n")
+
+    normalizedInputSubtomoStream = np.concatenate((normalizedInputSubtomoStream, generatedSubtomosArray))
+    misalignmentInfoVector = np.concatenate((misalignmentInfoVector, generatedMisalignment))
+
+    print("Data structure shapes AFTER augmentation:")
+    print("Input subtomo stream: " + str(normalizedInputSubtomoStream.shape))
+    print("Input misalignment info vector: " + str(misalignmentInfoVector.shape) + "\n")
 
     # ------------------------------------------------------------ SPLIT DATA
     normISS_train, normISS_test, misalignmentInfoVector_train, misalignmentInfoVector_test = \
         train_test_split(normalizedInputSubtomoStream, misalignmentInfoVector, test_size=0.15, random_state=42)
 
-    print("Data objects dimensions")
+    print("Data objects final dimensions")
     print('Input train matrix: ' + str(np.shape(normISS_train)))
     print('Output train matrix: ' + str(np.shape(misalignmentInfoVector_train)))
     print('Input test matrix: ' + str(np.shape(normISS_test)))
