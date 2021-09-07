@@ -62,8 +62,8 @@ def dataAugmentationSubtomo(subtomo, aligment, foldAugmentation, shape):
     """
 
     # There is a maximum of 3 possible transformations
-    if foldAugmentation > 2:
-        foldAugmentation = 2
+    if foldAugmentation > 3:
+        foldAugmentation = 3
 
     # Subtomo data augmentation
     outputSubtomos = []
@@ -84,16 +84,17 @@ def dataAugmentationSubtomo(subtomo, aligment, foldAugmentation, shape):
 
         outputSubtomos.append(outputSubtomo)
 
-    # Testing the transformation
-    outputSubtomoImage.setData(outputSubtomo)
-
-    inputSubtomo.setData(subtomo)
-
-    inputFilePath = "/home/fede/cryoEMTools/deepMisalignmentTS/Networks/testIn.mrc"
-    outputFilePath = "/home/fede/cryoEMTools/deepMisalignmentTS/Networks/testOut.mrc"
-
-    inputSubtomo.write(inputFilePath)
-    outputSubtomoImage.write(outputFilePath)
+        # Testing the transformation
+        # if i == 2:
+        #     outputSubtomoImage.setData(outputSubtomo)
+        #
+        #     inputSubtomo.setData(subtomo)
+        #
+        #     inputFilePath = "/home/fede/cryoEMTools/deepMisalignmentTS/Networks/testIn.mrc"
+        #     outputFilePath = "/home/fede/cryoEMTools/deepMisalignmentTS/Networks/testOut.mrc"
+        #
+        #     inputSubtomo.write(inputFilePath)
+        #     outputSubtomoImage.write(outputFilePath)
 
     # Alignment data augmentation
     outputMisalignment = []
