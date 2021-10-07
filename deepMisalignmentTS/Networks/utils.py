@@ -51,19 +51,17 @@ def produceClassesDistributionInfo(misalignmentInfoVector, verbose=True):
     return numberOfAlignedSubtomos / totalSubtomos
 
 
-def dataAugmentationSubtomo(subtomo, alignment, foldAugmentation, shape):
+def dataAugmentationSubtomo(subtomo, alignment, shape):
     """ This methods takes a subtomo used as a reference and returns a rotated version of this for data augmentation.
     Given a subtomo there is only 3 possible transformation (the combination of 180º rotations in Y and Z axis) in order
     to match the missing wedge between the input and the output subtomo.
     :param subtomo: input reference subtomo.
     :param alignment: alignment/misalignment toggle of the subtomo
-    :param foldAugmentation: number of subtomos generated per each input reference.
     :param shape: output shape of the subtomos.
     """
 
     # There is a maximum of 3 possible transformations
-    if foldAugmentation > 3:
-        foldAugmentation = 3
+    foldAugmentation = 3
 
     # Subtomo data augmentation
     outputSubtomos = []
