@@ -69,9 +69,6 @@ if __name__ == "__main__":
         plotUtils.plotClassesDistribution(misalignmentInfoVector)
 
     # ------------------------------------------------------------ DATA AUGMENTATION
-    # Augmentation ratio of the input data
-    foldAugmentation = int(0.5 / alignedSubtomosRatio)
-
     generatedSubtomos = []
     generatedMisalignment = []
 
@@ -82,10 +79,7 @@ if __name__ == "__main__":
         if alignment == 1:
             newSubtomos, newMisalignment = utils.dataAugmentationSubtomo(normalizedInputSubtomoStream[i, :, :, :],
                                                                          alignment,
-                                                                         foldAugmentation - 1,
                                                                          (SUBTOMO_SIZE, SUBTOMO_SIZE, SUBTOMO_SIZE))
-
-            # generatedSubtomos.append(newSubtomos)
 
             for subtomo in newSubtomos:
                 generatedSubtomos.append(subtomo)
