@@ -17,6 +17,7 @@ Z_Y_ROTATION_180 = np.matmul(Z_ROTATION_180, Y_ROTATION_180)
 
 _MATRICES = [Z_ROTATION_180, Y_ROTATION_180, Z_Y_ROTATION_180]
 
+
 def normalizeInputDataStream(inputSubtomoStream):
     """ Method to normalize the input subtomo data stream to """
     std = inputSubtomoStream.std()
