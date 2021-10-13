@@ -34,6 +34,25 @@ def plotClassesDistribution(misalignmentInfoVector):
     plt.show()
 
 
+def plotClassesDistributionDynamic(numberOfAlignedSubtomos, numberOfMisalignedSubtomos):
+    """ This method plots and histogram of the classes distributions from the dataset between aligned and misaligned
+    subtomos in dynamic training mode. """
+
+    title = "Classes distribution"
+
+    classes = ["Aligned", "Misaligned"]
+    classesHeight = [numberOfAlignedSubtomos, numberOfMisalignedSubtomos]
+
+    # Histogram plot
+    plt.style.use('ggplot')
+
+    plt.title(title)
+
+    plt.bar(classes, classesHeight, color='r')
+
+    plt.show()
+
+
 def plotTraining(history, epochs):
     """ This method generates training post from the history of the model."""
 
