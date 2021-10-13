@@ -2,6 +2,7 @@
 
 import numpy as np
 from math import cos, sin
+import random
 
 import xmippLib as xmipp
 
@@ -148,3 +149,16 @@ def dataAugmentationSubtomoDynamic(subtomo, shape):
         #     outputSubtomoImage.write(outputFilePath)
 
     return outputSubtomos
+
+
+def generateTraningValidationVectors(size, validationRatio):
+    """ Generates a vector of ID's indicating if each subtomo from the set is for training or for validation"""
+    randomIndexes = random.sample(range(0, size - 1), int(size * validationRatio))
+
+    tvVector = np.ones(size)
+
+    for i in randomIndexes:
+        tvVector[i] = 0
+
+    return tvVector
+
