@@ -102,3 +102,49 @@ def dataAugmentationSubtomo(subtomo, alignment, shape):
         outputMisalignment.append(alignment)
 
     return outputSubtomos, outputMisalignment
+
+
+def dataAugmentationSubtomoDynamic(subtomo, shape):
+    """ This methods takes a subtomo used as a reference and returns a rotated version of this for data augmentation
+    in dynamic training mode.
+    Given a subtomo there is only 3 possible transformation (the combination of 180º rotations in Y and Z axis) in order
+    to match the missing wedge between the input and the output subtomo.
+    :param subtomo: input reference subtomo.
+    :param shape: output shape of the subtomos.
+    """
+
+    # There is a maximum of 3 possible transformations
+    foldAugmentation = 3
+
+    # Subtomo data augmentation
+    outputSubtomos = []
+
+    inputSubtomo = xmipp.Image()
+
+    outputSubtomo = np.zeros(shape)
+
+    for i in range(foldAugmentation):
+        for slice in range(shape[2]):
+            inputSubtomo.setData(subtomo[slice])
+
+            outputSubtomoImage = inputSubtomo.applyWarpAffine(list(_MATRICES[i].flatten()),
+                                                              shape,
+                                                              True)
+
+            outputSubtomo[slice] = outputSubtomoImage.getData()
+
+        outputSubtomos.append(outputSubtomo)
+
+        # Testing the transformation
+        # if i == 2:
+        #     outputSubtomoImage.setData(outputSubtomo)
+        #
+        #     inputSubtomo.setData(subtomo)
+        #
+        #     inputFilePath = "/home/fede/cryoEMTools/deepMisalignmentTS/Networks/testIn.mrc"
+        #     outputFilePath = "/home/fede/cryoEMTools/deepMisalignmentTS/Networks/testOut.mrc"
+        #
+        #     inputSubtomo.write(inputFilePath)
+        #     outputSubtomoImage.write(outputFilePath)
+
+    return outputSubtomos
