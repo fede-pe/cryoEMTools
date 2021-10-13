@@ -1,5 +1,5 @@
 
-""" This module exposes the definition of the different models to be trained to solve the misalignment detection
+""" This module contains the definition of the different models to be trained to solve the misalignment detection
 problem. """
 
 from tensorflow.keras.models import Model
