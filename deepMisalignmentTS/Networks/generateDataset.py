@@ -194,7 +194,7 @@ if __name__ == "__main__":
               "<alignmentFlag 1/0>: Flag to set the imported subtomos as aligned (1) or misaligned (0). \n\n"
               ""
               "Option 2: Create the output vectors indicating if the misaligned and aligned subtomos are split in two "
-              "different vectors (1) or not (0). if not, a second vector containing the misalignment information would "
+              "different vectors (1) or not (0). If not, a second vector containing the misalignment information would "
               "be generated:\n"
               "python generateDataset.py <splitVectorFlag 1/0>\n"
               "<splitVectorFlag 1/0>: Flag to set if the output vectors must be split.")
