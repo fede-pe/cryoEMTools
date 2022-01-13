@@ -18,8 +18,10 @@ import utils
 
 SUBTOMO_SIZE = 32  # Dimensions of the subtomos (cubic, SUBTOMO_SIZE x SUBTOMO_SIZE x SUBTOMO_SIZE shape)
 BATCH_SIZE = 128  # Number of boxes per batch
+NUMBER_RANDOM_BATCHES = -1
 EPOCHS = 2  # Number of epochs
 LEARNING_RATE = 0.001  # Learning rate
+TESTING_SPLIT = 0.15  # Ratio of data used for validation
 VALIDATION_SPLIT = 0.2  # Ratio of data used for validation
 
 if __name__ == "__main__":
@@ -65,6 +67,9 @@ if __name__ == "__main__":
     normalizedInputSubtomoStreamMisali = utils.normalizeInputDataStream(inputSubtomoStreamMisali)
 
     # ------------------------------------------------------------ PRODUCE SIDE INFO
+    # Update the number of random batches respect to the dataset and batch sizes
+    NUMBER_RANDOM_BATCHES = totalSubtomos / BATCH_SIZE
+
     # Output classes distribution info
     aliSubtomosRatio = numberOfAliSubtomos / totalSubtomos
     misaliSubtomosRatio = numberOfMisaliSubtomos / totalSubtomos
@@ -108,13 +113,13 @@ if __name__ == "__main__":
     print("Number of new subtomos generated: %d\n" % len(generatedSubtomosAli))
 
     print("Data structure shapes BEFORE augmentation:")
-    print("Input subtomo stream: " + str(normalizedInputSubtomoStreamAli.shape))
+    print("Input aligned subtomo stream: " + str(normalizedInputSubtomoStreamAli.shape))
 
     normalizedInputSubtomoStreamAli = np.concatenate((normalizedInputSubtomoStreamAli,
                                                       generatedSubtomosArrayAli))
 
     print("Data structure shapes AFTER augmentation:")
-    print("Input subtomo stream: " + str(normalizedInputSubtomoStreamAli.shape))
+    print("Input misaligned subtomo stream: " + str(normalizedInputSubtomoStreamAli.shape))
 
     # Data augmentation for misaligned subtomos
     generatedSubtomosMisali = []
@@ -155,12 +160,12 @@ if __name__ == "__main__":
     # ------------------------------------------------------------ SPLIT DATA
     # Aligned subtomos
     normISSAli_train, normISSAli_test = train_test_split(normalizedInputSubtomoStreamAli,
-                                                         test_size=0.15,
+                                                         test_size=TESTING_SPLIT,
                                                          random_state=42)
 
     # Misligned subtomos
     normISSMisali_train, normISSMisali_test = train_test_split(normalizedInputSubtomoStreamMisali,
-                                                               test_size=0.15,
+                                                               test_size=TESTING_SPLIT,
                                                                random_state=42)
 
     print("Data objects final dimensions")
@@ -176,19 +181,25 @@ if __name__ == "__main__":
     print("Train model")
     start_time = time()
 
+    # Date and time for output generation
+    dateAndTime = str(datetime.datetime.now())
+    dateAndTimeVector = dateAndTime.split(' ')
+    dateAndTime = dateAndTimeVector[0] + "_" + dateAndTimeVector[1]
+
     # Validation/training ID toggle vectors
     aliID = utils.generateTraningValidationVectors(len(normISSAli_train), VALIDATION_SPLIT)
     misaliID = utils.generateTraningValidationVectors(len(normISSMisali_train), VALIDATION_SPLIT)
 
     # Parameters
-    params = {'dim': (SUBTOMO_SIZE, SUBTOMO_SIZE, SUBTOMO_SIZE),
+    params = {'aliData': normISSAli_train,
+              'misaliData': normISSMisali_train,
+              'number_batches': NUMBER_RANDOM_BATCHES,
               'batch_size': BATCH_SIZE,
-              'n_classes': 6,
-              'shuffle': True}
+              'dim': (SUBTOMO_SIZE, SUBTOMO_SIZE, SUBTOMO_SIZE)}
 
     # Generators
-    training_generator = DataGenerator(partition['train'], **params)
-    validation_generator = DataGenerator(partition['validation'], **params)
+    training_generator = DataGenerator(aliIDs=aliID, **params)
+    validation_generator = DataGenerator(misaliIDs=misaliID, **params)
 
     # Design model
     model = compileModel(model=scratchModel(), learningRate=LEARNING_RATE)

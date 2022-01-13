@@ -162,3 +162,23 @@ def generateTraningValidationVectors(size, validationRatio):
 
     return tvVector
 
+
+def combineAliAndMisaliVectors(aliV, misaliV, shuffle=True):
+    """ Generate and subtomos vector and its associated class (aligned or misaligned) from two independent vectors of
+    aligned and misaligned subtomos"""
+
+    aliInfoV = np.ones(len(aliV))
+    misaliInfoV = np.zeros((len(misaliV)))
+
+    subtomoV = np.concatenate(aliV, misaliV)
+    intoV = np.concatenate(aliInfoV, misaliInfoV)
+
+    if shuffle:
+        tmp = zip(subtomoV, intoV)
+
+        random.shuffle(tmp)
+
+        return tmp[0], tmp[1]
+
+    else:
+        return subtomoV, intoV
