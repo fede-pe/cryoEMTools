@@ -1,5 +1,6 @@
 """ This module contains the definition of different classes used during the definition and training of the different
 models. """
+import random
 
 import numpy as np
 from tensorflow.keras.utils import Sequence, to_categorical
@@ -8,52 +9,46 @@ from tensorflow.keras.utils import Sequence, to_categorical
 class DataGenerator(Sequence):
     """Generates data for Keras"""
 
-    def __init__(self, list_IDs, labels, batch_size, number_epochs, dim, n_classes=10, shuffle=True):
+    def __init__(self, aliData, misaliData, aliIDs, misaliIDs, number_batches, batch_size, dim):
         """Initialization"""
+        self.aliData = aliData
+        self.misaliData = misaliData
+        self.aliIDs = aliIDs
+        self.misaliIDs = misaliIDs
+
         self.dim = dim
         self.batch_size = batch_size
-        self.labels = labels
-        self.list_IDs = list_IDs
-        self.n_channels = n_channels
-        self.n_classes = n_classes
-        self.shuffle = shuffle
-        self.on_epoch_end()
+        self.number_batches = number_batches
 
     def __len__(self):
         """Denotes the number of batches per epoch"""
-        return int(np.floor(len(self.list_IDs) / self.batch_size))
+        return self.number_batches
 
     def __getitem__(self, index):
         """Generate one batch of data"""
-        # Generate indexes of the batch
-        indexes = self.indexes[index * self.batch_size:(index + 1) * self.batch_size]
 
-        # Find list of IDs
-        list_IDs_temp = [self.list_IDs[k] for k in indexes]
-
-        # Generate data
-        X, y = self.__data_generation(list_IDs_temp)
+        X, y = self.__data_generation()
 
         return X, y
 
-    def on_epoch_end(self):
-        """Updates indexes after each epoch"""
-        self.indexes = np.arange(len(self.list_IDs))
-        if self.shuffle == True:
-            np.random.shuffle(self.indexes)
-
-    def __data_generation(self, list_IDs_temp):
-        """Generates data containing batch_size samples"""  # X : (n_samples, *dim, n_channels)
+    def __data_generation(self):
+        """Generates data containing batch_size samples"""  # X : (n_samples, *dim)
         # Initialization
-        X = np.empty((self.batch_size, *self.dim, self.n_channels))
-        y = np.empty((self.batch_size), dtype=int)
+        X = np.empty((self.batch_size, *self.dim))
+        y = np.empty(self.batch_size, dtype=int)
+
+        # Pick batch_size/2 elements from ali and misali data vectors (2 * batch_size/2)
+        aliIDsubset = random.sample(self.aliData, self.batch_size / 2)
+        misaliIDsubset = random.sample(self.misaliData, self.batch_size / 2)
 
         # Generate data
-        for i, ID in enumerate(list_IDs_temp):
+        for i, in range(len(aliIDsubset)):
             # Store sample
-            X[i,] = np.load('data/' + ID + '.npy')
+            X[2 * i, ] = aliIDsubset[i, ]
+            X[(2 * i) + 1, ] = self.misaliData[i, ]
 
             # Store class
-            y[i] = self.labels[ID]
+            y[2 * i] = aliIDsubset[i]
+            y[(2 * i) + 1, ] = misaliIDsubset[i]
 
-        return X, to_categorical(y, num_classes=self.n_classes)
+        return X, y
