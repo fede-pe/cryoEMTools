@@ -229,6 +229,7 @@ if __name__ == "__main__":
     loadModelDir = os.path.join(stackDir, "outputLog_" + dateAndTime + '/model.h5')
     model = load_model(loadModelDir)
 
+    normISS_test, misalignmentInfoVector_test = utils.combineAliAndMisaliVectors(normISSAli_test, normISSMisali_test, shuffle=True)
     misalignmentInfoVector_prediction = model.predict(normISS_test)
 
     # Convert the set of probabilities from the previous command into the set of predicted classes
