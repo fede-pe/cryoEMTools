@@ -151,16 +151,17 @@ def dataAugmentationSubtomoDynamic(subtomo, shape):
     return outputSubtomos
 
 
-def generateTraningValidationVectors(size, validationRatio):
-    """ Generates a vector of ID's indicating if each subtomo from the set is for training or for validation"""
-    randomIndexes = random.sample(range(0, size - 1), int(size * validationRatio))
+def generateTrainingValidationVectors(size, validationRatio):
+    """ Generates two vector of ID's indicating the indices of the subtomos leading to training and validation
+    respectively. The partition of length=size*validation ratio is always returned first."""
 
-    tvVector = np.ones(size)
+    # Vector containing the indices of a vector of given size in random order
+    randomIndexes = list(range(0, size - 1))
+    random.shuffle(randomIndexes)
 
-    for i in randomIndexes:
-        tvVector[i] = 0
+    limitRatio = int(size * validationRatio)
 
-    return tvVector
+    return randomIndexes[0: limitRatio], randomIndexes[limitRatio:]
 
 
 def combineAliAndMisaliVectors(aliV, misaliV, shuffle=True):

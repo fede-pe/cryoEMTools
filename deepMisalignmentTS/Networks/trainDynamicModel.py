@@ -187,8 +187,8 @@ if __name__ == "__main__":
     dateAndTime = dateAndTimeVector[0] + "_" + dateAndTimeVector[1]
 
     # Validation/training ID toggle vectors
-    aliID = utils.generateTraningValidationVectors(len(normISSAli_train), VALIDATION_SPLIT)
-    misaliID = utils.generateTraningValidationVectors(len(normISSMisali_train), VALIDATION_SPLIT)
+    aliID_validation, aliID_train = utils.generateTrainingValidationVectors(len(normISSAli_train), VALIDATION_SPLIT)
+    misaliID_validation, misaliID_train = utils.generateTrainingValidationVectors(len(normISSMisali_train), VALIDATION_SPLIT)
 
     # Parameters
     params = {'aliData': normISSAli_train,
@@ -198,8 +198,8 @@ if __name__ == "__main__":
               'dim': (SUBTOMO_SIZE, SUBTOMO_SIZE, SUBTOMO_SIZE)}
 
     # Generators
-    training_generator = DataGenerator(aliIDs=aliID, **params)
-    validation_generator = DataGenerator(misaliIDs=misaliID, **params)
+    training_generator = DataGenerator(aliIDs=aliID_train, misaliIDs=misaliID_train, **params)
+    validation_generator = DataGenerator(aliIDs=aliID_validation, misaliIDs=aliID_train, **params)
 
     # Design model
     model = compileModel(model=scratchModel(), learningRate=LEARNING_RATE)
