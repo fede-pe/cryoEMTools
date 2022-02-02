@@ -41,6 +41,10 @@ class DataGenerator(Sequence):
         aliIDsubset = random.sample(self.aliIDs, self.batch_size / 2)
         misaliIDsubset = random.sample(self.misaliIDs, self.batch_size / 2)
 
+        print("SHAPE OF ALI AND MISMALI SUBSETS")
+        print(np.shape(aliIDsubset))
+        print(np.shape(misaliIDsubset))
+
         # Generate data
         for i, in range(len(aliIDsubset)):
             # Store sample

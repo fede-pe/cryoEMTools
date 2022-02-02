@@ -21,10 +21,11 @@ BATCH_SIZE = 128  # Number of boxes per batch
 NUMBER_RANDOM_BATCHES = -1
 EPOCHS = 2  # Number of epochs
 LEARNING_RATE = 0.001  # Learning rate
-TESTING_SPLIT = 0.15  # Ratio of data used for validation
+TESTING_SPLIT = 0.15  # Ratio of data used for testing
 VALIDATION_SPLIT = 0.2  # Ratio of data used for validation
 
 if __name__ == "__main__":
+    # Running command
 
     # Check no program arguments missing
     if len(sys.argv) < 4:
@@ -195,7 +196,7 @@ if __name__ == "__main__":
               'misaliData': normISSMisali_train,
               'number_batches': NUMBER_RANDOM_BATCHES,
               'batch_size': BATCH_SIZE,
-              'dim': (SUBTOMO_SIZE, SUBTOMO_SIZE, SUBTOMO_SIZE)}
+              'dim': (SUBTOMO_SIZE, SUBTOMO_SIZE, SUBTOMO_SIZE, 1)}
 
     # Generators
     training_generator = DataGenerator(aliIDs=aliID_train, misaliIDs=misaliID_train, **params)
@@ -205,10 +206,15 @@ if __name__ == "__main__":
     model = compileModel(model=scratchModel(), learningRate=LEARNING_RATE)
 
     # Train model on dataset
+    print("Training model...")
     history = model.fit_generator(generator=training_generator,
                                   validation_data=validation_generator,
                                   use_multiprocessing=True,
                                   workers=6)
+
+    # history = model.fit_generator(normISSAli_train, np.ones(len(normISSAli_train)),
+    #                               use_multiprocessing=True,
+    #                               workers=6)
 
     myValLoss = np.zeros(1)
     myValLoss[0] = history.history['val_loss'][-1]
