@@ -38,18 +38,22 @@ class DataGenerator(Sequence):
         y = np.empty(self.batch_size, dtype=int)
 
         # Pick batch_size/2 elements from ali and misali data vectors (2 * batch_size/2)
-        aliIDsubset = random.sample(self.aliIDs, self.batch_size / 2)
-        misaliIDsubset = random.sample(self.misaliIDs, self.batch_size / 2)
+        aliIDsubset = random.sample(self.aliIDs, self.batch_size // 2)
+        misaliIDsubset = random.sample(self.misaliIDs, self.batch_size // 2)
 
-        print("SHAPE OF ALI AND MISMALI SUBSETS")
-        print(np.shape(aliIDsubset))
-        print(np.shape(misaliIDsubset))
+        # print("SHAPE OF ALI AND MISMALI SUBSETS")
+        # print(np.shape(aliIDsubset))
+        # print(np.shape(misaliIDsubset))
+        #
+        # print("SHAPE OF X AND y")
+        # print(np.shape(X))
+        # print(np.shape(y))
 
         # Generate data
-        for i, in range(len(aliIDsubset)):
+        for i in range(len(aliIDsubset)):
             # Store sample
-            X[2 * i, ] = self.aliData[aliIDsubset[i], :]
-            X[(2 * i) + 1, ] = self.misaliData[misaliIDsubset[i], :]
+            X[2 * i, :] = self.aliData[aliIDsubset[i], :]
+            X[(2 * i) + 1, :] = self.misaliData[misaliIDsubset[i], :]
 
             # Store class
             y[2 * i] = 1  # Ali

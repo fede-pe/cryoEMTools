@@ -171,15 +171,20 @@ def combineAliAndMisaliVectors(aliV, misaliV, shuffle=True):
     aliInfoV = np.ones(len(aliV))
     misaliInfoV = np.zeros((len(misaliV)))
 
-    subtomoV = np.concatenate(aliV, misaliV)
-    intoV = np.concatenate(aliInfoV, misaliInfoV)
+    subtomoV = np.concatenate((aliV, misaliV))
+    intoV = np.concatenate((aliInfoV, misaliInfoV))
+
+    if len(subtomoV) != len(intoV):
+        raise Exception("ERROR: len(subtomoV) != len(intoV) " + str(len(subtomoV)) + "!=" + str(len(intoV)))
 
     if shuffle:
-        tmp = zip(subtomoV, intoV)
+        randomize = np.arange(len(subtomoV))
+        np.random.shuffle(randomize)
 
-        random.shuffle(tmp)
+        subtomoV = subtomoV[randomize]
+        intoV = intoV[randomize]
 
-        return tmp[0], tmp[1]
+        return subtomoV, intoV
 
     else:
         return subtomoV, intoV

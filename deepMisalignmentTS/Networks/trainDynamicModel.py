@@ -69,7 +69,7 @@ if __name__ == "__main__":
 
     # ------------------------------------------------------------ PRODUCE SIDE INFO
     # Update the number of random batches respect to the dataset and batch sizes
-    NUMBER_RANDOM_BATCHES = totalSubtomos / BATCH_SIZE
+    NUMBER_RANDOM_BATCHES = totalSubtomos // BATCH_SIZE
 
     # Output classes distribution info
     aliSubtomosRatio = numberOfAliSubtomos / totalSubtomos
@@ -186,17 +186,19 @@ if __name__ == "__main__":
     dateAndTime = str(datetime.datetime.now())
     dateAndTimeVector = dateAndTime.split(' ')
     dateAndTime = dateAndTimeVector[0] + "_" + dateAndTimeVector[1]
+    dateAndTime = dateAndTime.replace(":", "-")
 
     # Validation/training ID toggle vectors
     aliID_validation, aliID_train = utils.generateTrainingValidationVectors(len(normISSAli_train), VALIDATION_SPLIT)
-    misaliID_validation, misaliID_train = utils.generateTrainingValidationVectors(len(normISSMisali_train), VALIDATION_SPLIT)
+    misaliID_validation, misaliID_train = utils.generateTrainingValidationVectors(len(normISSMisali_train),
+                                                                                  VALIDATION_SPLIT)
 
     # Parameters
     params = {'aliData': normISSAli_train,
               'misaliData': normISSMisali_train,
               'number_batches': NUMBER_RANDOM_BATCHES,
               'batch_size': BATCH_SIZE,
-              'dim': (SUBTOMO_SIZE, SUBTOMO_SIZE, SUBTOMO_SIZE, 1)}
+              'dim': (SUBTOMO_SIZE, SUBTOMO_SIZE, SUBTOMO_SIZE)}
 
     # Generators
     training_generator = DataGenerator(aliIDs=aliID_train, misaliIDs=misaliID_train, **params)
@@ -207,10 +209,10 @@ if __name__ == "__main__":
 
     # Train model on dataset
     print("Training model...")
-    history = model.fit_generator(generator=training_generator,
-                                  validation_data=validation_generator,
-                                  use_multiprocessing=True,
-                                  workers=6)
+    history = model.fit(training_generator,
+                        validation_data=validation_generator,
+                        use_multiprocessing=True,
+                        workers=6)
 
     # history = model.fit_generator(normISSAli_train, np.ones(len(normISSAli_train)),
     #                               use_multiprocessing=True,
@@ -218,9 +220,15 @@ if __name__ == "__main__":
 
     myValLoss = np.zeros(1)
     myValLoss[0] = history.history['val_loss'][-1]
-    np.savetxt(os.path.join(stackDir, "outputLog_" + dateAndTime + '/model.txt'), myValLoss)
 
-    model.save(os.path.join(stackDir, "outputLog_" + dateAndTime + '/model.h5'))
+    dirPath = os.path.join(stackDir, "outputLog_" + dateAndTime)
+
+    if not os.path.exists(dirPath):
+        os.makedirs(dirPath)
+
+    np.savetxt(os.path.join(dirPath, "model.txt"), myValLoss)
+    model.save(os.path.join(dirPath, "model.h5"))
+
     elapsed_time = time() - start_time
 
     print("Time spent training the model: %0.10f seconds." % elapsed_time)
@@ -235,7 +243,8 @@ if __name__ == "__main__":
     loadModelDir = os.path.join(stackDir, "outputLog_" + dateAndTime + '/model.h5')
     model = load_model(loadModelDir)
 
-    normISS_test, misalignmentInfoVector_test = utils.combineAliAndMisaliVectors(normISSAli_test, normISSMisali_test, shuffle=True)
+    normISS_test, misalignmentInfoVector_test = utils.combineAliAndMisaliVectors(normISSAli_test, normISSMisali_test,
+                                                                                 shuffle=True)
     misalignmentInfoVector_prediction = model.predict(normISS_test)
 
     # Convert the set of probabilities from the previous command into the set of predicted classes
