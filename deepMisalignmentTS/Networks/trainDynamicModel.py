@@ -19,7 +19,7 @@ import utils
 SUBTOMO_SIZE = 32  # Dimensions of the subtomos (cubic, SUBTOMO_SIZE x SUBTOMO_SIZE x SUBTOMO_SIZE shape)
 BATCH_SIZE = 128  # Number of boxes per batch
 NUMBER_RANDOM_BATCHES = -1
-EPOCHS = 2  # Number of epochs
+EPOCHS = 50  # Number of epochs
 LEARNING_RATE = 0.001  # Learning rate
 TESTING_SPLIT = 0.15  # Ratio of data used for testing
 VALIDATION_SPLIT = 0.2  # Ratio of data used for validation
@@ -192,6 +192,14 @@ if __name__ == "__main__":
     aliID_validation, aliID_train = utils.generateTrainingValidationVectors(len(normISSAli_train), VALIDATION_SPLIT)
     misaliID_validation, misaliID_train = utils.generateTrainingValidationVectors(len(normISSMisali_train),
                                                                                   VALIDATION_SPLIT)
+    # print("aliID_validation")
+    # print(aliID_validation)
+    # print("aliID_train")
+    # print(aliID_train)
+    # print("misaliID_validation")
+    # print(misaliID_validation)
+    # print("misaliID_train")
+    # print(misaliID_train)
 
     # Parameters
     params = {'aliData': normISSAli_train,
@@ -210,6 +218,7 @@ if __name__ == "__main__":
     # Train model on dataset
     print("Training model...")
     history = model.fit(training_generator,
+                        epochs=EPOCHS,
                         validation_data=validation_generator,
                         use_multiprocessing=True,
                         workers=6)
