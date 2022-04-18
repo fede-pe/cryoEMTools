@@ -193,14 +193,15 @@ if __name__ == "__main__":
     aliID_validation, aliID_train = utils.generateTrainingValidationVectors(len(normISSAli_train), VALIDATION_SPLIT)
     misaliID_validation, misaliID_train = utils.generateTrainingValidationVectors(len(normISSMisali_train),
                                                                                   VALIDATION_SPLIT)
-    # print("aliID_validation")
-    # print(aliID_validation)
-    # print("aliID_train")
-    # print(aliID_train)
-    # print("misaliID_validation")
-    # print(misaliID_validation)
-    # print("misaliID_train")
-    # print(misaliID_train)
+
+    # print("aliID_validation: " + str(len(aliID_validation)))
+    # print(sorted(aliID_validation))
+    # print("aliID_train: " + str(len(aliID_train)))
+    # print(sorted(aliID_train))
+    # print("misaliID_validation: " + str(len(misaliID_validation)))
+    # print(sorted(misaliID_validation))
+    # print("misaliID_train: " + str(len(misaliID_train)))
+    # print(sorted(misaliID_train))
 
     # Parameters
     params = {'aliData': normISSAli_train,
@@ -210,23 +211,24 @@ if __name__ == "__main__":
               'dim': (SUBTOMO_SIZE, SUBTOMO_SIZE, SUBTOMO_SIZE)}
 
     # Generators
-    training_generator = DataGenerator(aliIDs=aliID_train, misaliIDs=misaliID_train, **params)
-    validation_generator = DataGenerator(aliIDs=aliID_validation, misaliIDs=aliID_train, **params)
+    training_generator = DataGenerator(aliIDs=aliID_train,
+                                       misaliIDs=misaliID_train,
+                                       **params)
+    validation_generator = DataGenerator(aliIDs=aliID_validation,
+                                         misaliIDs=aliID_train,
+                                         **params)
 
-    # Design model
-    model = compileModel(model=scratchModel(), learningRate=LEARNING_RATE)
+    # Compile model
+    model = compileModel(model=scratchModel(),
+                         learningRate=LEARNING_RATE)
 
     # Train model on dataset
     print("Training model...")
     history = model.fit(training_generator,
-                        epochs=EPOCHS,
                         validation_data=validation_generator,
+                        epochs=EPOCHS,
                         use_multiprocessing=True,
-                        workers=6)
-
-    # history = model.fit_generator(normISSAli_train, np.ones(len(normISSAli_train)),
-    #                               use_multiprocessing=True,
-    #                               workers=6)
+                        workers=1)
 
     myValLoss = np.zeros(1)
     myValLoss[0] = history.history['val_loss'][-1]

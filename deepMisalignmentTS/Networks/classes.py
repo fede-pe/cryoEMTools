@@ -48,6 +48,9 @@ class DataGenerator(Sequence):
         # print("SHAPE OF X AND y")
         # print(np.shape(X))
         # print(np.shape(y))
+        #
+        # print(len(self.aliIDs))
+        # print(len(self.misaliIDs))
 
         # Generate data
         for i in range(self.batch_size//2):
