@@ -50,7 +50,7 @@ class DataGenerator(Sequence):
         # print(np.shape(y))
 
         # Generate data
-        for i in range(len(aliIDsubset)):
+        for i in range(self.batch_size//2):
             aliIndex = 2 * i
             misaliIndex = (2 * i) + 1
 
@@ -62,6 +62,30 @@ class DataGenerator(Sequence):
             y[aliIndex] = 1  # Ali
             y[misaliIndex] = 0  # Misali
 
-        print(y)
+        # Testing the numpy array generation
+        #
+        # import xmippLib as xmipp
+        # inputSubtomoArray1 = xmipp.Image()
+        # inputSubtomoArray2 = xmipp.Image()
+        # inputSubtomo1 = xmipp.Image()
+        # inputSubtomo2 = xmipp.Image()
+        #
+        # for i in range(self.batch_size//2):
+        #     aliIndex = 2 * i
+        #     misaliIndex = (2 * i) + 1
+        #
+        #     X_tmp = X[aliIndex, :]
+        #     inputSubtomoArray1.setData(X_tmp)
+        #     inputSubtomoArray1.write(str(aliIndex)+"_nparray_subtomo.mrc")
+        #
+        #     X_tmp = X[misaliIndex, :]
+        #     inputSubtomoArray2.setData(X_tmp)
+        #     inputSubtomoArray2.write(str(misaliIndex)+"_nparray_subtomo.mrc")
+        #
+        #     inputSubtomo1.setData(self.aliData[aliIDsubset[i], :])
+        #     inputSubtomo1.write(str(aliIndex)+"_subtomo.mrc")
+        #
+        #     inputSubtomo2.setData(self.misaliData[misaliIDsubset[i], :])
+        #     inputSubtomo2.write(str(misaliIndex)+"_subtomo.mrc")
 
         return X, y
