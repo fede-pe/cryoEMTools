@@ -87,7 +87,7 @@ def plotTraining(history, epochs):
     plt.show()
 
 
-def plotTesting(misalignmentInfoVector_prediction, misalignmentInfoVector_test):
+def plotTesting(misalignmentInfoVector_test, misalignmentInfoVector_prediction):
     """ This method generates testing post from the history of the model.
     Variable indicates the column number of the feature in the information matrix."""
 
