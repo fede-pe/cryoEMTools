@@ -20,7 +20,7 @@ import utils
 SUBTOMO_SIZE = 32  # Dimensions of the subtomos (cubic, SUBTOMO_SIZE x SUBTOMO_SIZE x SUBTOMO_SIZE shape)
 BATCH_SIZE = 64  # Number of boxes per batch
 NUMBER_RANDOM_BATCHES = -1
-EPOCHS = 5  # Number of epochs
+EPOCHS = 100  # Number of epochs
 LEARNING_RATE = 0.0001  # Learning rate
 TESTING_SPLIT = 0.15  # Ratio of data used for testing
 VALIDATION_SPLIT = 0.2  # Ratio of data used for validation
@@ -68,9 +68,18 @@ if __name__ == "__main__":
     normalizedInputSubtomoStreamAli = utils.normalizeInputDataStream(inputSubtomoStreamAli)
     normalizedInputSubtomoStreamMisali = utils.normalizeInputDataStream(inputSubtomoStreamMisali)
 
+    # Test normalization
+    # print("\n")
+    # print("normalizedInputSubtomoStreamAli stats: mean " + str(np.mean(normalizedInputSubtomoStreamAli)) +
+    #       " std: " + str(np.std(normalizedInputSubtomoStreamAli)))
+    # print("normalizedInputSubtomoStreamMisali stats: mean " + str(np.mean(normalizedInputSubtomoStreamMisali)) +
+    #       " std: " + str(np.std(normalizedInputSubtomoStreamMisali)))
+    # print("\n")
+
     # ------------------------------------------------------------ PRODUCE SIDE INFO
     # Update the number of random batches respect to the dataset and batch sizes
     NUMBER_RANDOM_BATCHES = totalSubtomos // BATCH_SIZE
+    NUMBER_RANDOM_BATCHES = 20
 
     # Output classes distribution info
     aliSubtomosRatio = numberOfAliSubtomos / totalSubtomos
@@ -255,9 +264,29 @@ if __name__ == "__main__":
     loadModelDir = os.path.join(stackDir, "outputLog_" + dateAndTime + '/model.h5')
     model = load_model(loadModelDir)
 
-    normISS_test, misalignmentInfoVector_test = utils.combineAliAndMisaliVectors(normISSAli_test, normISSMisali_test,
+    normISS_test, misalignmentInfoVector_test = utils.combineAliAndMisaliVectors(normISSAli_test,
+                                                                                 normISSMisali_test,
                                                                                  shuffle=True)
+    # Testing the numpy array generation
+    #
+    # import xmippLib as xmipp
+    # inputSubtomoArray1 = xmipp.Image()
+    # inputSubtomo1 = xmipp.Image()
+    #
+    # for i in range(len(normISS_test)):
+    #     X_tmp = normISS_test[i, :]
+    #     inputSubtomoArray1.setData(X_tmp)
+    #     inputSubtomoArray1.write(str(i)+"_test_nparray_subtomo.mrc")
+
+    # print("len(normISS_test) " + str(len(normISS_test)))
+    # print("len(misalignmentInfoVector_test) " + str(len(misalignmentInfoVector_test)))
+
     misalignmentInfoVector_prediction = model.predict(normISS_test)
+
+    print("misalignmentInfoVector_prediction")
+    print(misalignmentInfoVector_prediction)
+    print("misalignmentInfoVector_test")
+    print(misalignmentInfoVector_test)
 
     # Convert the set of probabilities from the previous command into the set of predicted classes
     misalignmentInfoVector_predictionClasses = np.argmax(misalignmentInfoVector_prediction, axis=1)
@@ -274,7 +303,9 @@ if __name__ == "__main__":
     loss = model.evaluate(normISS_test,
                           misalignmentInfoVector_test,
                           verbose=2)
-    print("\nTesting set total mean absolute error: {:5.2f}\n".format(loss))
+
+    print("Testing set mean absolute error: {:5.4f}".format(loss[0]))
+    print("Testing set accuracy: {:5.4f}".format(loss[1]))
 
     # Plot results from testing
     plotUtils.plotTesting(
