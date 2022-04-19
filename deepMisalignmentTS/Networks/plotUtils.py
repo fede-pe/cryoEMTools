@@ -113,8 +113,8 @@ def plotTesting(misalignmentInfoVector_prediction, misalignmentInfoVector_test):
             confusionMatrix[1][1] += 1
 
         # False positive
-        elif prediction == 0 and test == 1:
-            confusionMatrix[0][1] += 1
+        elif prediction == 1 and test == 0:
+            confusionMatrix[1][0] += 1
 
     df_cm = pd.DataFrame(confusionMatrix,
                          index=[i for i in classes],
