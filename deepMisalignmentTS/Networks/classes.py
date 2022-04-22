@@ -53,13 +53,26 @@ class DataGenerator(Sequence):
         # print(len(self.misaliIDs))
 
         # Generate data
+        # for i in range(self.batch_size//2):
+        #     aliIndex = 2 * i
+        #     misaliIndex = (2 * i) + 1
+        #
+        #     # Store sample
+        #     X[aliIndex, :] = self.aliData[aliIDsubset[i], :]
+        #     X[misaliIndex, :] = self.misaliData[misaliIDsubset[i], :]
+        #
+        #     # Store class
+        #     y[aliIndex] = 1  # Ali
+        #     y[misaliIndex] = 0  # Misali
+
+        # Generate phantom data (Ali as it is, Misali = Ali * -1)
         for i in range(self.batch_size//2):
             aliIndex = 2 * i
             misaliIndex = (2 * i) + 1
 
             # Store sample
             X[aliIndex, :] = self.aliData[aliIDsubset[i], :]
-            X[misaliIndex, :] = self.misaliData[misaliIDsubset[i], :]
+            X[misaliIndex, :] = self.aliData[aliIDsubset[i], :] * -1
 
             # Store class
             y[aliIndex] = 1  # Ali
