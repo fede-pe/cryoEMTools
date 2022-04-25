@@ -68,12 +68,6 @@ def plotTraining(history, epochs):
     plt.legend()
     plt.show()
 
-    # Learning rate plot
-    plt.plot(history.epoch, history.history["lr"], "bo-")
-
-    plt.xlabel("Epoch")
-    plt.ylabel("Learning Rate", color='b')
-
     plt.tick_params('y', colors='b')
     plt.gca().set_xlim(0, epochs - 1)
     plt.grid(True)
