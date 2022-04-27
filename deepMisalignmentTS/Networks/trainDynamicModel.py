@@ -265,6 +265,7 @@ if __name__ == "__main__":
 
     normISS_test, misalignmentInfoVector_test = utils.combineAliAndMisaliVectors(normISSAli_test,
                                                                                  normISSMisali_test,
+                                                                                 SUBTOMO_SIZE,
                                                                                  shuffle=False)
     # Testing the numpy array generation
     #
