@@ -168,23 +168,27 @@ def combineAliAndMisaliVectors(aliV, misaliV, shuffle=True):
     """ Generate and subtomos vector and its associated class (aligned or misaligned) from two independent vectors of
     aligned and misaligned subtomos"""
 
+    # aliInfoV = np.ones(len(aliV))
+    # misaliInfoV = np.zeros((len(misaliV)))
+    #
+    # subtomoV = np.concatenate((aliV, misaliV))
+    # infoV = np.concatenate((aliInfoV, misaliInfoV))
+
+    # Generate phantom data (Ali as it is, Misali = Ali * -1)
     aliInfoV = np.ones(len(aliV))
-    misaliInfoV = np.zeros((len(misaliV)))
+    misaliInfoV = np.zeros((len(aliV)))
 
-    subtomoV = np.concatenate((aliV, misaliV))
-    intoV = np.concatenate((aliInfoV, misaliInfoV))
+    subtomoV = np.concatenate((aliV, aliV * -1))
+    infoV = np.concatenate((aliInfoV, misaliInfoV))
 
-    if len(subtomoV) != len(intoV):
-        raise Exception("ERROR: len(subtomoV) != len(intoV) " + str(len(subtomoV)) + "!=" + str(len(intoV)))
+    if len(subtomoV) != len(infoV):
+        raise Exception("ERROR: len(subtomoV) != len(infoV) " + str(len(subtomoV)) + "!=" + str(len(infoV)))
 
     if shuffle:
         randomize = np.arange(len(subtomoV))
         np.random.shuffle(randomize)
 
         subtomoV = subtomoV[randomize]
-        intoV = intoV[randomize]
+        infoV = infoV[randomize]
 
-        return subtomoV, intoV
-
-    else:
-        return subtomoV, intoV
+    return subtomoV, infoV
