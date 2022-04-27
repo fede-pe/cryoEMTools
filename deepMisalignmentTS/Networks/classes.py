@@ -53,30 +53,63 @@ class DataGenerator(Sequence):
         # print(len(self.misaliIDs))
 
         # Generate data
-        # for i in range(self.batch_size//2):
-        #     aliIndex = 2 * i
-        #     misaliIndex = (2 * i) + 1
-        #
-        #     # Store sample
-        #     X[aliIndex, :] = self.aliData[aliIDsubset[i], :]
-        #     X[misaliIndex, :] = self.misaliData[misaliIDsubset[i], :]
-        #
-        #     # Store class
-        #     y[aliIndex] = 1  # Ali
-        #     y[misaliIndex] = 0  # Misali
-
-        # Generate phantom data (Ali as it is, Misali = Ali * -1)
         for i in range(self.batch_size//2):
             aliIndex = 2 * i
             misaliIndex = (2 * i) + 1
 
             # Store sample
             X[aliIndex, :] = self.aliData[aliIDsubset[i], :]
-            X[misaliIndex, :] = self.aliData[aliIDsubset[i], :] * -1
+            X[misaliIndex, :] = self.misaliData[misaliIDsubset[i], :]
 
             # Store class
             y[aliIndex] = 1  # Ali
             y[misaliIndex] = 0  # Misali
+
+        # Generate phantom data (Ali as it is, Misali = Ali * -1)
+        # for i in range(self.batch_size // 2):
+        #     aliIndex = 2 * i
+        #     misaliIndex = (2 * i) + 1
+        #
+        #     # Store sample
+        #     X[aliIndex, :] = self.aliData[aliIDsubset[i], :]
+        #     X[misaliIndex, :] = self.aliData[aliIDsubset[i], :] * -1
+        #
+        #     # Store class
+        #     y[aliIndex] = 1  # Ali
+        #     y[misaliIndex] = 0  # Misali
+
+        # # Generate phantom data (Ali as it is, Misali = rot90z of ali)
+        # for i in range(self.batch_size // 2):
+        #     from math import cos, sin
+        #     import xmippLib as xmipp
+        #
+        #     Z_ROTATION_90 = np.asarray([[cos(np.deg2rad(180)), -sin(np.deg2rad(180)), 0],
+        #                                 [sin(np.deg2rad(180)), cos(np.deg2rad(180)), 0],
+        #                                 [0, 0, 1]])
+        #
+        #     aliIndex = 2 * i
+        #     misaliIndex = (2 * i) + 1
+        #
+        #     subtomo = self.aliData[aliIDsubset[i], :]
+        #     inputSubtomo = xmipp.Image()
+        #     outputSubtomo = np.zeros(self.dim)
+        #
+        #     for slice in range(self.dim[0]):
+        #         inputSubtomo.setData(subtomo[slice])
+        #
+        #         outputSubtomoImage = inputSubtomo.applyWarpAffine(list(Z_ROTATION_90.flatten()),
+        #                                                           self.dim,
+        #                                                           True)
+        #
+        #         outputSubtomo[slice] = outputSubtomoImage.getData()
+        #
+        #     # Store sample
+        #     X[aliIndex, :] = self.aliData[aliIDsubset[i], :]
+        #     X[misaliIndex, :] = outputSubtomo
+        #
+        #     # Store class
+        #     y[aliIndex] = 1  # Ali
+        #     y[misaliIndex] = 0  # Misali
 
         # Testing the numpy array generation
         #
