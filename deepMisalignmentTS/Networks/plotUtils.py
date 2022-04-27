@@ -86,7 +86,8 @@ def plotTesting(misalignmentInfoVector_test, misalignmentInfoVector_prediction):
     Variable indicates the column number of the feature in the information matrix."""
 
     title = "Prediction confusion matrix"
-    classes = ["Misaligned", "Aligned"]
+    classes_pred = ["Misaligned_pred", "Aligned_pred"]
+    classes_gt = ["Misaligned_gt", "Aligned_gt"]
 
     confusionMatrix = np.zeros((2, 2))
 
@@ -111,8 +112,8 @@ def plotTesting(misalignmentInfoVector_test, misalignmentInfoVector_prediction):
             confusionMatrix[1][0] += 1
 
     df_cm = pd.DataFrame(confusionMatrix,
-                         index=[i for i in classes],
-                         columns=[i for i in classes])
+                         index=[i for i in classes_pred],
+                         columns=[i for i in classes_gt])
 
     plt.figure(figsize=(10, 7))
     plt.title(title)
