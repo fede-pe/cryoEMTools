@@ -6,7 +6,6 @@ from time import time
 import os
 import sys
 
-import tensorflow.keras.callbacks as callbacks
 from tensorflow.keras.models import load_model
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error
@@ -266,7 +265,7 @@ if __name__ == "__main__":
 
     normISS_test, misalignmentInfoVector_test = utils.combineAliAndMisaliVectors(normISSAli_test,
                                                                                  normISSMisali_test,
-                                                                                 shuffle=True)
+                                                                                 shuffle=False)
     # Testing the numpy array generation
     #
     # import xmippLib as xmipp
@@ -289,7 +288,9 @@ if __name__ == "__main__":
     print(misalignmentInfoVector_test)
 
     # Convert the set of probabilities from the previous command into the set of predicted classes
-    misalignmentInfoVector_predictionClasses = np.argmax(misalignmentInfoVector_prediction, axis=1)
+    misalignmentInfoVector_predictionClasses = np.round(misalignmentInfoVector_prediction)
+
+    print(misalignmentInfoVector_predictionClasses)
 
     np.savetxt(os.path.join(stackDir, 'model_prediction.txt'),
                misalignmentInfoVector_predictionClasses)
