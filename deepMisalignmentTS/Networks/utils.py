@@ -164,7 +164,7 @@ def generateTrainingValidationVectors(size, validationRatio):
     return randomIndexes[0: limitRatio], randomIndexes[limitRatio:]
 
 
-def combineAliAndMisaliVectors(aliV, misaliV, shuffle=True):
+def combineAliAndMisaliVectors(aliV, misaliV, subtomoSize,  shuffle=True):
     """ Generate and subtomos vector and its associated class (aligned or misaligned) from two independent vectors of
     aligned and misaligned subtomos"""
 
@@ -180,6 +180,39 @@ def combineAliAndMisaliVectors(aliV, misaliV, shuffle=True):
 
     subtomoV = np.concatenate((aliV, aliV * -1))
     infoV = np.concatenate((aliInfoV, misaliInfoV))
+
+    # # Generate phantom data (Ali as it is, Misali = rot90z of ali)
+    # aliInfoV = np.ones(len(aliV))
+    # misaliInfoV = np.zeros((len(aliV)))
+    #
+    # subtomoV = np.zeros(((len(aliV)+len(aliV)), *(subtomoSize, subtomoSize, subtomoSize)))
+    #
+    # for i, _ in enumerate(aliV):
+    #     subtomoV[i, :] = aliV[i, :]
+    #
+    # infoV = np.concatenate((aliInfoV, misaliInfoV))
+    #
+    # for i, subtomo in enumerate(aliV):
+    #     from math import cos, sin
+    #     import xmippLib as xmipp
+    #
+    #     Z_ROTATION_90 = np.asarray([[cos(np.deg2rad(180)), -sin(np.deg2rad(180)), 0],
+    #                                 [sin(np.deg2rad(180)), cos(np.deg2rad(180)), 0],
+    #                                 [0, 0, 1]])
+    #
+    #     inputSubtomo = xmipp.Image()
+    #     outputSubtomo = np.zeros((len(subtomo), len(subtomo), len(subtomo)))
+    #
+    #     for slice in range(len(subtomo)):
+    #         inputSubtomo.setData(subtomo[slice])
+    #
+    #         outputSubtomoImage = inputSubtomo.applyWarpAffine(list(Z_ROTATION_90.flatten()),
+    #                                                           (len(subtomo), len(subtomo), len(subtomo)),
+    #                                                           True)
+    #
+    #         outputSubtomo[slice] = outputSubtomoImage.getData()
+    #
+    #     subtomoV[len(aliV)+i, :] = outputSubtomo
 
     if len(subtomoV) != len(infoV):
         raise Exception("ERROR: len(subtomoV) != len(infoV) " + str(len(subtomoV)) + "!=" + str(len(infoV)))
