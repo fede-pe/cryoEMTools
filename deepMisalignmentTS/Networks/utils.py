@@ -156,7 +156,7 @@ def generateTrainingValidationVectors(size, validationRatio):
     respectively. The partition of length=size*validation ratio is always returned first."""
 
     # Vector containing the indices of a vector of given size in random order
-    randomIndexes = list(range(0, size - 1))
+    randomIndexes = list(range(0, size))
     random.shuffle(randomIndexes)
 
     limitRatio = int(size * validationRatio)
