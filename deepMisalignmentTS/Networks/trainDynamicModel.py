@@ -29,7 +29,7 @@ if __name__ == "__main__":
 
     # Check no program arguments missing
     if len(sys.argv) < 4:
-        print("Usage: scipion python batch_deepDefocus.py <stackDir> <verboseOutput 0/1> <generatePlots 0/1>")
+        print("Usage: scipion python trainDynamicModel.py <stackDir> <verboseOutput 0/1> <generatePlots 0/1>")
         sys.exit()
 
     # Path with the input stack of data
