@@ -19,7 +19,7 @@ import utils
 SUBTOMO_SIZE = 32  # Dimensions of the subtomos (cubic, SUBTOMO_SIZE x SUBTOMO_SIZE x SUBTOMO_SIZE shape)
 BATCH_SIZE = 64  # Number of boxes per batch
 NUMBER_RANDOM_BATCHES = -1
-EPOCHS = 30  # Number of epochs
+EPOCHS = 10  # Number of epochs
 LEARNING_RATE = 0.0001  # Learning rate
 TESTING_SPLIT = 0.15  # Ratio of data used for testing
 VALIDATION_SPLIT = 0.2  # Ratio of data used for validation
@@ -223,7 +223,7 @@ if __name__ == "__main__":
                                        misaliIDs=misaliID_train,
                                        **params)
     validation_generator = DataGenerator(aliIDs=aliID_validation,
-                                         misaliIDs=aliID_train,
+                                         misaliIDs=misaliID_validation,
                                          **params)
 
     # Compile model
