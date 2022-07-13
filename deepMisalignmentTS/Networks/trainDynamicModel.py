@@ -78,7 +78,6 @@ if __name__ == "__main__":
     # ------------------------------------------------------------ PRODUCE SIDE INFO
     # Update the number of random batches respect to the dataset and batch sizes
     NUMBER_RANDOM_BATCHES = totalSubtomos // BATCH_SIZE
-    NUMBER_RANDOM_BATCHES = 20
 
     # Output classes distribution info
     aliSubtomosRatio = numberOfAliSubtomos / totalSubtomos
