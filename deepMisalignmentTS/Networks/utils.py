@@ -168,18 +168,18 @@ def combineAliAndMisaliVectors(aliV, misaliV, subtomoSize,  shuffle=True):
     """ Generate and subtomos vector and its associated class (aligned or misaligned) from two independent vectors of
     aligned and misaligned subtomos"""
 
-    # aliInfoV = np.ones(len(aliV))
-    # misaliInfoV = np.zeros((len(misaliV)))
-    #
-    # subtomoV = np.concatenate((aliV, misaliV))
-    # infoV = np.concatenate((aliInfoV, misaliInfoV))
-
-    # Generate phantom data (Ali as it is, Misali = Ali * -1)
     aliInfoV = np.ones(len(aliV))
-    misaliInfoV = np.zeros((len(aliV)))
+    misaliInfoV = np.zeros((len(misaliV)))
 
-    subtomoV = np.concatenate((aliV, aliV * -1))
+    subtomoV = np.concatenate((aliV, misaliV))
     infoV = np.concatenate((aliInfoV, misaliInfoV))
+
+    # # Generate phantom data (Ali as it is, Misali = Ali * -1)
+    # aliInfoV = np.ones(len(aliV))
+    # misaliInfoV = np.zeros((len(aliV)))
+    #
+    # subtomoV = np.concatenate((aliV, aliV * -1))
+    # infoV = np.concatenate((aliInfoV, misaliInfoV))
 
     # # Generate phantom data (Ali as it is, Misali = rot90z of ali)
     # aliInfoV = np.ones(len(aliV))
