@@ -28,8 +28,18 @@ if __name__ == "__main__":
     # Running command
 
     # Check no program arguments missing
-    if len(sys.argv) < 4:
-        print("Usage: scipion python trainDynamicModel.py <stackDir> <verboseOutput 0/1> <generatePlots 0/1>")
+    if len(sys.argv) == 4:
+        retrainModel = False
+        print("Starting new model training mode")
+    elif len(sys.argv) == 5:
+        retrainModel = True
+        print("Starting retraining model mode")
+
+        # Path with the previously trained model
+        pretrainedModelPath = sys.argv[4]
+    else:
+        print("Usage: scipion python trainDynamicModel.py <stackDir> <verboseOutput 0/1> <generatePlots 0/1> "
+              "[modelDir]")
         sys.exit()
 
     # Path with the input stack of data
@@ -226,8 +236,13 @@ if __name__ == "__main__":
                                          **params)
 
     # Compile model
-    model = compileModel(model=scratchModel(),
-                         learningRate=LEARNING_RATE)
+    if not retrainModel:
+        print("Generating a de novo model for training")
+        model = compileModel(model=scratchModel(),
+                             learningRate=LEARNING_RATE)
+    else:
+        print("Loading pretrained model located at :" + pretrainedModelPath)
+        model = load_model(pretrainedModelPath)
 
     # Train model on dataset
     print("Training model...")
