@@ -189,12 +189,13 @@ if __name__ == "__main__":
         print("2 options usage:\n\n"
               ""
               "Option 1: Add subtomos to the dataset indicating if they are aligned or not:\n"
-              "python generateDataset.py '<pathPatternToSubtomoFiles>' <alignmentFlag 1/0> \n"
+              "python3 generateDataset.py '<pathPatternToSubtomoFiles>' <alignmentFlag 1/0> \n"
               "<pathPatternToSubtomoFiles>: Regex path to the subtomo volume files, using quotes.\n"
               "<alignmentFlag 1/0>: Flag to set the imported subtomos as aligned (1) or misaligned (0). \n\n"
               ""
               "Option 2: Create the output vectors indicating if the misaligned and aligned subtomos are split in two "
               "different vectors (1) or not (0). If not, a second vector containing the misalignment information would "
               "be generated:\n"
-              "python generateDataset.py <splitVectorFlag 1/0>\n"
-              "<splitVectorFlag 1/0>: Flag to set if the output vectors must be split.")
+              "python3 generateDataset.py <splitVectorFlag 1/0>\n"
+              "<splitVectorFlag 1/0>: Flag to set if the output vectors must be split.\n\n"
+              "IMPORTANT: source xmipp binaries in terminal to avoid using scipion.")
