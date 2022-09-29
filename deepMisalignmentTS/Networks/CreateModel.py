@@ -1,12 +1,14 @@
 
 """ This module contains the definition of the different models to be trained to solve the misalignment detection
 problem. """
+import os
 
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Conv3D, MaxPool3D, BatchNormalization, Dropout, Flatten, Dense, \
+from tensorflow.keras.layers import Input, Conv3D, MaxPool3D, BatchNormalization, Dropout, Dense, \
     GlobalAveragePooling3D
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import BinaryCrossentropy
+from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 
 
 def compileModel(model, learningRate):
@@ -51,3 +53,32 @@ def scratchModel():
     L = Dense(units=1, name="output", activation="sigmoid")(L)
 
     return Model(inputLayer, L, name="3dDNNmisali")
+
+
+def getCallbacks(modelCheckpointFilePath):
+    myCallbacks = []
+
+    mcp = ModelCheckpoint(
+        os.path.join(modelCheckpointFilePath, 'model.{epoch:02d}-{val_loss:.2f}.h5'),
+        monitor='val_loss',
+        save_weights_only=False,
+        save_best_only=True,
+        mode='min',  # Because we are monitoring val_loss
+    )
+
+    myCallbacks.append(mcp)
+
+    rlrop = ReduceLROnPlateau(
+        monitor='val_loss',
+        factor=0.1,
+        patience=5,
+        verbose=1,
+        mode='auto',
+        min_delta=0.0001,
+        cooldown=0,
+        min_lr=0
+    )
+
+    myCallbacks.append(rlrop)
+
+    return myCallbacks

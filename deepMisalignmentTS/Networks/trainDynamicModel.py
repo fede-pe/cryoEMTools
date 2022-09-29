@@ -11,7 +11,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error
 import numpy as np
 
-from CreateModel import compileModel, scratchModel
+from CreateModel import compileModel, scratchModel, getCallbacks
 from classes import DataGenerator
 import plotUtils
 import utils
@@ -246,19 +246,21 @@ if __name__ == "__main__":
 
     # Train model on dataset
     print("Training model...")
-    history = model.fit(training_generator,
-                        validation_data=validation_generator,
-                        epochs=EPOCHS,
-                        use_multiprocessing=True,
-                        workers=1)
-
-    myValLoss = np.zeros(1)
-    myValLoss[0] = history.history['val_loss'][-1]
 
     dirPath = os.path.join(stackDir, "outputLog_" + dateAndTime)
 
     if not os.path.exists(dirPath):
         os.makedirs(dirPath)
+
+    history = model.fit(training_generator,
+                        validation_data=validation_generator,
+                        epochs=EPOCHS,
+                        use_multiprocessing=True,
+                        workers=1,
+                        callbacks=getCallbacks(dirPath))
+
+    myValLoss = np.zeros(1)
+    myValLoss[0] = history.history['val_loss'][-1]
 
     np.savetxt(os.path.join(dirPath, "model.txt"), myValLoss)
     model.save(os.path.join(dirPath, "model.h5"))
