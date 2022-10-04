@@ -69,7 +69,9 @@ class ScriptTomoDecisionTree:
                 X.append(vector[:-1])
                 y.append(vector[-1])
 
-        testSize = TEST_SPLIT * len(X)
+        testSize = int(TEST_SPLIT * len(X))
+
+        print(testSize)
 
         self.infoData_train = X[:testSize]
         self.classData_train = y[:testSize]
