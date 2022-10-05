@@ -56,6 +56,9 @@ class ScriptTomoDecisionTree:
         """
           Read input data
         """
+
+        print("Reading input data from " + self.filePath)
+
         X = []
         y = []
 
@@ -83,6 +86,8 @@ class ScriptTomoDecisionTree:
           Train decision tree
         """
 
+        print("Training tree")
+
         self.dtc.fit(self.infoData_train, self.classData_train)
 
         tree.plot_tree(self.dtc)
@@ -91,6 +96,8 @@ class ScriptTomoDecisionTree:
         """
           Test decision tree
         """
+
+        print("Testing tree")
 
         for d in self.infoData_test:
             self.dtc.predict(d)
