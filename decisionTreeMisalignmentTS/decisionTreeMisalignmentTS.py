@@ -29,7 +29,7 @@ import sys
 import random
 
 import matplotlib.pyplot as plt
-from sklearn import tree
+from sklearn import tree, metrics
 import numpy as np
 
 TEST_SPLIT = 0.2
@@ -42,7 +42,6 @@ class ScriptTomoDecisionTree:
                      'averageFiducialResidualsInImage_1',
                      'stdFiducialResidualsInImage_0',
                      'stdFiducialResidualsInImage_0.5',
-                     'stdFiducialResidualsInImage_0',
                      'stdFiducialResidualsInImage_1',
                      'averageResidualDistancePerFiducial_0',
                      'averageResidualDistancePerFiducial_0.5',
@@ -118,7 +117,12 @@ class ScriptTomoDecisionTree:
 
         self.dtc.fit(self.infoData_train, self.classData_train)
 
-        tree.plot_tree(self.dtc)
+        text_representation = tree.export_text(self.dtc)
+        print(text_representation)
+
+        tree.plot_tree(self.dtc,
+                       feature_names=self.feature_names,
+                       filled=True)
         plt.show()
 
     def testDecisionTree(self):
@@ -128,7 +132,9 @@ class ScriptTomoDecisionTree:
 
         print("Testing tree")
 
-        self.dtc.predict(self.infoData_test)
+        y_predict = self.dtc.predict(self.infoData_test)
+
+        print("Model accuracy: " + str(metrics.accuracy_score(self.classData_test, y_predict)))
 
 
 if __name__ == '__main__':
