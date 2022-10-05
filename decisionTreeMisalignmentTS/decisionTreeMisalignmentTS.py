@@ -37,6 +37,26 @@ TEST_SPLIT = 0.2
 
 class ScriptTomoDecisionTree:
 
+    feature_names = ['averageFiducialResidualsInImage_0',
+                     'averageFiducialResidualsInImage_0.5',
+                     'averageFiducialResidualsInImage_1',
+                     'stdFiducialResidualsInImage_0',
+                     'stdFiducialResidualsInImage_0.5',
+                     'stdFiducialResidualsInImage_0',
+                     'stdFiducialResidualsInImage_1',
+                     'averageResidualDistancePerFiducial_0',
+                     'averageResidualDistancePerFiducial_0.5',
+                     'averageResidualDistancePerFiducial_1',
+                     'stdResidualDistancePerFiducial_0',
+                     'stdResidualDistancePerFiducial_0.5',
+                     'stdResidualDistancePerFiducial_1',
+                     'ratioOfImagesOutOfRange_0',
+                     'ratioOfImagesOutOfRange_0.5',
+                     'ratioOfImagesOutOfRange_1',
+                     'longestMisalignedChain_0',
+                     'longestMisalignedChain_0.5',
+                     'longestMisalignedChain_1']
+
     def __init__(self, filePath):
         self.filePath = filePath
 
