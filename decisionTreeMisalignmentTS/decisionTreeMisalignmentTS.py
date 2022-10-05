@@ -65,7 +65,7 @@ class ScriptTomoDecisionTree:
             random.shuffle(lines)
 
             for line in lines:
-                vector = line.split()
+                vector = line.split(',')
                 X.append(vector[:-1])
                 y.append(vector[-1])
 
