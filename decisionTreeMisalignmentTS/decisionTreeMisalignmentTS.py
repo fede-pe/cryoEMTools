@@ -27,7 +27,10 @@
 
 import sys
 import random
+
+import matplotlib.pyplot as plt
 from sklearn import tree
+import numpy as np
 
 TEST_SPLIT = 0.2
 
@@ -69,17 +72,22 @@ class ScriptTomoDecisionTree:
 
             for line in lines:
                 vector = line.split(',')
-                X.append(vector[:-1])
-                y.append(vector[-1])
+                vector_f = [float(i) for i in vector]
+                X.append(vector_f[:-1])
+                y.append(vector_f[-1])
+
+        X_array = np.asarray(X)
+        y_array = np.asarray(y)
+
+        X_array.reshape(-1, 1)
+        y_array.reshape(-1, 1)
 
         testSize = int(TEST_SPLIT * len(X))
 
-        print(testSize)
-
-        self.infoData_train = X[:testSize]
-        self.classData_train = y[:testSize]
-        self.infoData_test = X[testSize:]
-        self.classData_test = y[testSize:]
+        self.infoData_train = X_array[:testSize]
+        self.classData_train = y_array[:testSize]
+        self.infoData_test = X_array[testSize:]
+        self.classData_test = y_array[testSize:]
 
     def trainDecisionTree(self):
         """
@@ -91,6 +99,7 @@ class ScriptTomoDecisionTree:
         self.dtc.fit(self.infoData_train, self.classData_train)
 
         tree.plot_tree(self.dtc)
+        plt.show()
 
     def testDecisionTree(self):
         """
@@ -99,8 +108,7 @@ class ScriptTomoDecisionTree:
 
         print("Testing tree")
 
-        for d in self.infoData_test:
-            self.dtc.predict(d)
+        self.dtc.predict(self.infoData_test)
 
 
 if __name__ == '__main__':
