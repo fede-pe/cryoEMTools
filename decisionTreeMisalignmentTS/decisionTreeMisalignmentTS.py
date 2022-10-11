@@ -103,10 +103,10 @@ class ScriptTomoDecisionTree:
 
         testSize = int(TEST_SPLIT * len(X))
 
-        self.infoData_train = X_array[:testSize]
-        self.classData_train = y_array[:testSize]
-        self.infoData_test = X_array[testSize:]
-        self.classData_test = y_array[testSize:]
+        self.infoData_train = X_array[testSize:]
+        self.classData_train = y_array[testSize:]
+        self.infoData_test = X_array[:testSize]
+        self.classData_test = y_array[: testSize]
 
     def trainDecisionTree(self):
         """
