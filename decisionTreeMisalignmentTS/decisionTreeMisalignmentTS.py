@@ -30,13 +30,14 @@ import random
 
 import matplotlib.pyplot as plt
 from sklearn import tree, metrics
+from sklearn.ensemble import RandomForestClassifier
+import seaborn as sns
 import numpy as np
 
 TEST_SPLIT = 0.2
 
 
 class ScriptTomoDecisionTree:
-
     feature_names = ['averageFiducialResidualsInImage_0',
                      'averageFiducialResidualsInImage_0.5',
                      'averageFiducialResidualsInImage_1',
@@ -56,10 +57,16 @@ class ScriptTomoDecisionTree:
                      'longestMisalignedChain_0.5',
                      'longestMisalignedChain_1']
 
-    def __init__(self, filePath):
+    def __init__(self, filePath, mode):
         self.filePath = filePath
 
-        self.dtc = tree.DecisionTreeClassifier()
+        if mode == "0":
+            print("Tree mode")
+            self.dtc = tree.DecisionTreeClassifier()
+
+        else:
+            print("Forest mode")
+            self.dtc = RandomForestClassifier(max_depth=2, random_state=0)
 
         self.testSplit = 0.2
 
@@ -113,24 +120,39 @@ class ScriptTomoDecisionTree:
           Train decision tree
         """
 
-        print("Training tree")
+        print("Training...")
 
         self.dtc.fit(self.infoData_train, self.classData_train)
 
-        text_representation = tree.export_text(self.dtc)
-        print(text_representation)
+        if mode == "0":
+            text_representation = tree.export_text(self.dtc)
+            print(text_representation)
 
-        tree.plot_tree(self.dtc,
-                       feature_names=self.feature_names,
-                       filled=True)
-        plt.show()
+            tree.plot_tree(self.dtc,
+                           feature_names=self.feature_names,
+                           filled=True)
+            plt.show()
+
+        else:
+            import pandas as pd
+            feature_imp = pd.Series(self.dtc.feature_importances_, index=self.feature_names).sort_values(ascending=False)
+
+            # Creating a bar plot
+            sns.barplot(x=feature_imp,
+                        y=feature_imp.index)
+            # Add labels to your graph
+            plt.xlabel('Feature Importance Score')
+            plt.ylabel('Features')
+            plt.title("Visualizing Important Features")
+            plt.legend()
+            plt.show()
 
     def testDecisionTree(self):
         """
           Test decision tree
         """
 
-        print("Testing tree")
+        print("Testing...")
 
         y_predict = self.dtc.predict(self.infoData_test)
 
@@ -139,12 +161,18 @@ class ScriptTomoDecisionTree:
 
 if __name__ == '__main__':
     # Check no program arguments missing
-    if len(sys.argv) != 2:
-        print("Usage: python decisionTreeMisalignmentTS.py <infoFilePath> ")
+    if len(sys.argv) != 3:
+        print("Usage: python decisionTreeMisalignmentTS.py <infoFilePath> <mode 0 (tree)/1 (forest)>")
         sys.exit()
 
     # Path with the input stack of data
     filePath = sys.argv[1]
 
-    cdt = ScriptTomoDecisionTree(filePath)
+    mode = sys.argv[2]
 
+    if mode != "0" and mode != "1":
+        print(mode)
+        print("ERROR IN MODE. Usage: python decisionTreeMisalignmentTS.py <infoFilePath> <mode 0 (tree)/1 (forest)>")
+        sys.exit()
+
+    cdt = ScriptTomoDecisionTree(filePath, mode)
