@@ -130,7 +130,8 @@ class ScriptTomoDecisionTree:
 
             tree.plot_tree(self.dtc,
                            feature_names=self.feature_names,
-                           filled=True)
+                           filled=True,
+                           fontsize=12)
             plt.show()
 
         else:
