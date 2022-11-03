@@ -173,10 +173,10 @@ class DeepDefocusMultiOutputModel():
         """
         input_shape = (height, width, 3)
         inputs = Input(shape=input_shape, name='input')
-
-        defocus_branch = self.build_defocus_branch_Fede(inputs
-                                                        )
+        defocus_branch = self.build_defocus_branch_Fede(inputs)
         L = Flatten()(defocus_branch)
+        L = Dense(256, activation='relu')(L)
+        L = Dropout(0.2)(L)
         L = Dense(2, activation='linear', name='defocus_output')(L)
 
         model = Model(inputs=inputs, outputs=[L],
