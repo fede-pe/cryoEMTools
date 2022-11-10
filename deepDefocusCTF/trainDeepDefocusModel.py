@@ -303,13 +303,6 @@ if __name__ == "__main__":
     _ = plt.plot([-100, 100], [-100, 100])
     plt.show()
 
-    # ------------------ NORMALIZING DATA -----------------------------------
-    #defocusVector_Norm[:, 0] = (defocusVector[:, 0] - mean_def_U) / std_def_U
-    #defocusVector_Norm[:, 1] = (defocusVector[:, 1] - mean_def_V) / std_def_V
-
-    #print('Input matrix: ' + str(np.shape(imagMatrix_Norm)))
-    #print('Output matrix: ' + str(np.shape(defocusVector_Norm)))
-
     # DATA GENERATOR
     print('Generating images...')
     X_set_generated, Y_set_generated = data_generator(imagMatrix_Norm, defocusVector[:, :2])

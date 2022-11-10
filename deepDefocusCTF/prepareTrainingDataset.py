@@ -8,14 +8,16 @@ import shutil
 import sqlite3
 import pandas as pd
 
+DB_NAME = 'ctfs.sqlite'
+
 class DeepDefocus:
 
     @staticmethod
     def importCTF(fnDir, dataFlag):
         fileList = []
-        verbose = 0
+        verbose = 1
         #CONNECT TO THE DATABASE
-        dbName = 'subset.sqlite'
+        dbName = DB_NAME
         dbRoot = os.path.join(fnDir, dbName)
         pattern = r'/Runs.*'
         fnDirBase = re.sub(pattern, "", fnDir)
@@ -41,7 +43,7 @@ class DeepDefocus:
 
             if dataFlag == 1:
                 if enabled == 1:
-                    fileList.append((id, dU, dV, dSinA, dCosA, dAngle, kV, file))  # dmt
+                    fileList.append((id, dU, dV, dSinA, dCosA, dAngle, kV, file))
             else:
                 fileList.append(file)
 
@@ -50,8 +52,8 @@ class DeepDefocus:
                 print("ENABLED", enabled)
                 print("FILE = ", file)
                 print("DEFOCUS_U = ", dU)
-                print("DEFOCUS_V = ",  dV )
-                print("DEFOCUS_ANGLE = ", dAngle )
+                print("DEFOCUS_V = ",  dV)
+                print("DEFOCUS_ANGLE = ", dAngle)
                 print("KV = ", kV, "\n")
 
         con.close()

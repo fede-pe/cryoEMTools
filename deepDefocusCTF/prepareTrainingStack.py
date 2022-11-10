@@ -21,6 +21,7 @@ def prepareData(stackDir):
         dSinA = df_metadata.loc[index, 'Sin(2*angle)']
         dCosA = df_metadata.loc[index, 'Cos(2*angle)']
 
+        # Replace is done since we want the 3 images not only the one in the metadata file
         img1Path = storedFile.replace("_psdAt_%d.xmp" % subset, "_psdAt_1.xmp")
         img2Path = storedFile.replace("_psdAt_%d.xmp" % subset, "_psdAt_2.xmp")
         img3Path = storedFile.replace("_psdAt_%d.xmp" % subset, "_psdAt_3.xmp")
