@@ -5,7 +5,7 @@ ASTIG_RAND=$(shuf -i 0-$ASTIG_DIFF -n1);
 
 SIGN=$(shuf -e -n1 0 2);
 
-if [[$SIGN -gt 1]]
+if [[ $SIGN -gt 1 ]]
 then
 DEFOCUS_V=$(($DEFOCUS_U + $ASTIG_RAND));
 else
