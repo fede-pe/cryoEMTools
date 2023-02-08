@@ -25,7 +25,7 @@ class DeepDefocus:
         print("Opened database successfully: ", dbRoot)
         # id = ID, Enabled = ENABLED, c67 = _xmipp_enhanced_psd, c01 = _defocusU, c02 = _defocusV, C03 = _defocusAngle
         # C65 = _xmipp_ctfVoltage
-        query = "SELECT id, enabled, c60, c01, C02, C03, C58 from Objects"
+        query = "SELECT id, enabled, c67, c01, C02, C03, C58 from Objects" # C67 normally changes
         print('query: ', query)
         cursor = con.execute(query)
 

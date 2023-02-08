@@ -34,8 +34,8 @@ def prepareData(stackDir):
         imagMatrix[i, :, :, 1] = img2
         imagMatrix[i, :, :, 2] = img3
 
-        defocusVector[i, 0] = defocus_U
-        defocusVector[i, 1] = defocus_V
+        defocusVector[i, 0] = int(defocus_U)
+        defocusVector[i, 1] = int(defocus_V)
         defocusVector[i, 2] = dSinA
         defocusVector[i, 3] = dCosA
 
@@ -50,7 +50,7 @@ def prepareData(stackDir):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python3 prepareTrainingStack.py <dirOut>")
+        print("Usage: python3 prepareTrainingStack_deprecated.py <dirOut>")
         exit(0)
 
     stackDir = sys.argv[1]
