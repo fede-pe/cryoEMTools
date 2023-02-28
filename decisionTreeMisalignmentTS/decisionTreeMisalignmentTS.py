@@ -77,10 +77,10 @@ class ScriptTomoDecisionTree:
 
         if trainMode == "0":  # Chain mode
             print("Training chain mode")
-            self.featureNames = FEATURE_NAMES_CHAIN
+            self.feature_names = FEATURE_NAMES_CHAIN
         else:  # Image mode
             print("Training image mode")
-            self.featureNames = FEATURE_NAMES_IMAGE
+            self.feature_names = FEATURE_NAMES_IMAGE
 
         self.readInputData()
 
