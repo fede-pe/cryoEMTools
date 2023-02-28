@@ -36,45 +36,51 @@ import numpy as np
 
 TEST_SPLIT = 0.2
 
+FEATURE_NAMES_CHAIN = ['avgResidual',
+                       'stdResidual',
+                       'chArea',
+                       'chParameter',
+                       'pvBinX',
+                       'pvBinY',
+                       'pvF',
+                       'pvADF',
+                       'imagesOutOfRange',
+                       'LongestMisaliChain']
+
+FEATURE_NAMES_IMAGE = ['avgResidual',
+                       'stdResidual',
+                       'chArea',
+                       'chPerimeter',
+                       'pvBinX',
+                       'pvBinY',
+                       'pvF',
+                       'markerOutOfRange']
+
 
 class ScriptTomoDecisionTree:
-    feature_names_chain = ['avgResidual',
-                           'stdResidual',
-                           'chArea',
-                           'chParameter',
-                           'pvBinX',
-                           'pvBinY',
-                           'pvF',
-                           'pvADF',
-                           'imagesOutOfRange',
-                           'LongestMisaliChain']
-
-    feature_names_image = ['avgResidual',
-                           'stdResidual',
-                           'chArea',
-                           'chPerimeter',
-                           'pvBinX',
-                           'pvBinY',
-                           'pvF',
-                           'markerOutOfRange']
-
-    def __init__(self, filePath, mode):
+    def __init__(self, filePath, treeMode, trainMode):
         self.filePath = filePath
 
-        if mode == "0":
-            print("Tree mode")
-            self.dtc = tree.DecisionTreeClassifier()
-
-        else:
-            print("Forest mode")
-            self.dtc = RandomForestClassifier(max_depth=2, random_state=0)
-
-        self.testSplit = 0.2
+        self.testSplit = TEST_SPLIT
 
         self.infoData_train = []
         self.classData_train = []
         self.infoData_test = []
         self.classData_test = []
+
+        if treeMode == "0":  # Tree training
+            print("Tree mode")
+            self.dtc = tree.DecisionTreeClassifier()
+        else:  # Forest training
+            print("Forest mode")
+            self.dtc = RandomForestClassifier(max_depth=2, random_state=0)
+
+        if trainMode == "0":  # Chain mode
+            print("Training chain mode")
+            self.featureNames = FEATURE_NAMES_CHAIN
+        else:  # Image mode
+            print("Training image mode")
+            self.featureNames = FEATURE_NAMES_IMAGE
 
         self.readInputData()
 
@@ -125,7 +131,7 @@ class ScriptTomoDecisionTree:
 
         self.dtc.fit(self.infoData_train, self.classData_train)
 
-        if treeMode == "0":
+        if treeMode == "0":  # Tree training
             text_representation = tree.export_text(self.dtc)
             print(text_representation)
 
@@ -135,7 +141,7 @@ class ScriptTomoDecisionTree:
                            fontsize=12)
             plt.show()
 
-        else:
+        else:  # Forest training
             import pandas as pd
             feature_imp = pd.Series(self.dtc.feature_importances_, index=self.feature_names).sort_values(ascending=False)
 
@@ -185,4 +191,4 @@ if __name__ == '__main__':
               "<treeMode 0 (tree) /1 (forest)> <trainMode 0 (chain) / 1 (image)>")
         sys.exit()
 
-    cdt = ScriptTomoDecisionTree(filePath, treeMode)
+    cdt = ScriptTomoDecisionTree(filePath, treeMode, trainMode)
