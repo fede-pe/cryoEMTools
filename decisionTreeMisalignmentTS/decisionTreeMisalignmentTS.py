@@ -38,24 +38,25 @@ TEST_SPLIT = 0.2
 
 
 class ScriptTomoDecisionTree:
-    feature_names = ['averageFiducialResidualsInImage_0',
-                     'averageFiducialResidualsInImage_0.5',
-                     'averageFiducialResidualsInImage_1',
-                     'stdFiducialResidualsInImage_0',
-                     'stdFiducialResidualsInImage_0.5',
-                     'stdFiducialResidualsInImage_1',
-                     'averageResidualDistancePerFiducial_0',
-                     'averageResidualDistancePerFiducial_0.5',
-                     'averageResidualDistancePerFiducial_1',
-                     'stdResidualDistancePerFiducial_0',
-                     'stdResidualDistancePerFiducial_0.5',
-                     'stdResidualDistancePerFiducial_1',
-                     'ratioOfImagesOutOfRange_0',
-                     'ratioOfImagesOutOfRange_0.5',
-                     'ratioOfImagesOutOfRange_1',
-                     'longestMisalignedChain_0',
-                     'longestMisalignedChain_0.5',
-                     'longestMisalignedChain_1']
+    feature_names_chain = ['avgResidual',
+                           'stdResidual',
+                           'chArea',
+                           'chParameter',
+                           'pvBinX',
+                           'pvBinY',
+                           'pvF',
+                           'pvADF',
+                           'imagesOutOfRange',
+                           'LongestMisaliChain']
+
+    feature_names_image = ['avgResidual',
+                           'stdResidual',
+                           'chArea',
+                           'chPerimeter',
+                           'pvBinX',
+                           'pvBinY',
+                           'pvF',
+                           'markerOutOfRange']
 
     def __init__(self, filePath, mode):
         self.filePath = filePath
@@ -124,7 +125,7 @@ class ScriptTomoDecisionTree:
 
         self.dtc.fit(self.infoData_train, self.classData_train)
 
-        if mode == "0":
+        if treeMode == "0":
             text_representation = tree.export_text(self.dtc)
             print(text_representation)
 
@@ -162,18 +163,26 @@ class ScriptTomoDecisionTree:
 
 if __name__ == '__main__':
     # Check no program arguments missing
-    if len(sys.argv) != 3:
-        print("Usage: python decisionTreeMisalignmentTS.py <infoFilePath> <mode 0 (tree)/1 (forest)>")
+    if len(sys.argv) != 4:
+        print("Usage: python decisionTreeMisalignmentTS.py <infoFilePath> <treeMode 0 (tree) /1 (forest)> "
+              "<trainMode 0 (chain) / 1 (image)>")
         sys.exit()
 
     # Path with the input stack of data
     filePath = sys.argv[1]
+    treeMode = sys.argv[2]
+    trainMode = sys.argv[3]
 
-    mode = sys.argv[2]
-
-    if mode != "0" and mode != "1":
-        print(mode)
-        print("ERROR IN MODE. Usage: python decisionTreeMisalignmentTS.py <infoFilePath> <mode 0 (tree)/1 (forest)>")
+    if treeMode != "0" and treeMode != "1":
+        print(treeMode)
+        print("ERROR IN TREE MODE. Usage: python decisionTreeMisalignmentTS.py <infoFilePath> "
+              "<treeMode 0 (tree) /1 (forest)> <trainMode 0 (chain) / 1 (image)>")
         sys.exit()
 
-    cdt = ScriptTomoDecisionTree(filePath, mode)
+    if trainMode != "0" and trainMode != "1":
+        print(treeMode)
+        print("ERROR IN TRAIN MODE. Usage: python decisionTreeMisalignmentTS.py <infoFilePath> "
+              "<treeMode 0 (tree) /1 (forest)> <trainMode 0 (chain) / 1 (image)>")
+        sys.exit()
+
+    cdt = ScriptTomoDecisionTree(filePath, treeMode)
