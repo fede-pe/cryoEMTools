@@ -39,7 +39,7 @@ TEST_SPLIT = 0.2
 FEATURE_NAMES_CHAIN = ['avgResidual',
                        'stdResidual',
                        'chArea',
-                       'chParameter',
+                       'chPerimeter',
                        'pvBinX',
                        'pvBinY',
                        'pvF',
