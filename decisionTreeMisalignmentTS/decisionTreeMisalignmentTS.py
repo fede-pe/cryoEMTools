@@ -57,6 +57,8 @@ FEATURE_NAMES_IMAGE = ['avgResidual',
                        'pvF',
                        'markerOutOfRange']
 
+PRUNING = True
+
 
 class ScriptTomoDecisionTree:
     def __init__(self, filePath, treeMode, trainMode):
@@ -135,69 +137,69 @@ class ScriptTomoDecisionTree:
 
         if treeMode == "0":  # Tree training
             # Pruning
-            prun = self.dtc.cost_complexity_pruning_path(self.infoData_train, self.classData_train)
-            alphas = prun['ccp_alphas']
+            if PRUNING:
+                prun = self.dtc.cost_complexity_pruning_path(self.infoData_train, self.classData_train)
+                alphas = prun['ccp_alphas']
 
-            clfs = []
-            for alpha in alphas:
-                clf = tree.DecisionTreeClassifier(random_state=0, ccp_alpha=alpha)
-                clf.fit(self.infoData_train, self.classData_train)
+                clfs = []
+                for alpha in alphas:
+                    clf = tree.DecisionTreeClassifier(random_state=0, ccp_alpha=alpha)
+                    clf.fit(self.infoData_train, self.classData_train)
 
-                clfs.append(clf)
+                    clfs.append(clf)
 
-            clfs = clfs[:-1]
-            ccp_alphas = alphas[:-1]
-            node_counts = [clf.tree_.node_count for clf in clfs]
-            depth = [clf.tree_.max_depth for clf in clfs]
-            plt.scatter(ccp_alphas, node_counts)
-            plt.scatter(ccp_alphas, depth)
-            plt.plot(ccp_alphas, node_counts, label='no of nodes', drawstyle="steps-post")
-            plt.plot(ccp_alphas, depth, label='depth', drawstyle="steps-post")
-            plt.legend()
-            plt.show()
+                clfs = clfs[:-1]
+                ccp_alphas = alphas[:-1]
+                node_counts = [clf.tree_.node_count for clf in clfs]
+                depth = [clf.tree_.max_depth for clf in clfs]
+                plt.scatter(ccp_alphas, node_counts)
+                plt.scatter(ccp_alphas, depth)
+                plt.plot(ccp_alphas, node_counts, label='no of nodes', drawstyle="steps-post")
+                plt.plot(ccp_alphas, depth, label='depth', drawstyle="steps-post")
+                plt.legend()
+                plt.show()
 
+                train_acc = []
+                test_acc = []
+                for c in clfs:
+                    y_train_pred = c.predict(self.infoData_train)
+                    y_test_pred = c.predict(self.infoData_test)
+                    train_acc.append(metrics.accuracy_score(y_train_pred, self.classData_train))
+                    test_acc.append(metrics.accuracy_score(y_test_pred, self.classData_test))
 
-            train_acc = []
-            test_acc = []
-            for c in clfs:
-                y_train_pred = c.predict(self.infoData_train)
-                y_test_pred = c.predict(self.infoData_test)
-                train_acc.append(metrics.accuracy_score(y_train_pred, self.classData_train))
-                test_acc.append(metrics.accuracy_score(y_test_pred, self.classData_test))
+                plt.scatter(ccp_alphas, train_acc)
+                plt.scatter(ccp_alphas, test_acc)
+                plt.plot(ccp_alphas, train_acc, label='train_accuracy', drawstyle="steps-post")
+                plt.plot(ccp_alphas, test_acc, label='test_accuracy', drawstyle="steps-post")
+                plt.legend()
+                plt.title('Accuracy vs alpha')
+                plt.show()
 
-            plt.scatter(ccp_alphas, train_acc)
-            plt.scatter(ccp_alphas, test_acc)
-            plt.plot(ccp_alphas, train_acc, label='train_accuracy', drawstyle="steps-post")
-            plt.plot(ccp_alphas, test_acc, label='test_accuracy', drawstyle="steps-post")
-            plt.legend()
-            plt.title('Accuracy vs alpha')
-            plt.show()
+                input_alpha = float(raw_input("Enter alpha:\n"))
 
-            input_alpha = float(raw_input("Enter alpha:\n"))
+                clf_ = tree.DecisionTreeClassifier(random_state=0, ccp_alpha=input_alpha)
+                clf_.fit(self.infoData_train, self.classData_train)
 
-            clf_ = tree.DecisionTreeClassifier(random_state=0, ccp_alpha=input_alpha)
-            clf_.fit(self.infoData_train, self.classData_train)
+                tree.plot_tree(clf_,
+                               feature_names=self.feature_names,
+                               filled=True,
+                               fontsize=12)
+                plt.show()
 
-            tree.plot_tree(clf_,
-                           feature_names=self.feature_names,
-                           filled=True,
-                           fontsize=12)
-            plt.show()
+            else:
+                text_representation = tree.export_text(self.dtc)
+                print(text_representation)
 
-            # No prunning
-            # text_representation = tree.export_text(self.dtc)
-            # print(text_representation)
-
-            # tree.plot_tree(self.dtc,
-            #                feature_names=self.feature_names,
-            #                filled=True,
-            #                fontsize=12)
-            # plt.show()
-
+                tree.plot_tree(self.dtc,
+                               feature_names=self.feature_names,
+                               filled=True,
+                               fontsize=12)
+                plt.show()
 
         else:  # Forest training
             import pandas as pd
-            feature_imp = pd.Series(self.dtc.feature_importances_, index=self.feature_names).sort_values(ascending=False)
+            feature_imp = pd.Series(self.dtc.feature_importances_,
+                                    index=self.feature_names).sort_values(ascending=False)
 
             # Creating a bar plot
             sns.barplot(x=feature_imp,
