@@ -48,7 +48,7 @@ if __name__ == "__main__":
     # Generate output plots
     if sys.argv[4] == "0":
         generatePlots = False
-    elif sys.argv[5] == "1":
+    elif sys.argv[4] == "1":
         generatePlots = True
     else:
         raise Exception("Invalid option for <generatePlots 0/1>. This option only accepts 0 or 1 input values.")
