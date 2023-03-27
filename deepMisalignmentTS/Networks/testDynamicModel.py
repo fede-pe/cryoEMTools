@@ -97,6 +97,7 @@ if __name__ == "__main__":
         plotUtils.plotClassesDistributionDynamic(numberOfAliSubtomos, numberOfMisaliSubtomos)
 
     # ------------------------------------------------------------ DATA AUGMENTATION
+    """
     start_time = time()
 
     # Data augmentation for aligned subtomos
@@ -167,7 +168,7 @@ if __name__ == "__main__":
 
     dataAug_time = time() - start_time
     print("Time spent in data augmentation: %0.10f seconds.\n\n" % dataAug_time)
-
+    """
     # ------------------------------------------------------------ TEST MODEL
     print("\n\nTest model...\n")
     start_time = time()
