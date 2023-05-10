@@ -8,7 +8,7 @@ from tensorflow.keras.layers import Input, Conv3D, MaxPool3D, BatchNormalization
     GlobalAveragePooling3D
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import BinaryCrossentropy
-from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
+from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, TensorBoard
 
 
 def compileModel(model, learningRate):
@@ -80,5 +80,8 @@ def getCallbacks(modelCheckpointFilePath):
     )
 
     myCallbacks.append(rlrop)
+
+    tensorboard_callback = TensorBoard(log_dir='tensorboard_logs')
+    myCallbacks.append(tensorboard_callback)
 
     return myCallbacks
