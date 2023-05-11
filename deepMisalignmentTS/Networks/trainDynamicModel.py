@@ -326,7 +326,8 @@ if __name__ == "__main__":
     print("Testing set accuracy: {:5.4f}".format(loss[1]))
 
     # Plot results from testing
-    plotUtils.plotTesting(
-        misalignmentInfoVector_test,
-        misalignmentInfoVector_predictionClasses
-    )
+    if generatePlots:
+        plotUtils.plotTesting(
+            misalignmentInfoVector_test,
+            misalignmentInfoVector_predictionClasses
+        )
