@@ -1,4 +1,3 @@
-
 """ This module contains the definition of the different models to be trained to solve the misalignment detection
 problem. """
 import os
@@ -44,7 +43,7 @@ def scratchModel():
 
     L = GlobalAveragePooling3D()(L)
 
-#    L = Flatten()(L)
+    #    L = Flatten()(L)
     L = Dense(units=512, activation="relu")(L)
     # L = Dense(units=256, activation="relu")(L)
     # L = Dense(units=128, activation="relu")(L)
@@ -81,7 +80,17 @@ def getCallbacks(modelCheckpointFilePath):
 
     myCallbacks.append(rlrop)
 
-    tensorboard_callback = TensorBoard(log_dir='tensorboard_logs')
+    tensorboard_callback = TensorBoard(
+        log_dir='logs',
+        histogram_freq=0,
+        write_graph=True,
+        write_images=True,
+        write_steps_per_second=False,
+        update_freq='epoch',
+        profile_batch=0,
+        embeddings_freq=0,
+        embeddings_metadata=None,
+    )
     myCallbacks.append(tensorboard_callback)
 
     return myCallbacks
