@@ -81,15 +81,10 @@ def getCallbacks(modelCheckpointFilePath):
     myCallbacks.append(rlrop)
 
     tensorboard_callback = TensorBoard(
-        log_dir='logs',
-        histogram_freq=0,
+        log_dir='./logs',
+        histogram_freq=1,
         write_graph=True,
         write_images=True,
-        write_steps_per_second=False,
-        update_freq='epoch',
-        profile_batch=0,
-        embeddings_freq=0,
-        embeddings_metadata=None,
     )
     myCallbacks.append(tensorboard_callback)
 
