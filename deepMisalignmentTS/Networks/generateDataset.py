@@ -198,4 +198,5 @@ if __name__ == "__main__":
               "be generated:\n"
               "python3 generateDataset.py <splitVectorFlag 1/0>\n"
               "<splitVectorFlag 1/0>: Flag to set if the output vectors must be split.\n\n"
-              "IMPORTANT: source xmipp binaries in terminal to avoid using scipion.")
+              "IMPORTANT: source xmipp binaries in terminal to avoid using scipion.\n"
+              "IMPORTANT: use absolute paths for regex.")
