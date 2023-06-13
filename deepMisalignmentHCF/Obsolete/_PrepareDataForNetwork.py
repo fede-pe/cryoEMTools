@@ -18,7 +18,9 @@ def prepareData(stackDir):
 
         # Complete misalignmentInfoList vector.
         for i, line in enumerate(metadataLines):
-            misalignmentInfoVector = [float(line["maxDistance"]),
+            misalignmentInfoVector = [float(line["centroidX"]),
+                                      float(line["centroidY"]),
+                                      float(line["maxDistance"]),
                                       float(line["totalDistance"]),
                                       float(line["hullArea"]),
                                       float(line["hullPerimeter"]),
@@ -32,7 +34,7 @@ def prepareData(stackDir):
 
         inputDataStream = np.zeros((Ndim, 32, 32, 32), dtype=np.float64)
 
-        # Complete inputDataStream matrix (we only ca iterate over the csvReader once and it is necessary to know the
+        # Complete inputDataStream matrix (we only can iterate over the csvReader once and it is necessary to know the
         # Ndim a priori.
         for i, subtomoPath in enumerate(subtomoPathList):
             subtomoVol = xmipp.Image(subtomoPath).getData()
