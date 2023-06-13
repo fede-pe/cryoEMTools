@@ -96,7 +96,8 @@ class TrackerDisplacement:
 
                 hull = self.getConvexHull(vectorMisalignment2D)
 
-                hullArea = [hull.area]
+                # For 2-Dimensional convex hulls volume attribute equals to the area.
+                hullArea = [hull.volume]
                 hullPerimeter = self.getHullPerimeter(hull)
 
                 pca = self.getPCA(vectorMisalignment2D)[0]
@@ -381,7 +382,7 @@ class TrackerDisplacement:
 
         fileName = 'misalignmentStatistics.txt'
         filePrefix = os.path.dirname(os.path.abspath(sys.argv[0]))
-        filePath = os.path.join(filePrefix, 'trainingSet', fileName)
+        filePath = os.path.join(filePrefix, '../trainingSet', fileName)
 
         " Create intermediate directories if missing "
         if not os.path.exists(filePath):
@@ -421,7 +422,7 @@ class TrackerDisplacement:
 
     @staticmethod
     def createSubtomoLinks(subtomos):
-        prefix = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), 'trainingSet')
+        prefix = os.path.join(os.path.dirname(os.path.abspath(sys.argv[0])), '../trainingSet')
 
         # Search for the last subtomo saved
         lastIndex = 0

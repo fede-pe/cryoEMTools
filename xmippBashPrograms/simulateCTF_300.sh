@@ -1,3 +1,5 @@
+COUNTER=0;
+
 for FILE in *.mrc; do 
 DEFOCUS_U=$(shuf -i 4000-35000 -n1);
 ASTIG_DIFF=$(($DEFOCUS_U/10));
@@ -15,4 +17,8 @@ fi
 ASTIG_ANGLE=$(shuf -i 0-180 -n1);
 echo "xmipp_transform_filter -i $FILE -o "${FILE%.mrc}_ctf.mrc" --fourier ctfdefastig 300.000000 2.700000 0.070000 $DEFOCUS_U $DEFOCUS_V $ASTIG_ANGLE --sampling 1.000000 -v 0";
 xmipp_transform_filter -i $FILE -o "${FILE%.mrc}_ctf.mrc" --fourier ctfdefastig 300.000000 2.700000 0.070000 $DEFOCUS_U $DEFOCUS_V $ASTIG_ANGLE --sampling 1.000000 -v 0;
+
+echo $COUNTER $FILE $DEFOCUS_U $DEFOCUS_V $ASTIG_ANGLE >> simulationParameters.txt;
+
+COUNTER=$(($COUNTER+1)); 
 done;
