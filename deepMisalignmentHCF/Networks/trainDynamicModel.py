@@ -1,6 +1,7 @@
 """ This module trains and validate the different models to solve the misalignment detection problem. """
 
 
+import argparse
 import datetime
 from time import time
 import os
@@ -25,41 +26,44 @@ TESTING_SPLIT = 0.15  # Ratio of data used for testing
 VALIDATION_SPLIT = 0.2  # Ratio of data used for validation
 
 if __name__ == "__main__":
-    # Running command
+    # Read params
+    description = "Script for training a DDN to detect alignment errors in tomography based on artifacted fiducial " \
+                  "markers\n"
 
-    # Check no program arguments missing
-    if len(sys.argv) == 4:
+    parser = argparse.ArgumentParser(description=description)
+
+    # Define the mandatory input path parameters
+    parser.add_argument('--stackDir', required=True, help='Input path to folder contaning two numpy arrays containing'
+                                                          'both aligned and misaligned fiducials (mandatory)')
+
+    # Define the optional parameters
+    parser.add_argument('--verboseOutput', action='store_true', help='Enable verbose output')
+    parser.add_argument('--generatePlots', action='store_true', help='Generate plots')
+    parser.add_argument('--normalize', action='store_true', help='Normalize data')
+
+    # Define the optional input path parameter '--modelDir'
+    parser.add_argument('--modelDir', help='Model directory path')
+
+    # Parse the command-line arguments
+    args = parser.parse_args()
+
+    # Access the values of the parameters
+    stackDir = args.stackDir
+    verboseOutput = args.verboseOutput
+    generatePlots = args.generatePlots
+    normalize = args.normalize
+    modelDir = args.modelDir
+
+    print("Input path:", stackDir)
+    print("Verbose output:", verboseOutput)
+    print("Generate plots:", generatePlots)
+    print("Normalize data:", normalize)
+    print("Model directory path:", modelDir)
+
+    if modelDir is None:
         retrainModel = False
-        print("Starting new model training mode")
-    elif len(sys.argv) == 5:
+    else:
         retrainModel = True
-        print("Starting retraining model mode")
-
-        # Path with the previously trained model
-        pretrainedModelPath = sys.argv[4]
-    else:
-        print("Usage: scipion python trainDynamicModel.py <stackDir> <verboseOutput 0/1> <generatePlots 0/1> "
-              "[modelDir]")
-        sys.exit()
-
-    # Path with the input stack of data
-    stackDir = sys.argv[1]
-
-    # Verbose output
-    if sys.argv[2] == "0":
-        verboseOutput = False
-    elif sys.argv[2] == "1":
-        verboseOutput = True
-    else:
-        raise Exception("Invalid option for <verboseOutput 0/1>. This option only accepts 0 or 1 input values.")
-
-    # Generate output plots
-    if sys.argv[3] == "0":
-        generatePlots = False
-    elif sys.argv[3] == "1":
-        generatePlots = True
-    else:
-        raise Exception("Invalid option for <generatePlots 0/1>. This option only accepts 0 or 1 input values.")
 
     os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
