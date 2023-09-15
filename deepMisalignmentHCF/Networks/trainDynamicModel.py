@@ -4,7 +4,6 @@ import argparse
 import datetime
 from time import time
 import os
-import sys
 
 from tensorflow.keras.models import load_model
 from sklearn.model_selection import train_test_split
