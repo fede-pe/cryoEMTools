@@ -20,13 +20,11 @@ _MATRICES = [Z_ROTATION_180, Y_ROTATION_180, Z_Y_ROTATION_180]
 
 
 def normalizeInputDataStream(inputSubtomoStream):
-    """ Method to normalize the input subtomo data stream to """
-    std = inputSubtomoStream.std()
-    mean = inputSubtomoStream.mean()
+    """ Method to normalize the input subtomo data stream element by element """
+    for n, _ in enumerate(inputSubtomoStream):
+        inputSubtomoStream[n] = (inputSubtomoStream[n] - inputSubtomoStream[n].mean()) / inputSubtomoStream[n].std()
 
-    normalizedInputDataStream = (inputSubtomoStream - mean) / std
-
-    return normalizedInputDataStream
+    return inputSubtomoStream
 
 
 def produceClassesDistributionInfo(misalignmentInfoVector, verbose=True):
