@@ -1,6 +1,5 @@
 """ This module trains and validate the different models to solve the misalignment detection problem. """
 
-
 import argparse
 import datetime
 from time import time
@@ -77,17 +76,18 @@ if __name__ == "__main__":
     numberOfMisaliSubtomos = len(inputSubtomoStreamMisali)
     totalSubtomos = numberOfAliSubtomos + numberOfMisaliSubtomos
 
-    # Normalize input subtomo data stream to N(0,1)
-    normalizedInputSubtomoStreamAli = utils.normalizeInputDataStream(inputSubtomoStreamAli)
-    normalizedInputSubtomoStreamMisali = utils.normalizeInputDataStream(inputSubtomoStreamMisali)
+    if normalize:
+        # Normalize input subtomo data stream to N(0,1)
+        inputSubtomoStreamAli = utils.normalizeInputDataStream(inputSubtomoStreamAli)
+        inputSubtomoStreamMisali = utils.normalizeInputDataStream(inputSubtomoStreamMisali)
 
-    # Test normalization
-    # print("\n")
-    # print("normalizedInputSubtomoStreamAli stats: mean " + str(np.mean(normalizedInputSubtomoStreamAli)) +
-    #       " std: " + str(np.std(normalizedInputSubtomoStreamAli)))
-    # print("normalizedInputSubtomoStreamMisali stats: mean " + str(np.mean(normalizedInputSubtomoStreamMisali)) +
-    #       " std: " + str(np.std(normalizedInputSubtomoStreamMisali)))
-    # print("\n")
+        # Test normalization
+        # print("\n")
+        # print("inputSubtomoStreamAli stats: mean " + str(np.mean(inputSubtomoStreamAli)) +
+        #       " std: " + str(np.std(inputSubtomoStreamAli)))
+        # print("inputSubtomoStreamMisali stats: mean " + str(np.mean(inputSubtomoStreamMisali)) +
+        #       " std: " + str(np.std(inputSubtomoStreamMisali)))
+        # print("\n")
 
     # ------------------------------------------------------------ PRODUCE SIDE INFO
     # Update the number of random batches respect to the dataset and batch sizes
@@ -118,7 +118,7 @@ if __name__ == "__main__":
 
     for i in range(numberOfAliSubtomos):
 
-        newSubtomos = utils.dataAugmentationSubtomoDynamic(normalizedInputSubtomoStreamAli[i, :, :, :],
+        newSubtomos = utils.dataAugmentationSubtomoDynamic(inputSubtomoStreamAli[i, :, :, :],
                                                            (SUBTOMO_SIZE, SUBTOMO_SIZE, SUBTOMO_SIZE))
 
         for subtomo in newSubtomos:
@@ -136,13 +136,13 @@ if __name__ == "__main__":
     print("Number of new subtomos generated: %d\n" % len(generatedSubtomosAli))
 
     print("Data structure shapes BEFORE augmentation:")
-    print("Input aligned subtomo stream: " + str(normalizedInputSubtomoStreamAli.shape))
+    print("Input aligned subtomo stream: " + str(inputSubtomoStreamAli.shape))
 
-    normalizedInputSubtomoStreamAli = np.concatenate((normalizedInputSubtomoStreamAli,
-                                                      generatedSubtomosArrayAli))
+    inputSubtomoStreamAli = np.concatenate((inputSubtomoStreamAli,
+                                            generatedSubtomosArrayAli))
 
     print("Data structure shapes AFTER augmentation:")
-    print("Input misaligned subtomo stream: " + str(normalizedInputSubtomoStreamAli.shape))
+    print("Input misaligned subtomo stream: " + str(inputSubtomoStreamAli.shape))
 
     # Data augmentation for misaligned subtomos
     generatedSubtomosMisali = []
@@ -151,7 +151,7 @@ if __name__ == "__main__":
 
     for i in range(numberOfMisaliSubtomos):
 
-        newSubtomos = utils.dataAugmentationSubtomoDynamic(normalizedInputSubtomoStreamMisali[i, :, :, :],
+        newSubtomos = utils.dataAugmentationSubtomoDynamic(inputSubtomoStreamMisali[i, :, :, :],
                                                            (SUBTOMO_SIZE, SUBTOMO_SIZE, SUBTOMO_SIZE))
 
         for subtomo in newSubtomos:
@@ -169,25 +169,25 @@ if __name__ == "__main__":
     print("Number of new subtomos generated: %d\n" % len(generatedSubtomosMisali))
 
     print("Data structure shapes BEFORE augmentation:")
-    print("Input subtomo stream: " + str(normalizedInputSubtomoStreamMisali.shape))
+    print("Input subtomo stream: " + str(inputSubtomoStreamMisali.shape))
 
-    normalizedInputSubtomoStreamMisali = np.concatenate((normalizedInputSubtomoStreamMisali,
-                                                         generatedSubtomosArrayMisali))
+    inputSubtomoStreamMisali = np.concatenate((inputSubtomoStreamMisali,
+                                               generatedSubtomosArrayMisali))
 
     print("Data structure shapes AFTER augmentation:")
-    print("Input subtomo stream: " + str(normalizedInputSubtomoStreamMisali.shape))
+    print("Input subtomo stream: " + str(inputSubtomoStreamMisali.shape))
 
     dataAug_time = time() - start_time
     print("Time spent in data augmentation: %0.10f seconds.\n\n" % dataAug_time)
 
     # ------------------------------------------------------------ SPLIT DATA
     # Aligned subtomos
-    normISSAli_train, normISSAli_test = train_test_split(normalizedInputSubtomoStreamAli,
+    normISSAli_train, normISSAli_test = train_test_split(inputSubtomoStreamAli,
                                                          test_size=TESTING_SPLIT,
                                                          random_state=42)
 
     # Misligned subtomos
-    normISSMisali_train, normISSMisali_test = train_test_split(normalizedInputSubtomoStreamMisali,
+    normISSMisali_train, normISSMisali_test = train_test_split(inputSubtomoStreamMisali,
                                                                test_size=TESTING_SPLIT,
                                                                random_state=42)
 
