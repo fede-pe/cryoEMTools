@@ -4,6 +4,7 @@ import argparse
 import datetime
 from time import time
 import os
+import glob
 
 from tensorflow.keras.models import load_model
 from sklearn.model_selection import train_test_split
@@ -31,7 +32,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=description)
 
     # Define the mandatory input path parameters
-    parser.add_argument('--stackDir', required=True, help='Input path to folder contaning two numpy arrays containing'
+    parser.add_argument('--stackDir', required=True, help='Input path to folder containing two numpy arrays containing'
                                                           'both aligned and misaligned fiducials (mandatory)')
 
     # Define the optional parameters
@@ -68,6 +69,10 @@ if __name__ == "__main__":
     # ------------------------------------------------------------ PREPROCESS DATA
     print("Loading data...")
     start_time = time()
+
+    # Search for all available dataset
+    inputDataArrays = glob.glob(f"{stackDir}/*.npy")
+
     inputSubtomoStreamAli = np.load(os.path.join(stackDir, "inputDataStreamAli.npy"))
     inputSubtomoStreamMisali = np.load(os.path.join(stackDir, "inputDataStreamMisali.npy"))
 
@@ -334,3 +339,7 @@ if __name__ == "__main__":
             misalignmentInfoVector_test,
             misalignmentInfoVector_predictionClasses
         )
+
+
+def argPaser():
+    """ This method generates the arg parser for program input """
