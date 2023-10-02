@@ -61,7 +61,7 @@ def addSubtomosToOutput(pathPatternToSubtomoFiles, alignmentFlag):
     print("Added %d subtomos to dataset." % len(glob.glob(pathPatternToSubtomoFiles)))
 
 
-def generateNetworkVectors():
+def generateNetworkVectors(outputPath):
     """ This method generates the vectors associated to the metadata files for posteriorly training and testing the
     network. """
 
@@ -94,8 +94,8 @@ def generateNetworkVectors():
             subtomoVol = xmipp.Image(subtomoPath).getData()
             inputDataStream[i, :, :, :] = subtomoVol
 
-        inputDataStreamPath = os.path.join(filePrefix, "inputDataStream.npy")
-        misalignmentInfoPath = os.path.join(filePrefix, "misalignmentInfoList.npy")
+        inputDataStreamPath = outputPath + "_DataStream.npy"
+        misalignmentInfoPath = outputPath + "_InfoList.npy"
 
         np.save(inputDataStreamPath, inputDataStream)
         np.save(misalignmentInfoPath, misalignmentInfoList)
@@ -104,7 +104,7 @@ def generateNetworkVectors():
         print("Output misalignment info vector saved at" + misalignmentInfoPath)
 
 
-def generateNetworkVectorsSplit():
+def generateNetworkVectorsSplit(outputPath):
     """ This method generates the vectors associated to the metadata files for posteriorly training and testing the
     network. """
 
@@ -147,8 +147,8 @@ def generateNetworkVectorsSplit():
             subtomoVol = xmipp.Image(subtomoPath).getData()
             inputDataStreamMisali[i, :, :, :] = subtomoVol
 
-        inputDataStreamAliPath = os.path.join(filePrefix, "inputDataStreamAli.npy")
-        inputDataStreamMisaliPath = os.path.join(filePrefix, "inputDataStreamMisali.npy")
+        inputDataStreamAliPath = outputPath + "_Ali.npy"
+        inputDataStreamMisaliPath = outputPath + "_Misali.npy"
 
         np.save(inputDataStreamAliPath, inputDataStreamAli)
         np.save(inputDataStreamMisaliPath, inputDataStreamMisali)
@@ -225,10 +225,10 @@ if __name__ == "__main__":
 
         if args.singleVector == 0:
             print("Generating single output data vector...")
-            generateNetworkVectors()
+            generateNetworkVectors(args.outputPath)
         else:
             print("Generating split output data vectors...")
-            generateNetworkVectorsSplit()
+            generateNetworkVectorsSplit(args.outputPath)
 
         elapsed_time = time() - start_time
         print("Time spent preparing the data: %0.10f seconds." % elapsed_time)
