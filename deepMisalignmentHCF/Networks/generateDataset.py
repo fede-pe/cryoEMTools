@@ -100,8 +100,8 @@ def generateNetworkVectors(outputPath):
         np.save(inputDataStreamPath, inputDataStream)
         np.save(misalignmentInfoPath, misalignmentInfoList)
 
-        print("Output subtomo vector saved at" + inputDataStreamPath)
-        print("Output misalignment info vector saved at" + misalignmentInfoPath)
+        print("Output subtomo vector saved at " + inputDataStreamPath)
+        print("Output misalignment info vector saved at " + misalignmentInfoPath)
 
 
 def generateNetworkVectorsSplit(outputPath):
@@ -153,8 +153,8 @@ def generateNetworkVectorsSplit(outputPath):
         np.save(inputDataStreamAliPath, inputDataStreamAli)
         np.save(inputDataStreamMisaliPath, inputDataStreamMisali)
 
-        print("Output aligned subtomo vector saved at" + inputDataStreamAliPath)
-        print("Output misaligned subtomo vector saved at" + inputDataStreamMisaliPath)
+        print("Output aligned subtomo vector saved at " + inputDataStreamAliPath)
+        print("Output misaligned subtomo vector saved at " + inputDataStreamMisaliPath)
 
 
 # ----------------------------------- Main ------------------------------------------------
