@@ -6,10 +6,11 @@ import os
 import sys
 import csv
 import glob
-
-import numpy as np
-import xmippLib as xmipp
 from time import time
+import numpy as np
+import argparse
+
+import xmippLib as xmipp
 
 
 def addSubtomosToOutput(pathPatternToSubtomoFiles, alignmentFlag):
@@ -158,45 +159,121 @@ def generateNetworkVectorsSplit():
 
 # ----------------------------------- Main ------------------------------------------------
 if __name__ == "__main__":
-    if len(sys.argv) == 2 and (sys.argv[1] != "0" or sys.argv[1] != "1"):
+    def mode_1(path_to_subtomos, aligned):
+        # Implementation for the first execution mode
+        print(f"Executing Mode 1 with pathToSubtomos: {path_to_subtomos}, aligned: {aligned}")
+
+
+    def mode_2(output_path, single_vector):
+        # Implementation for the second execution mode
+        print(f"Executing Mode 2 with outputPath: {output_path}, singleVector: {single_vector}")
+
+
+    parserDescription = """Script to generate a dataset for posterior DNN training. 2 options usage:
+
+    - Option 1: Add subtomos to the dataset indicating if they are aligned or not:
+    
+    python3 generateDataset.py '<pathPatternToSubtomoFiles>' <alignmentFlag 1/0>
+    <pathPatternToSubtomoFiles>: Regex path to the subtomo volume files, using quotes.
+    <alignmentFlag 1/0>: Flag to set the imported subtomos as aligned (1) or misaligned (0).
+
+    - Option 2: Create the output vectors indicating if the misaligned and aligned subtomos are split in two
+    different vectors (1) or not (0). If not, a second vector containing the misalignment information would
+    be generated:
+    
+    python3 generateDataset.py <splitVectorFlag 1/0>
+
+    <splitVectorFlag 1/0>: Flag to set if the output vectors must be split.
+
+    IMPORTANT: source xmipp binaries in terminal to avoid using scipion.
+    IMPORTANT: use absolute paths for regex."""
+
+    parser = argparse.ArgumentParser(description=parserDescription)
+
+    subparsers = parser.add_subparsers(dest="mode", help="Execution modes")
+
+    # Execution Mode 1
+    mode_1_parser = subparsers.add_parser("mode1", help="First execution mode")
+    mode_1_parser.add_argument("--pathToSubtomos", required=True, help="Regex pattern for path to subtomos")
+    mode_1_parser.add_argument("--aligned", type=int, choices=[0, 1], required=True, help="Aligned options: 0 "
+                                                                                          "(misaligned) or 1 (aligned)")
+
+    # Execution Mode 2
+    mode_2_parser = subparsers.add_parser("mode2", help="Second execution mode")
+    mode_2_parser.add_argument("--outputPath", required=True, help="Output path for the dataset")
+    mode_2_parser.add_argument("--singleVector", action="store_true", help="Save all data in the same array")
+
+    args = parser.parse_args()
+
+    # Execution of mode 1: adding elements to datasets
+    if args.mode == "mode1":
         start_time = time()
 
-        splitFlag = int(sys.argv[1])
+        mode_1(args.pathToSubtomos, args.aligned)
 
-        if splitFlag == 0:
-            print("Preparing stack...")
+        print("Adding subtomos to vectors...")
+        addSubtomosToOutput(args.pathToSubtomos, args.aligned)
+
+        elapsed_time = time() - start_time
+        print("Time spent collecting data: %0.10f seconds." % elapsed_time)
+
+    # Execution of mode 2: generating data vectors
+    elif args.mode == "mode2":
+        start_time = time()
+
+        mode_2(args.outputPath, args.singleVector)
+
+        if args.singleVector == 0:
+            print("Generating single output data vector...")
             generateNetworkVectors()
-        elif splitFlag == 1:
-            print("Preparing stack in split mode...")
+        else:
+            print("Generating split output data vectors...")
             generateNetworkVectorsSplit()
 
         elapsed_time = time() - start_time
         print("Time spent preparing the data: %0.10f seconds." % elapsed_time)
 
-    elif len(sys.argv) == 3 and (sys.argv[2] != "0" or sys.argv[2] != "1"):
-        print("Adding subtomos to dataset...")
-        start_time = time()
+    # ------------------------------------------------------------------------------------------------------------------
 
-        pathPatternToSubtomoFiles = sys.argv[1]
-        alignmentFlag = sys.argv[2]
-
-        addSubtomosToOutput(pathPatternToSubtomoFiles, alignmentFlag)
-
-        elapsed_time = time() - start_time
-        print("Time spent collecting data: %0.10f seconds." % elapsed_time)
-
-    else:
-        print("2 options usage:\n\n"
-              ""
-              "Option 1: Add subtomos to the dataset indicating if they are aligned or not:\n"
-              "python3 generateDataset.py '<pathPatternToSubtomoFiles>' <alignmentFlag 1/0> \n"
-              "<pathPatternToSubtomoFiles>: Regex path to the subtomo volume files, using quotes.\n"
-              "<alignmentFlag 1/0>: Flag to set the imported subtomos as aligned (1) or misaligned (0). \n\n"
-              ""
-              "Option 2: Create the output vectors indicating if the misaligned and aligned subtomos are split in two "
-              "different vectors (1) or not (0). If not, a second vector containing the misalignment information would "
-              "be generated:\n"
-              "python3 generateDataset.py <splitVectorFlag 1/0>\n"
-              "<splitVectorFlag 1/0>: Flag to set if the output vectors must be split.\n\n"
-              "IMPORTANT: source xmipp binaries in terminal to avoid using scipion.\n"
-              "IMPORTANT: use absolute paths for regex.")
+    # if len(sys.argv) == 2 and (sys.argv[1] != "0" or sys.argv[1] != "1"):
+    #     start_time = time()
+    #
+    #     splitFlag = int(sys.argv[1])
+    #
+    #     if splitFlag == 0:
+    #         print("Preparing stack...")
+    #         generateNetworkVectors()
+    #     elif splitFlag == 1:
+    #         print("Preparing stack in split mode...")
+    #         generateNetworkVectorsSplit()
+    #
+    #     elapsed_time = time() - start_time
+    #     print("Time spent preparing the data: %0.10f seconds." % elapsed_time)
+    #
+    # elif len(sys.argv) == 3 and (sys.argv[2] != "0" or sys.argv[2] != "1"):
+    #     print("Adding subtomos to dataset...")
+    #     start_time = time()
+    #
+    #     pathPatternToSubtomoFiles = sys.argv[1]
+    #     alignmentFlag = sys.argv[2]
+    #
+    #     addSubtomosToOutput(pathPatternToSubtomoFiles, alignmentFlag)
+    #
+    #     elapsed_time = time() - start_time
+    #     print("Time spent collecting data: %0.10f seconds." % elapsed_time)
+    #
+    # else:
+    #     print("2 options usage:\n\n"
+    #           ""
+    #           "Option 1: Add subtomos to the dataset indicating if they are aligned or not:\n"
+    #           "python3 generateDataset.py '<pathPatternToSubtomoFiles>' <alignmentFlag 1/0> \n"
+    #           "<pathPatternToSubtomoFiles>: Regex path to the subtomo volume files, using quotes.\n"
+    #           "<alignmentFlag 1/0>: Flag to set the imported subtomos as aligned (1) or misaligned (0). \n\n"
+    #           ""
+    #           "Option 2: Create the output vectors indicating if the misaligned and aligned subtomos are split in two "
+    #           "different vectors (1) or not (0). If not, a second vector containing the misalignment information would "
+    #           "be generated:\n"
+    #           "python3 generateDataset.py <splitVectorFlag 1/0>\n"
+    #           "<splitVectorFlag 1/0>: Flag to set if the output vectors must be split.\n\n"
+    #           "IMPORTANT: source xmipp binaries in terminal to avoid using scipion.\n"
+    #           "IMPORTANT: use absolute paths for regex.")
