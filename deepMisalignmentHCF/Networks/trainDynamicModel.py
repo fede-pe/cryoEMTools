@@ -249,8 +249,8 @@ if __name__ == "__main__":
         model = compileModel(model=scratchModel(),
                              learningRate=LEARNING_RATE)
     else:
-        print("Loading pretrained model located at : " + pretrainedModelPath)
-        model = load_model(pretrainedModelPath)
+        print("Loading pretrained model located at : " + modelDir)
+        model = load_model(modelDir)
 
     # Train model on dataset
     print("Training model...")
