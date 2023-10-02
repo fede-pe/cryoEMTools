@@ -195,8 +195,8 @@ if __name__ == "__main__":
     # Execution Mode 1
     mode_1_parser = subparsers.add_parser("mode1", help="First execution mode")
     mode_1_parser.add_argument("--pathToSubtomos", required=True, help="Regex pattern for path to subtomos")
-    mode_1_parser.add_argument("--aligned", type=int, choices=[0, 1], required=True, help="Aligned options: 0 "
-                                                                                          "(misaligned) or 1 (aligned)")
+    mode_1_parser.add_argument("--aligned", type=int, choices=[0, 1], required=True,
+                               help="Aligned options: 0 (misaligned) or 1 (aligned)")
 
     # Execution Mode 2
     mode_2_parser = subparsers.add_parser("mode2", help="Second execution mode")
@@ -223,7 +223,7 @@ if __name__ == "__main__":
 
         mode_2(args.outputPath, args.singleVector)
 
-        if args.singleVector == 0:
+        if args.singleVector:
             print("Generating single output data vector...")
             generateNetworkVectors(args.outputPath)
         else:
