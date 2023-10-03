@@ -16,6 +16,7 @@ from classes import DataGenerator
 import plotUtils
 import utils
 
+# Module variables
 SUBTOMO_SIZE = 32  # Dimensions of the subtomos (cubic, SUBTOMO_SIZE x SUBTOMO_SIZE x SUBTOMO_SIZE shape)
 BATCH_SIZE = 64  # Number of boxes per batch
 NUMBER_RANDOM_BATCHES = -1
@@ -24,7 +25,96 @@ LEARNING_RATE = 0.0001  # Learning rate
 TESTING_SPLIT = 0.15  # Ratio of data used for testing
 VALIDATION_SPLIT = 0.2  # Ratio of data used for validation
 
+
+class TrainDynamicModel():
+    """ This class holds all the methods needed to train dynamically a DNN model """
+
+    def __init__(self, stackDir, verboseOutput, generatePlots, normalize, modelDir):
+        self.stackDir = stackDir
+        self.verboseOutput = verboseOutput
+        self.generatePlots = generatePlots
+        self.normalize = normalize
+        self.modelDir = modelDir
+
+        if modelDir is None:
+            self.retrainModel = False
+        else:
+            self.retrainModel = True
+
+        # Side information variables
+        self.start_time = None
+        self.totalSubtomos = 0
+        self.totalAliSubtomos = 0
+        self.totalMisaliSubtomos = 0
+
+        # Dictionaries with dataset information
+        self.aliDict = {}
+        self.misaliDict = {}
+
+        # Trigger program execution
+        self.produceSideInfo()
+
+    def produceSideInfo(self):
+        """ Produce read input data arrays and metadata information """
+        print("Loading data...")
+        self.start_time = time()
+
+        # Search for all available dataset
+        inputDataArrays = glob.glob(f"{self.stackDir}/*.npy")
+
+        for ida in inputDataArrays:
+            fnNoExt = os.path.splitext(os.path.basename(ida))[0]
+            [key, flag] = fnNoExt.split('_')
+
+            if flag == "_Ali":
+                data = np.load(ida)
+                self.aliDict[key] = (data, data.size)
+                self.totalAliSubtomos += data.size
+                self.totalSubtomos += data.size
+
+            elif flag == "_Misali":
+                data = np.load(ida)
+                self.misaliDict[key] = (data, data.size)
+                self.totalMisaliSubtomos += data.size
+                self.totalSubtomos += data.size
+
+        # Update the number of random batches respect to the dataset and batch sizes
+        NUMBER_RANDOM_BATCHES = self.totalSubtomos // BATCH_SIZE
+
+        # Output classes distribution info
+        aliSubtomosRatio = self.totalAliSubtomos / self.totalSubtomos
+        misaliSubtomosRatio = self.totalMisaliSubtomos / self.totalSubtomos
+
+        if self.verboseOutput:
+            print("\nClasses distribution:")
+
+            for key in self.aliDict.keys():
+                totalAli = self.aliDict[key][1]
+                totalMisali = self.misaliDict[key][1]
+                total = totalAli + totalMisali
+
+                print("Dataset %s:\t"
+                      "Aligned: %d (%.3f%%)\t"
+                      "Misaligned: %d (%.3f%%)\t"
+                      % (key,
+                         self.aliDict[key][1], (totalAli/total) * 100,
+                         self.misaliDict[key][1], (totalMisali/total) * 100))
+
+            print("\nSet of datasets:\t"
+                  "Aligned: %d (%.3f%%)\t"
+                  "Misaligned: %d (%.3f%%)\t"
+                  % (self.totalAliSubtomos, aliSubtomosRatio * 100,
+                     self.totalMisaliSubtomos, misaliSubtomosRatio * 100))
+
+        # Plot classes distribution info histogram
+        if generatePlots:
+            plotUtils.plotClassesDistributionDynamic(numberOfAliSubtomos, numberOfMisaliSubtomos)
+
+
+# ----------------------------------- Main ------------------------------------------------
 if __name__ == "__main__":
+    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+
     # Read params
     description = "Script for training a DDN to detect alignment errors in tomography based on artifacted fiducial " \
                   "markers\n"
@@ -47,39 +137,19 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Access the values of the parameters
-    stackDir = args.stackDir
-    verboseOutput = args.verboseOutput
-    generatePlots = args.generatePlots
-    normalize = args.normalize
-    modelDir = args.modelDir
+    print("Input path:", args.stackDir)
+    print("Verbose output:", args.verboseOutput)
+    print("Generate plots:", args.generatePlots)
+    print("Normalize data:", args.normalize)
+    print("Model directory path:", args.modelDir)
 
-    print("Input path:", stackDir)
-    print("Verbose output:", verboseOutput)
-    print("Generate plots:", generatePlots)
-    print("Normalize data:", normalize)
-    print("Model directory path:", modelDir)
-
-    if modelDir is None:
-        retrainModel = False
-    else:
-        retrainModel = True
-
-    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+    tdm = TrainDynamicModel(stackDir=args.stackDir,
+                            verboseOutput=args.verboseOutput,
+                            generatePlots=args.generatePlots,
+                            normalize=args.normalize,
+                            modelDir=args.modelDir)
 
     # ------------------------------------------------------------ PREPROCESS DATA
-    print("Loading data...")
-    start_time = time()
-
-    # Search for all available dataset
-    inputDataArrays = glob.glob(f"{stackDir}/*.npy")
-
-    inputSubtomoStreamAli = np.load(os.path.join(stackDir, "inputDataStreamAli.npy"))
-    inputSubtomoStreamMisali = np.load(os.path.join(stackDir, "inputDataStreamMisali.npy"))
-
-    numberOfAliSubtomos = len(inputSubtomoStreamAli)
-    numberOfMisaliSubtomos = len(inputSubtomoStreamMisali)
-    totalSubtomos = numberOfAliSubtomos + numberOfMisaliSubtomos
-
     if normalize:
         # Normalize input subtomo data stream to N(0,1)
         inputSubtomoStreamAli = utils.normalizeInputDataStream(inputSubtomoStreamAli)
@@ -92,25 +162,6 @@ if __name__ == "__main__":
         # print("inputSubtomoStreamMisali stats: mean " + str(np.mean(inputSubtomoStreamMisali)) +
         #       " std: " + str(np.std(inputSubtomoStreamMisali)))
         # print("\n")
-
-    # ------------------------------------------------------------ PRODUCE SIDE INFO
-    # Update the number of random batches respect to the dataset and batch sizes
-    NUMBER_RANDOM_BATCHES = totalSubtomos // BATCH_SIZE
-
-    # Output classes distribution info
-    aliSubtomosRatio = numberOfAliSubtomos / totalSubtomos
-    misaliSubtomosRatio = numberOfMisaliSubtomos / totalSubtomos
-
-    if verboseOutput:
-        print("\nClasses distribution:\n"
-              "Aligned: %d (%.3f%%)\n"
-              "Misaligned: %d (%.3f%%)\n\n"
-              % (numberOfAliSubtomos, aliSubtomosRatio * 100,
-                 numberOfMisaliSubtomos, misaliSubtomosRatio * 100))
-
-    # Plot classes distribution info histogram
-    if generatePlots:
-        plotUtils.plotClassesDistributionDynamic(numberOfAliSubtomos, numberOfMisaliSubtomos)
 
     # ------------------------------------------------------------ DATA AUGMENTATION
     start_time = time()
@@ -339,7 +390,3 @@ if __name__ == "__main__":
             misalignmentInfoVector_test,
             misalignmentInfoVector_predictionClasses
         )
-
-
-def argPaser():
-    """ This method generates the arg parser for program input """
