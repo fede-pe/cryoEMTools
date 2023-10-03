@@ -34,22 +34,37 @@ def plotClassesDistribution(misalignmentInfoVector):
     plt.show()
 
 
-def plotClassesDistributionDynamic(numberOfAlignedSubtomos, numberOfMisalignedSubtomos):
-    """ This method plots and histogram of the classes distributions from the dataset between aligned and misaligned
-    subtomos in dynamic training mode. """
+def plotClassesDistributionDynamic(aliDict, misaliDict):
+    """ This method plots and histogram of the classes distributions from each dataset between aligned and misaligned
+    subtomos. """
 
-    title = "Classes distribution"
+    aliSubtomos = []
+    misaliSubtomos = []
+    populations = []
 
-    classes = ["Aligned", "Misaligned"]
-    classesHeight = [numberOfAlignedSubtomos, numberOfMisalignedSubtomos]
+    for key in aliDict.keys():
+        populations.append(key)
+        aliSubtomos.append(aliDict[key][1])
+        misaliSubtomos.append(misaliDict[key][1])
 
-    # Histogram plot
-    plt.style.use('ggplot')
+    # Set up positions for bars on X-axis
+    bar_width = 0.35
+    index = np.arange(len(populations))
 
-    plt.title(title)
+    # Create bar plot
+    fig, ax = plt.subplots()
+    bar1 = ax.bar(index, aliSubtomos, bar_width, label='AliSubtomos')
+    bar2 = ax.bar(index + bar_width, misaliSubtomos, bar_width, label='MisaliSubtomos')
 
-    plt.bar(classes, classesHeight, color='r')
+    # Customize the plot
+    ax.set_xlabel('Population')
+    ax.set_ylabel('Number of Individuals')
+    ax.set_title('Population Distribution by Gender')
+    ax.set_xticks(index + bar_width / 2)
+    ax.set_xticklabels(populations)
+    ax.legend()
 
+    # Display the plot
     plt.show()
 
 
