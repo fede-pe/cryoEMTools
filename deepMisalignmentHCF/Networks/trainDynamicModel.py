@@ -42,7 +42,6 @@ class TrainDynamicModel():
             self.retrainModel = True
 
         # Side information variables
-        self.start_time = None
         self.totalSubtomos = 0
         self.totalAliSubtomos = 0
         self.totalMisaliSubtomos = 0
@@ -65,11 +64,13 @@ class TrainDynamicModel():
         self.produceSideInfo()
         if normalize:
             self.normalizeData()
+        self.dataAugmentation()
 
     def produceSideInfo(self):
         """ Produce read input data arrays and metadata information """
+
         print("Loading data...")
-        self.start_time = time()
+        start_time = time()
 
         # Search for all available dataset
         inputDataArrays = glob.glob(f"{self.stackDir}/*_*.npy")
@@ -80,15 +81,15 @@ class TrainDynamicModel():
 
             if flag == "Ali":
                 data = np.load(ida)
-                self.aliDict[key] = (data, data.size)
-                self.totalAliSubtomos += data.size
-                self.totalSubtomos += data.size
+                self.aliDict[key] = (data, len(data))
+                self.totalAliSubtomos += len(data)
+                self.totalSubtomos += len(data)
 
             elif flag == "Misali":
                 data = np.load(ida)
-                self.misaliDict[key] = (data, data.size)
-                self.totalMisaliSubtomos += data.size
-                self.totalSubtomos += data.size
+                self.misaliDict[key] = (data, len(data))
+                self.totalMisaliSubtomos += len(data)
+                self.totalSubtomos += len(data)
 
         # Update the number of random batches respect to the dataset and batch sizes
         NUMBER_RANDOM_BATCHES = self.totalSubtomos // BATCH_SIZE
@@ -122,6 +123,9 @@ class TrainDynamicModel():
         if self.generatePlots:
             plotUtils.plotClassesDistributionDynamic(self.aliDict, self.misaliDict, self.dirPath)
 
+        sideInfo_time = time() - start_time
+        print("Time spent in side information generation: %0.10f seconds.\n\n" % sideInfo_time)
+
     def normalizeData(self):
         """ Normalize given data array """
 
@@ -138,6 +142,93 @@ class TrainDynamicModel():
                       % (key,
                          str(np.mean(self.aliDict[key][0])), str(np.std(self.aliDict[key][0])),
                          str(np.mean(self.misaliDict[key][0])), str(np.std(self.misaliDict[key][0]))))
+
+    def dataAugmentation(self):
+        """ Method to perform data augmentation strategies to input data """
+
+        start_time = time()
+
+        for key in self.aliDict.keys():
+            numberOfAliSubtomos = self.aliDict[key][1]
+            numberOfMisaliSubtomos = self.misaliDict[key][1]
+
+            inputSubtomoStreamAli = self.aliDict[key][0]
+            inputSubtomoStreamMisali = self.misaliDict[key][0]
+
+            print(numberOfAliSubtomos)
+            print(numberOfMisaliSubtomos)
+            print(inputSubtomoStreamAli.shape)
+            print(inputSubtomoStreamMisali.shape)
+
+            # Data augmentation for aligned subtomos
+            generatedSubtomosAli = []
+
+            for i in range(numberOfAliSubtomos):
+                newSubtomos = utils.dataAugmentationSubtomoDynamic(inputSubtomoStreamAli[i, :, :, :],
+                                                                   (SUBTOMO_SIZE, SUBTOMO_SIZE, SUBTOMO_SIZE))
+
+                for subtomo in newSubtomos:
+                    generatedSubtomosAli.append(subtomo)
+
+            generatedSubtomosArrayAli = np.zeros((len(generatedSubtomosAli),
+                                                  SUBTOMO_SIZE,
+                                                  SUBTOMO_SIZE,
+                                                  SUBTOMO_SIZE),
+                                                 dtype=np.float64)
+
+            for i, subtomo in enumerate(generatedSubtomosAli):
+                generatedSubtomosArrayAli[i, :, :, :] = subtomo[:, :, :]
+
+            if self.verboseOutput:
+                print("Number of new subtomos generated: %d\n" % len(generatedSubtomosAli))
+                print("Data structure shapes BEFORE augmentation:")
+                print("Input aligned subtomo stream: " + str(inputSubtomoStreamAli.shape))
+
+            inputSubtomoStreamAli = np.concatenate((inputSubtomoStreamAli,
+                                                    generatedSubtomosArrayAli))
+
+            self.aliDict[key] = (inputSubtomoStreamAli, numberOfAliSubtomos)
+
+            if self.verboseOutput:
+                print("Data structure shapes AFTER augmentation:")
+                print("Input misaligned subtomo stream: " + str(inputSubtomoStreamAli.shape))
+
+            # Data augmentation for misaligned subtomos
+            generatedSubtomosMisali = []
+
+            for i in range(numberOfMisaliSubtomos):
+
+                newSubtomos = utils.dataAugmentationSubtomoDynamic(inputSubtomoStreamMisali[i, :, :, :],
+                                                                   (SUBTOMO_SIZE, SUBTOMO_SIZE, SUBTOMO_SIZE))
+
+                for subtomo in newSubtomos:
+                    generatedSubtomosMisali.append(subtomo)
+
+            generatedSubtomosArrayMisali = np.zeros((len(generatedSubtomosMisali),
+                                                     SUBTOMO_SIZE,
+                                                     SUBTOMO_SIZE,
+                                                     SUBTOMO_SIZE),
+                                                    dtype=np.float64)
+
+            for i, subtomo in enumerate(generatedSubtomosMisali):
+                generatedSubtomosArrayMisali[i, :, :, :] = subtomo[:, :, :]
+
+            if self.verboseOutput:
+                print("Number of new subtomos generated: %d\n" % len(generatedSubtomosMisali))
+                print("Data structure shapes BEFORE augmentation:")
+                print("Input subtomo stream: " + str(inputSubtomoStreamMisali.shape))
+
+            inputSubtomoStreamMisali = np.concatenate((inputSubtomoStreamMisali,
+                                                       generatedSubtomosArrayMisali))
+
+            self.misaliDict[key] = (inputSubtomoStreamMisali, numberOfMisaliSubtomos)
+
+            if self.verboseOutput:
+                print("Data structure shapes AFTER augmentation:")
+                print("Input subtomo stream: " + str(inputSubtomoStreamMisali.shape))
+
+        dataAug_time = time() - start_time
+        print("Time spent in data augmentation: %0.10f seconds.\n\n" % dataAug_time)
 
 
 # ----------------------------------- Main ------------------------------------------------
@@ -177,78 +268,6 @@ if __name__ == "__main__":
                             generatePlots=args.generatePlots,
                             normalize=args.normalize,
                             modelDir=args.modelDir)
-
-    # ------------------------------------------------------------ DATA AUGMENTATION
-    start_time = time()
-
-    # Data augmentation for aligned subtomos
-    generatedSubtomosAli = []
-
-    print("Data augmentation for aligned subtomos:")
-
-    for i in range(numberOfAliSubtomos):
-
-        newSubtomos = utils.dataAugmentationSubtomoDynamic(inputSubtomoStreamAli[i, :, :, :],
-                                                           (SUBTOMO_SIZE, SUBTOMO_SIZE, SUBTOMO_SIZE))
-
-        for subtomo in newSubtomos:
-            generatedSubtomosAli.append(subtomo)
-
-    generatedSubtomosArrayAli = np.zeros((len(generatedSubtomosAli),
-                                          SUBTOMO_SIZE,
-                                          SUBTOMO_SIZE,
-                                          SUBTOMO_SIZE),
-                                         dtype=np.float64)
-
-    for i, subtomo in enumerate(generatedSubtomosAli):
-        generatedSubtomosArrayAli[i, :, :, :] = subtomo[:, :, :]
-
-    print("Number of new subtomos generated: %d\n" % len(generatedSubtomosAli))
-
-    print("Data structure shapes BEFORE augmentation:")
-    print("Input aligned subtomo stream: " + str(inputSubtomoStreamAli.shape))
-
-    inputSubtomoStreamAli = np.concatenate((inputSubtomoStreamAli,
-                                            generatedSubtomosArrayAli))
-
-    print("Data structure shapes AFTER augmentation:")
-    print("Input misaligned subtomo stream: " + str(inputSubtomoStreamAli.shape))
-
-    # Data augmentation for misaligned subtomos
-    generatedSubtomosMisali = []
-
-    print("Data augmentation for misaligned subtomos:")
-
-    for i in range(numberOfMisaliSubtomos):
-
-        newSubtomos = utils.dataAugmentationSubtomoDynamic(inputSubtomoStreamMisali[i, :, :, :],
-                                                           (SUBTOMO_SIZE, SUBTOMO_SIZE, SUBTOMO_SIZE))
-
-        for subtomo in newSubtomos:
-            generatedSubtomosMisali.append(subtomo)
-
-    generatedSubtomosArrayMisali = np.zeros((len(generatedSubtomosMisali),
-                                             SUBTOMO_SIZE,
-                                             SUBTOMO_SIZE,
-                                             SUBTOMO_SIZE),
-                                            dtype=np.float64)
-
-    for i, subtomo in enumerate(generatedSubtomosMisali):
-        generatedSubtomosArrayMisali[i, :, :, :] = subtomo[:, :, :]
-
-    print("Number of new subtomos generated: %d\n" % len(generatedSubtomosMisali))
-
-    print("Data structure shapes BEFORE augmentation:")
-    print("Input subtomo stream: " + str(inputSubtomoStreamMisali.shape))
-
-    inputSubtomoStreamMisali = np.concatenate((inputSubtomoStreamMisali,
-                                               generatedSubtomosArrayMisali))
-
-    print("Data structure shapes AFTER augmentation:")
-    print("Input subtomo stream: " + str(inputSubtomoStreamMisali.shape))
-
-    dataAug_time = time() - start_time
-    print("Time spent in data augmentation: %0.10f seconds.\n\n" % dataAug_time)
 
     # ------------------------------------------------------------ SPLIT DATA
     # Aligned subtomos
