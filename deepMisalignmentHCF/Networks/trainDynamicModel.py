@@ -51,6 +51,16 @@ class TrainDynamicModel():
         self.aliDict = {}
         self.misaliDict = {}
 
+        # Compose output folder
+        dateAndTime = str(datetime.datetime.now())
+        dateAndTimeVector = dateAndTime.split(' ')
+        dateAndTime = dateAndTimeVector[0] + "_" + dateAndTimeVector[1]
+        dateAndTime = dateAndTime.replace(":", "-")
+        self.dirPath = os.path.join(stackDir, "outputLog_" + dateAndTime)
+
+        if not os.path.exists(self.dirPath):
+            os.makedirs(self.dirPath)
+
         # Trigger program execution
         self.produceSideInfo()
 
@@ -60,19 +70,21 @@ class TrainDynamicModel():
         self.start_time = time()
 
         # Search for all available dataset
-        inputDataArrays = glob.glob(f"{self.stackDir}/*.npy")
+        inputDataArrays = glob.glob(f"{self.stackDir}/*_*.npy")
+
+        print(inputDataArrays)
 
         for ida in inputDataArrays:
             fnNoExt = os.path.splitext(os.path.basename(ida))[0]
             [key, flag] = fnNoExt.split('_')
 
-            if flag == "_Ali":
+            if flag == "Ali":
                 data = np.load(ida)
                 self.aliDict[key] = (data, data.size)
                 self.totalAliSubtomos += data.size
                 self.totalSubtomos += data.size
 
-            elif flag == "_Misali":
+            elif flag == "Misali":
                 data = np.load(ida)
                 self.misaliDict[key] = (data, data.size)
                 self.totalMisaliSubtomos += data.size
@@ -108,7 +120,7 @@ class TrainDynamicModel():
 
         # Plot classes distribution info histogram
         if self.generatePlots:
-            plotUtils.plotClassesDistributionDynamic(self.aliDict, self.misaliDict)
+            plotUtils.plotClassesDistributionDynamic(self.aliDict, self.misaliDict, self.dirPath)
 
 
 # ----------------------------------- Main ------------------------------------------------

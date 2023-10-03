@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sn
+import os
 
 
 def plotClassesDistribution(misalignmentInfoVector):
@@ -34,7 +35,7 @@ def plotClassesDistribution(misalignmentInfoVector):
     plt.show()
 
 
-def plotClassesDistributionDynamic(aliDict, misaliDict):
+def plotClassesDistributionDynamic(aliDict, misaliDict, dirPath):
     """ This method plots and histogram of the classes distributions from each dataset between aligned and misaligned
     subtomos. """
 
@@ -65,7 +66,7 @@ def plotClassesDistributionDynamic(aliDict, misaliDict):
     ax.legend()
 
     # Display the plot
-    plt.show()
+    plt.savefig(os.path.join(dirPath, "classesDistribution.png"))
 
 
 def plotTraining(history, epochs):
