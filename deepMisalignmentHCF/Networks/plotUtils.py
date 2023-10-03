@@ -59,8 +59,8 @@ def plotClassesDistributionDynamic(aliDict, misaliDict, dirPath):
 
     # Customize the plot
     ax.set_xlabel('Population')
-    ax.set_ylabel('Number of Individuals')
-    ax.set_title('Population Distribution by Gender')
+    ax.set_ylabel('Number of subtomos')
+    ax.set_title('Classes distribution')
     ax.set_xticks(index + bar_width / 2)
     ax.set_xticklabels(populations)
     ax.legend()
