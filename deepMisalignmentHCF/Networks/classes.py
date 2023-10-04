@@ -1,24 +1,31 @@
 """ This module contains the definition of different classes used during the definition and training of the different
 models. """
 import random
-
 import numpy as np
+
 from tensorflow.keras.utils import Sequence
+
+import utils
 
 
 class DataGenerator(Sequence):
     """Generates data for Keras"""
 
-    def __init__(self, aliData, misaliData, aliIDs, misaliIDs, number_batches, batch_size, dim):
+    def __init__(self, aliDict, misaliDict, number_batches, batch_size, dim, mode):
         """Initialization"""
-        self.aliData = aliData
-        self.misaliData = misaliData
-        self.aliIDs = aliIDs
-        self.misaliIDs = misaliIDs
+        self.aliDict = aliDict
+        self.misaliDict = misaliDict
 
         self.dim = dim
         self.batch_size = batch_size
         self.number_batches = number_batches
+        self.number_datasets = len(self.aliDict)
+
+        # Set mode=0 for training and mode=1 for validation
+        if mode == 0:
+            self.mode = 2
+        elif mode == 1:
+            self.mode = 3
 
     def __len__(self):
         """Denotes the number of batches per epoch"""
@@ -32,38 +39,48 @@ class DataGenerator(Sequence):
         return X, y
 
     def __data_generation(self):
-        """Generates data containing batch_size samples"""  # X : (n_samples, *dim)
+        """Generates data containing batch_size samples"""
         # Initialization
-        X = np.zeros((self.batch_size, *self.dim))
+        X = np.zeros((self.batch_size, *self.dim))  # X : (n_samples, *dim)
         y = np.zeros(self.batch_size, dtype=int)
 
-        # Pick batch_size/2 elements from ali and misali data vectors (2 * batch_size/2)
-        aliIDsubset = random.sample(self.aliIDs, self.batch_size // 2)
-        misaliIDsubset = random.sample(self.misaliIDs, self.batch_size // 2)
+        # With this workaround we ensure to take batch_size elements evenly distributed by the different datasets
+        dataset_batch_size = self.batch_size // self.number_datasets
+        module_batch_size = self.batch_size % self.number_datasets
 
-        # print("SHAPE OF ALI AND MISMALI SUBSETS")
-        # print(np.shape(aliIDsubset))
-        # print(np.shape(misaliIDsubset))
+        numberOfElementsPerDataset = [dataset_batch_size] * self.number_datasets
 
-        # print("SHAPE OF X AND y")
-        # print(np.shape(X))
-        # print(np.shape(y))
-        #
-        # print(len(self.aliIDs))
-        # print(len(self.misaliIDs))
+        for i in range(module_batch_size):
+            numberOfElementsPerDataset[i] += 1
 
-        # Generate data
-        for i in range(self.batch_size//2):
-            aliIndex = 2 * i
-            misaliIndex = (2 * i) + 1
+        counter = 0
 
-            # Store sample
-            X[aliIndex, :] = self.aliData[aliIDsubset[i], :]
-            X[misaliIndex, :] = self.misaliData[misaliIDsubset[i], :]
+        for i, key in enumerate(self.aliDict.keys()):
+            # Pick numberOfElementsPerDataset/2 elements from ali and misali data
+            aliIDsubset = random.sample(self.aliDict[key][self.mode], numberOfElementsPerDataset[i])
+            misaliIDsubset = random.sample(self.misaliDict[key][self.mode], numberOfElementsPerDataset[i])
 
-            # Store class
-            y[aliIndex] = 1  # Ali
-            y[misaliIndex] = 0  # Misali
+            print("For dataset %s" % key)
+            print("shape of ali and mismali subsets")
+            print(np.shape(aliIDsubset))
+            print(np.shape(misaliIDsubset))
+
+            # Save data
+            for j in range(numberOfElementsPerDataset[i]):
+                aliIndex = 2 * counter
+                misaliIndex = (2 * counter) + 1
+
+                # Store sample
+                X[aliIndex, :] = self.aliDict[key][0][aliIDsubset[j], :]
+                X[misaliIndex, :] = self.misaliDict[key][0][misaliIDsubset[j], :]
+
+                # Store class
+                y[aliIndex] = 1  # Ali
+                y[misaliIndex] = 0  # Misali
+
+                counter += 1
+
+        # ---------------------- THE CODE BELLOW IS NOT USABLE AFTER THE LAST MODIFICATION
 
         # Generate phantom data (Ali as it is, Misali = Ali * -1)
         # for i in range(self.batch_size // 2):
@@ -112,7 +129,6 @@ class DataGenerator(Sequence):
         #     y[misaliIndex] = 0  # Misali
 
         # Testing the numpy array generation
-        #
         # import xmippLib as xmipp
         # inputSubtomoArray1 = xmipp.Image()
         # inputSubtomoArray2 = xmipp.Image()
