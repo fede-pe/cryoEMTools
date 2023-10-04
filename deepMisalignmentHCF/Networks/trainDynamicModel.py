@@ -19,8 +19,7 @@ import utils
 # Module variables
 SUBTOMO_SIZE = 32  # Dimensions of the subtomos (cubic, SUBTOMO_SIZE x SUBTOMO_SIZE x SUBTOMO_SIZE shape)
 BATCH_SIZE = 64  # Number of boxes per batch
-NUMBER_RANDOM_BATCHES = -1
-EPOCHS = 50  # Number of epochs
+EPOCHS = 2  # Number of epochs
 LEARNING_RATE = 0.0001  # Learning rate
 TESTING_SPLIT = 0.15  # Ratio of data used for testing
 VALIDATION_SPLIT = 0.2  # Ratio of data used for validation
@@ -29,12 +28,13 @@ VALIDATION_SPLIT = 0.2  # Ratio of data used for validation
 class TrainDynamicModel:
     """ This class holds all the methods needed to train dynamically a DNN model """
 
-    def __init__(self, stackDir, verboseOutput, generatePlots, normalize, modelDir):
+    def __init__(self, stackDir, verboseOutput, generatePlots, normalize, modelDir, debug):
         self.stackDir = stackDir
         self.verboseOutput = verboseOutput
         self.generatePlots = generatePlots
         self.normalize = normalize
         self.modelDir = modelDir
+        self.debug = debug
 
         if modelDir is None:
             self.retrainModel = False
@@ -45,10 +45,13 @@ class TrainDynamicModel:
         self.totalSubtomos = 0
         self.totalAliSubtomos = 0
         self.totalMisaliSubtomos = 0
+        self.numberRandomBatches = -1
 
         # Dictionaries with dataset information
         self.aliDict = {}
         self.misaliDict = {}
+        self.aliDict_test = {}
+        self.misaliDict_test = {}
 
         # Compose output folder
         dateAndTime = str(datetime.datetime.now())
@@ -62,10 +65,13 @@ class TrainDynamicModel:
 
         # Trigger program execution
         self.produceSideInfo()
+
         if normalize:
             self.normalizeData()
         self.dataAugmentation()
         self.splitData()
+
+        self.modelTraining()
 
     def produceSideInfo(self):
         """ Produce read input data arrays and metadata information """
@@ -93,7 +99,7 @@ class TrainDynamicModel:
                 self.totalSubtomos += len(data)
 
         # Update the number of random batches respect to the dataset and batch sizes
-        NUMBER_RANDOM_BATCHES = self.totalSubtomos // BATCH_SIZE
+        self.numberRandomBatches = self.totalSubtomos // BATCH_SIZE
 
         # Output classes distribution info
         aliSubtomosRatio = self.totalAliSubtomos / self.totalSubtomos
@@ -107,18 +113,20 @@ class TrainDynamicModel:
                 totalMisali = self.misaliDict[key][1]
                 total = totalAli + totalMisali
 
-                print("Dataset %s:\t"
+                if self.verboseOutput:
+                    print("Dataset %s:\t"
+                          "Aligned: %d (%.3f%%)\t"
+                          "Misaligned: %d (%.3f%%)\t"
+                          % (key,
+                             self.aliDict[key][1], (totalAli / total) * 100,
+                             self.misaliDict[key][1], (totalMisali / total) * 100))
+
+            if self.verboseOutput:
+                print("\nSet of datasets:\t"
                       "Aligned: %d (%.3f%%)\t"
                       "Misaligned: %d (%.3f%%)\t"
-                      % (key,
-                         self.aliDict[key][1], (totalAli / total) * 100,
-                         self.misaliDict[key][1], (totalMisali / total) * 100))
-
-            print("\nSet of datasets:\t"
-                  "Aligned: %d (%.3f%%)\t"
-                  "Misaligned: %d (%.3f%%)\t"
-                  % (self.totalAliSubtomos, aliSubtomosRatio * 100,
-                     self.totalMisaliSubtomos, misaliSubtomosRatio * 100))
+                      % (self.totalAliSubtomos, aliSubtomosRatio * 100,
+                         self.totalMisaliSubtomos, misaliSubtomosRatio * 100))
 
         # Plot classes distribution info histogram
         if self.generatePlots:
@@ -139,7 +147,7 @@ class TrainDynamicModel:
             self.misaliDict[key] = (utils.normalizeInputDataStream(self.misaliDict[key][0]), self.misaliDict[key][1])
 
             # Test normalization
-            if self.verboseOutput:
+            if self.debug:
                 print("Dataset %s:\t"
                       "Aligned: mean %s, std %s\t"
                       "Misaligned: mean %s, std %s\t"
@@ -157,6 +165,9 @@ class TrainDynamicModel:
         start_time = time()
 
         for key in self.aliDict.keys():
+            if self.debug:
+                print("Data generation for dataset: %s" % key)
+
             numberOfAliSubtomos = self.aliDict[key][1]
             numberOfMisaliSubtomos = self.misaliDict[key][1]
 
@@ -182,19 +193,19 @@ class TrainDynamicModel:
             for i, subtomo in enumerate(generatedSubtomosAli):
                 generatedSubtomosArrayAli[i, :, :, :] = subtomo[:, :, :]
 
-            if self.verboseOutput:
-                print("Number of new subtomos generated: %d\n" % len(generatedSubtomosAli))
-                print("Data structure shapes BEFORE augmentation:")
-                print("Input aligned subtomo stream: " + str(inputSubtomoStreamAli.shape))
+            if self.debug:
+                print("Data structure shapes for aligned dataset BEFORE augmentation:")
+                print("Subtomo data shape: " + str(inputSubtomoStreamAli.shape))
 
             inputSubtomoStreamAli = np.concatenate((inputSubtomoStreamAli,
                                                     generatedSubtomosArrayAli))
 
             self.aliDict[key] = (inputSubtomoStreamAli, numberOfAliSubtomos)
 
-            if self.verboseOutput:
-                print("Data structure shapes AFTER augmentation:")
-                print("Input misaligned subtomo stream: " + str(inputSubtomoStreamAli.shape))
+            if self.debug:
+                print("Data structure shapes for aligned dataset AFTER augmentation:")
+                print("Subtomo data shape: " + str(inputSubtomoStreamAli.shape))
+                print("Number of new subtomos generated: %d" % len(generatedSubtomosAli))
 
             # Data augmentation for misaligned subtomos
             generatedSubtomosMisali = []
@@ -216,19 +227,19 @@ class TrainDynamicModel:
             for i, subtomo in enumerate(generatedSubtomosMisali):
                 generatedSubtomosArrayMisali[i, :, :, :] = subtomo[:, :, :]
 
-            if self.verboseOutput:
-                print("Number of new subtomos generated: %d\n" % len(generatedSubtomosMisali))
-                print("Data structure shapes BEFORE augmentation:")
-                print("Input subtomo stream: " + str(inputSubtomoStreamMisali.shape))
+            if self.debug:
+                print("Data structure shapes for misaligned dataset BEFORE augmentation:")
+                print("Subtomo data shape: " + str(inputSubtomoStreamMisali.shape))
 
             inputSubtomoStreamMisali = np.concatenate((inputSubtomoStreamMisali,
                                                        generatedSubtomosArrayMisali))
 
             self.misaliDict[key] = (inputSubtomoStreamMisali, numberOfMisaliSubtomos)
 
-            if self.verboseOutput:
-                print("Data structure shapes AFTER augmentation:")
-                print("Input subtomo stream: " + str(inputSubtomoStreamMisali.shape))
+            if self.debug:
+                print("Data structure shapes for misaligned dataset AFTER augmentation:")
+                print("Subtomo data shape: " + str(inputSubtomoStreamMisali.shape))
+                print("Number of new subtomos generated: %d\n" % len(generatedSubtomosMisali))
 
         dataAug_time = time() - start_time
         print("Time spent in data augmentation: %0.10f seconds.\n\n" % dataAug_time)
@@ -240,29 +251,112 @@ class TrainDynamicModel:
         start_time = time()
 
         for key in self.aliDict.keys():
+            if self.debug:
+                print("Split data for dataset: %s" % key)
+
             # Aligned subtomos
-            aliTrain, aliTest = train_test_split(self.aliDict[key],
+            aliTrain, aliTest = train_test_split(self.aliDict[key][0],
                                                  test_size=TESTING_SPLIT,
                                                  random_state=42)
 
-            self.aliDict[key] = (aliTrain, aliTest)
+            self.aliDict[key] = (aliTrain, len(aliTrain))
+            self.aliDict_test[key] = (aliTest, len(aliTest))
 
             # Misligned subtomos
-            misaliTrain, misaliTest = train_test_split(self.misaliDict[key],
+            misaliTrain, misaliTest = train_test_split(self.misaliDict[key][0],
                                                        test_size=TESTING_SPLIT,
                                                        random_state=42)
 
-            self.misaliDict[key] = (misaliTrain, misaliTest)
+            self.misaliDict[key] = (misaliTrain, len(misaliTrain))
+            self.misaliDict_test[key] = (misaliTest, len(misaliTest))
 
-            if self.verboseOutput:
-                print("Data objects final dimensions for dataset %s" % key)
-                print('Input train aligned subtomos matrix: ' + str(np.shape(aliTrain)))
-                print('Input test aligned subtomos matrix: ' + str(np.shape(aliTest)))
-                print('Input train misaligned subtomos matrix: ' + str(np.shape(aliTrain)))
-                print('Input test misaligned subtomos matrix: ' + str(np.shape(aliTest)) + '\n')
+            if self.debug:
+                print('Data objects final dimensions for dataset %s' % key)
+                print('Train aligned subtomos matrix: ' + str(np.shape(aliTrain)))
+                print('Test aligned subtomos matrix: ' + str(np.shape(aliTest)))
+                print('Train misaligned subtomos matrix: ' + str(np.shape(misaliTrain)))
+                print('Test misaligned subtomos matrix: ' + str(np.shape(misaliTest)) + '\n')
 
-            elapsed_time = time() - start_time
-            print("Overall time spent in data train-test splitting: %0.10f seconds.\n\n" % elapsed_time)
+        elapsed_time = time() - start_time
+        print("Overall time spent in data train-test splitting: %0.10f seconds.\n\n" % elapsed_time)
+
+    def modelTraining(self):
+        """ Method for mode training """
+
+        print("------------------------------------------ Model training")
+        start_time = time()
+
+        for key in self.aliDict.keys():
+            # Validation/training ID toggle vectors
+            aliID_validation, aliID_train = utils.generateTrainingValidationVectors(self.aliDict[key][1],
+                                                                                    VALIDATION_SPLIT)
+
+            misaliID_validation, misaliID_train = utils.generateTrainingValidationVectors(self.misaliDict[key][1],
+                                                                                          VALIDATION_SPLIT)
+
+            # Add ID's for training and validation to dictionary
+            self.aliDict[key] = (self.aliDict[key][0],
+                                 self.aliDict[key][1],
+                                 aliID_train,
+                                 aliID_validation)
+
+            self.misaliDict[key] = (self.misaliDict[key][0],
+                                    self.misaliDict[key][1],
+                                    misaliID_validation,
+                                    misaliID_train)
+
+            if self.debug:
+                print("For dataset %s" % key)
+                print("aliID_validation: " + str(len(aliID_validation)))
+                print(sorted(aliID_validation))
+                print("aliID_train: " + str(len(aliID_train)))
+                print(sorted(aliID_train))
+                print("misaliID_validation: " + str(len(misaliID_validation)))
+                print(sorted(misaliID_validation))
+                print("misaliID_train: " + str(len(misaliID_train)))
+                print(sorted(misaliID_train))
+
+        # Parameters
+        params = {'aliDict': self.aliDict,
+                  'misaliDict': self.misaliDict,
+                  'number_batches': self.numberRandomBatches,
+                  'batch_size': BATCH_SIZE,
+                  'dim': (SUBTOMO_SIZE, SUBTOMO_SIZE, SUBTOMO_SIZE)}
+
+        # Generators
+        training_generator = DataGenerator(mode=0, **params)
+        validation_generator = DataGenerator(mode=1, **params)
+
+        # Compile model
+        if not self.retrainModel:
+            print("Generating a de novo model for training")
+            model = compileModel(model=scratchModel(),
+                                 learningRate=LEARNING_RATE)
+        else:
+            print("Loading pretrained model located at : " + self.modelDir)
+            model = load_model(self.modelDir)
+
+        # Train model on dataset
+        print("Training model...")
+
+        history = model.fit(training_generator,
+                            validation_data=validation_generator,
+                            epochs=EPOCHS,
+                            use_multiprocessing=True,
+                            workers=1,
+                            callbacks=getCallbacks(self.dirPath))
+
+        myValLoss = np.zeros(1)
+        myValLoss[0] = history.history['val_loss'][-1]
+
+        np.savetxt(os.path.join(self.dirPath, "model.txt"), myValLoss)
+        model.save(os.path.join(self.dirPath, "model.h5"))
+
+        if self.generatePlots:
+            plotUtils.plotTraining(history, EPOCHS)
+
+        elapsed_time = time() - start_time
+        print("Time spent training the model: %0.10f seconds.\n\n" % elapsed_time)
 
 
 # ----------------------------------- Main ------------------------------------------------
@@ -283,6 +377,7 @@ if __name__ == "__main__":
     parser.add_argument('--verboseOutput', action='store_true', help='Enable verbose output')
     parser.add_argument('--generatePlots', action='store_true', help='Generate plots')
     parser.add_argument('--normalize', action='store_true', help='Normalize data')
+    parser.add_argument('--debug', action='store_true', help='Enable debug mode')
 
     # Define the optional input path parameter '--modelDir'
     parser.add_argument('--modelDir', help='Model directory path')
@@ -296,89 +391,15 @@ if __name__ == "__main__":
     print("Generate plots:", args.generatePlots)
     print("Normalize data:", args.normalize)
     print("Model directory path:", args.modelDir)
+    print("Debug mode:", args.debug)
 
     tdm = TrainDynamicModel(stackDir=args.stackDir,
                             verboseOutput=args.verboseOutput,
                             generatePlots=args.generatePlots,
                             normalize=args.normalize,
-                            modelDir=args.modelDir)
+                            modelDir=args.modelDir,
+                            debug=args.debug)
 
-    # # ------------------------------------------------------------ TRAIN MODEL
-    # print("Train model")
-    # start_time = time()
-    #
-    # # Date and time for output generation
-    # dateAndTime = str(datetime.datetime.now())
-    # dateAndTimeVector = dateAndTime.split(' ')
-    # dateAndTime = dateAndTimeVector[0] + "_" + dateAndTimeVector[1]
-    # dateAndTime = dateAndTime.replace(":", "-")
-    #
-    # # Validation/training ID toggle vectors
-    # aliID_validation, aliID_train = utils.generateTrainingValidationVectors(len(normISSAli_train), VALIDATION_SPLIT)
-    # misaliID_validation, misaliID_train = utils.generateTrainingValidationVectors(len(normISSMisali_train),
-    #                                                                               VALIDATION_SPLIT)
-    #
-    # # print("aliID_validation: " + str(len(aliID_validation)))
-    # # print(sorted(aliID_validation))
-    # # print("aliID_train: " + str(len(aliID_train)))
-    # # print(sorted(aliID_train))
-    # # print("misaliID_validation: " + str(len(misaliID_validation)))
-    # # print(sorted(misaliID_validation))
-    # # print("misaliID_train: " + str(len(misaliID_train)))
-    # # print(sorted(misaliID_train))
-    #
-    # # Parameters
-    # params = {'aliData': normISSAli_train,
-    #           'misaliData': normISSMisali_train,
-    #           'number_batches': NUMBER_RANDOM_BATCHES,
-    #           'batch_size': BATCH_SIZE,
-    #           'dim': (SUBTOMO_SIZE, SUBTOMO_SIZE, SUBTOMO_SIZE)}
-    #
-    # # Generators
-    # training_generator = DataGenerator(aliIDs=aliID_train,
-    #                                    misaliIDs=misaliID_train,
-    #                                    **params)
-    # validation_generator = DataGenerator(aliIDs=aliID_validation,
-    #                                      misaliIDs=misaliID_validation,
-    #                                      **params)
-    #
-    # # Compile model
-    # if not retrainModel:
-    #     print("Generating a de novo model for training")
-    #     model = compileModel(model=scratchModel(),
-    #                          learningRate=LEARNING_RATE)
-    # else:
-    #     print("Loading pretrained model located at : " + modelDir)
-    #     model = load_model(modelDir)
-    #
-    # # Train model on dataset
-    # print("Training model...")
-    #
-    # dirPath = os.path.join(stackDir, "outputLog_" + dateAndTime)
-    #
-    # if not os.path.exists(dirPath):
-    #     os.makedirs(dirPath)
-    #
-    # history = model.fit(training_generator,
-    #                     validation_data=validation_generator,
-    #                     epochs=EPOCHS,
-    #                     use_multiprocessing=True,
-    #                     workers=1,
-    #                     callbacks=getCallbacks(dirPath))
-    #
-    # myValLoss = np.zeros(1)
-    # myValLoss[0] = history.history['val_loss'][-1]
-    #
-    # np.savetxt(os.path.join(dirPath, "model.txt"), myValLoss)
-    # model.save(os.path.join(dirPath, "model.h5"))
-    #
-    # elapsed_time = time() - start_time
-    #
-    # print("Time spent training the model: %0.10f seconds." % elapsed_time)
-    #
-    # if generatePlots:
-    #     plotUtils.plotTraining(history, EPOCHS)
-    #
     # # ------------------------------------------------------------ TEST MODEL
     # print("\n\nTest model...\n")
     # start_time = time()
@@ -446,7 +467,7 @@ if __name__ == "__main__":
     # # Parameters
     # params = {'aliData': normISSAli_train,
     #           'misaliData': normISSMisali_train,
-    #           'number_batches': NUMBER_RANDOM_BATCHES,
+    #           'number_batches': self.numberRandomBatches,
     #           'batch_size': BATCH_SIZE,
     #           'dim': (SUBTOMO_SIZE, SUBTOMO_SIZE, SUBTOMO_SIZE)}
     #
