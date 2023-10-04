@@ -104,7 +104,7 @@ def dataAugmentationSubtomo(subtomo, alignment, shape):
 
 
 def dataAugmentationSubtomoDynamic(subtomo, shape):
-    """ This methods takes a subtomo used as a reference and returns a rotated version of this for data augmentation
+    """ This method takes a subtomo used as a reference and returns a rotated version of this for data augmentation
     in dynamic training mode.
     Given a subtomo there is only 3 possible transformation (the combination of 180º rotations in Y and Z axis) in order
     to match the missing wedge between the input and the output subtomo.
