@@ -23,9 +23,17 @@ class DataGenerator(Sequence):
 
         # Set mode=0 for training and mode=1 for validation
         if mode == 0:
+            print("Data generator training class created:")
             self.mode = 2
         elif mode == 1:
+            print("Data generator validation class created:")
             self.mode = 3
+
+        print("self.dim " + str(self.dim))
+        print("self.batch_size " + str(self.batch_size))
+        print("self.number_batches " + str(self.number_batches))
+        print("self.number_datasets " + str(self.number_datasets))
+        print("self.mode " + str(self.mode))
 
     def __len__(self):
         """Denotes the number of batches per epoch"""
@@ -50,23 +58,26 @@ class DataGenerator(Sequence):
 
         numberOfElementsPerDataset = [dataset_batch_size] * self.number_datasets
 
-        for i in range(module_batch_size):
-            numberOfElementsPerDataset[i] += 1
+        for i in range(module_batch_size//2):
+            numberOfElementsPerDataset[i] += 2
+
+        # print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+        # print(numberOfElementsPerDataset)
 
         counter = 0
 
         for i, key in enumerate(self.aliDict.keys()):
             # Pick numberOfElementsPerDataset/2 elements from ali and misali data
-            aliIDsubset = random.sample(self.aliDict[key][self.mode], numberOfElementsPerDataset[i])
-            misaliIDsubset = random.sample(self.misaliDict[key][self.mode], numberOfElementsPerDataset[i])
+            aliIDsubset = random.sample(self.aliDict[key][self.mode], numberOfElementsPerDataset[i]//2)
+            misaliIDsubset = random.sample(self.misaliDict[key][self.mode], numberOfElementsPerDataset[i]//2)
 
-            print("For dataset %s" % key)
-            print("shape of ali and mismali subsets")
-            print(np.shape(aliIDsubset))
-            print(np.shape(misaliIDsubset))
+            # print("Filling vectors for dataset %s" % key)
+            # print("Shape of ali and mismali subsets")
+            # print(np.shape(aliIDsubset))
+            # print(np.shape(misaliIDsubset))
 
             # Save data
-            for j in range(numberOfElementsPerDataset[i]):
+            for j in range(numberOfElementsPerDataset[i]//2):
                 aliIndex = 2 * counter
                 misaliIndex = (2 * counter) + 1
 
