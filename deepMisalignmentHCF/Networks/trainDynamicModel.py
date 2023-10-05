@@ -272,11 +272,14 @@ class TrainDynamicModel:
         print("------------------------------------------ Data split train-test")
         start_time = time()
 
+        # Aligned subtomos
+        if self.debug:
+            print('Data split for aligned dataset')
+
         for key in self.aliDict.keys():
             if self.debug:
-                print("Split data for dataset: %s" % key)
+                print("\tSplit data for dataset: %s" % key)
 
-            # Aligned subtomos
             aliTrain, aliTest = train_test_split(self.aliDict[key][0],
                                                  test_size=TESTING_SPLIT,
                                                  random_state=42)
@@ -284,7 +287,19 @@ class TrainDynamicModel:
             self.aliDict[key] = (aliTrain, len(aliTrain))
             self.aliDict_test[key] = (aliTest, len(aliTest))
 
-            # Misligned subtomos
+            if self.debug:
+                print('\tData objects final dimensions for dataset %s' % key)
+                print('\tTrain aligned subtomos matrix: ' + str(np.shape(aliTrain)))
+                print('\tTest aligned subtomos matrix: ' + str(np.shape(aliTest)))
+
+        # Misaligned subtomos
+        if self.debug:
+            print('Data split for misaligned dataset')
+
+        for key in self.misaliDict.keys():
+            if self.debug:
+                print("\tSplit data for dataset: %s" % key)
+
             misaliTrain, misaliTest = train_test_split(self.misaliDict[key][0],
                                                        test_size=TESTING_SPLIT,
                                                        random_state=42)
@@ -293,14 +308,12 @@ class TrainDynamicModel:
             self.misaliDict_test[key] = (misaliTest, len(misaliTest))
 
             if self.debug:
-                print('Data objects final dimensions for dataset %s' % key)
-                print('Train aligned subtomos matrix: ' + str(np.shape(aliTrain)))
-                print('Test aligned subtomos matrix: ' + str(np.shape(aliTest)))
-                print('Train misaligned subtomos matrix: ' + str(np.shape(misaliTrain)))
-                print('Test misaligned subtomos matrix: ' + str(np.shape(misaliTest)) + '\n')
+                print('\tData objects final dimensions for dataset %s' % key)
+                print('\tTrain misaligned subtomos matrix: ' + str(np.shape(misaliTrain)))
+                print('\tTest misaligned subtomos matrix: ' + str(np.shape(misaliTest)))
 
         elapsed_time = time() - start_time
-        print("Overall time spent in data train-test splitting: %0.10f seconds.\n\n" % elapsed_time)
+        print("Time spent in data train-test splitting: %0.10f seconds.\n\n" % elapsed_time)
 
     def modelTraining(self):
         """ Method for model training """
