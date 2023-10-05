@@ -353,7 +353,7 @@ class TrainDynamicModel:
         model.save(os.path.join(self.dirPath, "model.h5"))
 
         if self.generatePlots:
-            plotUtils.plotTraining(history, EPOCHS)
+            plotUtils.plotTraining(history, EPOCHS, self.dirPath)
 
         elapsed_time = time() - start_time
         print("Time spent training the model: %0.10f seconds.\n\n" % elapsed_time)

@@ -54,8 +54,8 @@ def plotClassesDistributionDynamic(aliDict, misaliDict, dirPath):
 
     # Create bar plot
     fig, ax = plt.subplots()
-    bar1 = ax.bar(index, aliSubtomos, bar_width, label='AliSubtomos')
-    bar2 = ax.bar(index + bar_width, misaliSubtomos, bar_width, label='MisaliSubtomos')
+    _ = ax.bar(index, aliSubtomos, bar_width, label='AliSubtomos')
+    _ = ax.bar(index + bar_width, misaliSubtomos, bar_width, label='MisaliSubtomos')
 
     # Customize the plot
     ax.set_xlabel('Population')
@@ -67,9 +67,10 @@ def plotClassesDistributionDynamic(aliDict, misaliDict, dirPath):
 
     # Display the plot
     plt.savefig(os.path.join(dirPath, "classesDistribution.png"))
+    plt.close()
 
 
-def plotTraining(history, epochs):
+def plotTraining(history, epochs, dirPath):
     """ This method generates training post from the history of the model."""
 
     # Loss plot
@@ -82,7 +83,8 @@ def plotTraining(history, epochs):
     plt.ylabel('Loss')
 
     plt.legend()
-    plt.show()
+    plt.savefig(os.path.join(dirPath, "loss.png"))
+    plt.close()
 
     plt.tick_params('y', colors='b')
     plt.gca().set_xlim(0, epochs - 1)
@@ -94,7 +96,8 @@ def plotTraining(history, epochs):
     ax2.tick_params('y', colors='r')
 
     plt.title("Reduce LR on Plateau", fontsize=14)
-    plt.show()
+    plt.savefig(os.path.join(dirPath, "learningRate.png"))
+    plt.close()
 
 
 def plotTesting(misalignmentInfoVector_test, misalignmentInfoVector_prediction):
