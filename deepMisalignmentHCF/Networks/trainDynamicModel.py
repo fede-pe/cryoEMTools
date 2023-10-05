@@ -72,6 +72,7 @@ class TrainDynamicModel:
         self.splitData()
 
         self.modelTraining()
+        self.modelTesting()
 
     def produceSideInfo(self):
         """ Produce read input data arrays and metadata information """
@@ -281,7 +282,7 @@ class TrainDynamicModel:
         print("Overall time spent in data train-test splitting: %0.10f seconds.\n\n" % elapsed_time)
 
     def modelTraining(self):
-        """ Method for mode training """
+        """ Method for model training """
 
         print("------------------------------------------ Model training")
         start_time = time()
@@ -357,6 +358,68 @@ class TrainDynamicModel:
 
         elapsed_time = time() - start_time
         print("Time spent training the model: %0.10f seconds.\n\n" % elapsed_time)
+        
+    def modelTesting(self):
+        """ Method for model testing"""
+
+        print("------------------------------------------ Model training")
+        start_time = time()
+
+        loadModelDir = os.path.join(self.dirPath, "model.h5")
+        model = load_model(loadModelDir)
+
+        normISS_test, misalignmentInfoVector_test = utils.combineAliAndMisaliVectors(self.aliDict_test,
+                                                                                     self.misaliDict_test,
+                                                                                     SUBTOMO_SIZE,
+                                                                                     shuffle=False)
+        # Testing the numpy array generation
+        #
+        # import xmippLib as xmipp
+        # inputSubtomoArray1 = xmipp.Image()
+        # inputSubtomo1 = xmipp.Image()
+        #
+        # for i in range(len(normISS_test)):
+        #     X_tmp = normISS_test[i, :]
+        #     inputSubtomoArray1.setData(X_tmp)
+        #     inputSubtomoArray1.write(str(i)+"_test_nparray_subtomo.mrc")
+
+        # print("len(normISS_test) " + str(len(normISS_test)))
+        # print("len(misalignmentInfoVector_test) " + str(len(misalignmentInfoVector_test)))
+
+        misalignmentInfoVector_prediction = model.predict(normISS_test)
+
+        print("misalignmentInfoVector_prediction")
+        print(misalignmentInfoVector_prediction)
+        print("misalignmentInfoVector_test")
+        print(misalignmentInfoVector_test)
+
+        # Convert the set of probabilities from the previous command into the set of predicted classes
+        misalignmentInfoVector_predictionClasses = np.round(misalignmentInfoVector_prediction)
+
+        print(misalignmentInfoVector_predictionClasses)
+
+        np.savetxt(os.path.join(self.stackDir, 'model_prediction.txt'),
+                   misalignmentInfoVector_predictionClasses)
+
+        mae = mean_absolute_error(misalignmentInfoVector_test, misalignmentInfoVector_predictionClasses)
+        print("Final model mean absolute error val_loss: %f\n" % mae)
+
+        loss = model.evaluate(normISS_test,
+                              misalignmentInfoVector_test,
+                              verbose=2)
+
+        print("Testing set mean absolute error: {:5.4f}".format(loss[0]))
+        print("Testing set accuracy: {:5.4f}".format(loss[1]))
+
+        # Plot results from testing
+        if self.generatePlots:
+            plotUtils.plotTesting(
+                misalignmentInfoVector_test,
+                misalignmentInfoVector_predictionClasses
+            )
+
+        elapsed_time = time() - start_time
+        print("Time spent testing the model: %0.10f seconds.\n" % elapsed_time)
 
 
 # ----------------------------------- Main ------------------------------------------------
@@ -399,198 +462,3 @@ if __name__ == "__main__":
                             normalize=args.normalize,
                             modelDir=args.modelDir,
                             debug=args.debug)
-
-    # # ------------------------------------------------------------ TEST MODEL
-    # print("\n\nTest model...\n")
-    # start_time = time()
-    #
-    # loadModelDir = os.path.join(stackDir, "outputLog_" + dateAndTime + '/model.h5')
-    # model = load_model(loadModelDir)
-    #
-    # normISS_test, misalignmentInfoVector_test = utils.combineAliAndMisaliVectors(normISSAli_test,
-    #                                                                              normISSMisali_test,
-    #                                                                              SUBTOMO_SIZE,
-    #                                                                              shuffle=False)
-    # # Testing the numpy array generation
-    # #
-    # # import xmippLib as xmipp
-    # # inputSubtomoArray1 = xmipp.Image()
-    # # inputSubtomo1 = xmipp.Image()
-    # #
-    # # for i in range(len(normISS_test)):
-    # #     X_tmp = normISS_test[i, :]
-    # #     inputSubtomoArray1.setData(X_tmp)
-    # #     inputSubtomoArray1.write(str(i)+"_test_nparray_subtomo.mrc")
-    #
-    # # print("len(normISS_test) " + str(len(normISS_test)))
-    # # print("len(misalignmentInfoVector_test) " + str(len(misalignmentInfoVector_test)))
-    #
-    # misalignmentInfoVector_prediction = model.predict(normISS_test)
-    #
-    # print("misalignmentInfoVector_prediction")
-    # print(misalignmentInfoVector_prediction)
-    # print("misalignmentInfoVector_test")
-    # print(misalignmentInfoVector_test)
-    #
-    # # Convert the set of probabilities from the previous command into the set of predicted classes
-    # misalignmentInfoVector_predictionClasses = np.round(misalignmentInfoVector_prediction)
-    #
-    # print(misalignmentInfoVector_predictionClasses)
-    #
-    # np.savetxt(os.path.join(stackDir, 'model_prediction.txt'),
-    #            misalignmentInfoVector_predictionClasses)
-    #
-    # # ------------------------------------------------------------ TRAIN MODEL
-    # print("Train model")
-    # start_time = time()
-    #
-    # # Date and time for output generation
-    # dateAndTime = str(datetime.datetime.now())
-    # dateAndTimeVector = dateAndTime.split(' ')
-    # dateAndTime = dateAndTimeVector[0] + "_" + dateAndTimeVector[1]
-    # dateAndTime = dateAndTime.replace(":", "-")
-    #
-    # # Validation/training ID toggle vectors
-    # aliID_validation, aliID_train = utils.generateTrainingValidationVectors(len(normISSAli_train), VALIDATION_SPLIT)
-    # misaliID_validation, misaliID_train = utils.generateTrainingValidationVectors(len(normISSMisali_train),
-    #                                                                               VALIDATION_SPLIT)
-    #
-    # # print("aliID_validation: " + str(len(aliID_validation)))
-    # # print(sorted(aliID_validation))
-    # # print("aliID_train: " + str(len(aliID_train)))
-    # # print(sorted(aliID_train))
-    # # print("misaliID_validation: " + str(len(misaliID_validation)))
-    # # print(sorted(misaliID_validation))
-    # # print("misaliID_train: " + str(len(misaliID_train)))
-    # # print(sorted(misaliID_train))
-    #
-    # # Parameters
-    # params = {'aliData': normISSAli_train,
-    #           'misaliData': normISSMisali_train,
-    #           'number_batches': self.numberRandomBatches,
-    #           'batch_size': BATCH_SIZE,
-    #           'dim': (SUBTOMO_SIZE, SUBTOMO_SIZE, SUBTOMO_SIZE)}
-    #
-    # # Generators
-    # training_generator = DataGenerator(aliIDs=aliID_train,
-    #                                    misaliIDs=misaliID_train,
-    #                                    **params)
-    # validation_generator = DataGenerator(aliIDs=aliID_validation,
-    #                                      misaliIDs=misaliID_validation,
-    #                                      **params)
-    #
-    # # Compile model
-    # if not retrainModel:
-    #     print("Generating a de novo model for training")
-    #     model = compileModel(model=scratchModel(),
-    #                          learningRate=LEARNING_RATE)
-    # else:
-    #     print("Loading pretrained model located at : " + modelDir)
-    #     model = load_model(modelDir)
-    #
-    # # Train model on dataset
-    # print("Training model...")
-    #
-    # dirPath = os.path.join(stackDir, "outputLog_" + dateAndTime)
-    #
-    # if not os.path.exists(dirPath):
-    #     os.makedirs(dirPath)
-    #
-    # history = model.fit(training_generator,
-    #                     validation_data=validation_generator,
-    #                     epochs=EPOCHS,
-    #                     use_multiprocessing=True,
-    #                     workers=1,
-    #                     callbacks=getCallbacks(dirPath))
-    #
-    # myValLoss = np.zeros(1)
-    # myValLoss[0] = history.history['val_loss'][-1]
-    #
-    # np.savetxt(os.path.join(dirPath, "model.txt"), myValLoss)
-    # model.save(os.path.join(dirPath, "model.h5"))
-    #
-    # elapsed_time = time() - start_time
-    #
-    # print("Time spent training the model: %0.10f seconds." % elapsed_time)
-    #
-    # if generatePlots:
-    #     plotUtils.plotTraining(history, EPOCHS)
-    #
-    # # ------------------------------------------------------------ TEST MODEL
-    # print("\n\nTest model...\n")
-    # start_time = time()
-    #
-    # loadModelDir = os.path.join(stackDir, "outputLog_" + dateAndTime + '/model.h5')
-    # model = load_model(loadModelDir)
-    #
-    # normISS_test, misalignmentInfoVector_test = utils.combineAliAndMisaliVectors(normISSAli_test,
-    #                                                                              normISSMisali_test,
-    #                                                                              SUBTOMO_SIZE,
-    #                                                                              shuffle=False)
-    # # Testing the numpy array generation
-    # #
-    # # import xmippLib as xmipp
-    # # inputSubtomoArray1 = xmipp.Image()
-    # # inputSubtomo1 = xmipp.Image()
-    # #
-    # # for i in range(len(normISS_test)):
-    # #     X_tmp = normISS_test[i, :]
-    # #     inputSubtomoArray1.setData(X_tmp)
-    # #     inputSubtomoArray1.write(str(i)+"_test_nparray_subtomo.mrc")
-    #
-    # # print("len(normISS_test) " + str(len(normISS_test)))
-    # # print("len(misalignmentInfoVector_test) " + str(len(misalignmentInfoVector_test)))
-    #
-    # misalignmentInfoVector_prediction = model.predict(normISS_test)
-    #
-    # print("misalignmentInfoVector_prediction")
-    # print(misalignmentInfoVector_prediction)
-    # print("misalignmentInfoVector_test")
-    # print(misalignmentInfoVector_test)
-    #
-    # # Convert the set of probabilities from the previous command into the set of predicted classes
-    # misalignmentInfoVector_predictionClasses = np.round(misalignmentInfoVector_prediction)
-    #
-    # print(misalignmentInfoVector_predictionClasses)
-    #
-    # np.savetxt(os.path.join(stackDir, 'model_prediction.txt'),
-    #            misalignmentInfoVector_predictionClasses)
-    #
-    # elapsed_time = time() - start_time
-    # print("Time spent testing the model: %0.10f seconds.\n" % elapsed_time)
-    #
-    # mae = mean_absolute_error(misalignmentInfoVector_test, misalignmentInfoVector_predictionClasses)
-    # print("Final model mean absolute error val_loss: %f\n" % mae)
-    #
-    # loss = model.evaluate(normISS_test,
-    #                       misalignmentInfoVector_test,
-    #                       verbose=2)
-    #
-    # print("Testing set mean absolute error: {:5.4f}".format(loss[0]))
-    # print("Testing set accuracy: {:5.4f}".format(loss[1]))
-    #
-    # # Plot results from testing
-    # if generatePlots:
-    #     plotUtils.plotTesting(
-    #         misalignmentInfoVector_test,
-    #         misalignmentInfoVector_predictionClasses
-    #     )
-    # elapsed_time = time() - start_time
-    # print("Time spent testing the model: %0.10f seconds.\n" % elapsed_time)
-    #
-    # mae = mean_absolute_error(misalignmentInfoVector_test, misalignmentInfoVector_predictionClasses)
-    # print("Final model mean absolute error val_loss: %f\n" % mae)
-    #
-    # loss = model.evaluate(normISS_test,
-    #                       misalignmentInfoVector_test,
-    #                       verbose=2)
-    #
-    # print("Testing set mean absolute error: {:5.4f}".format(loss[0]))
-    # print("Testing set accuracy: {:5.4f}".format(loss[1]))
-    #
-    # # Plot results from testing
-    # if generatePlots:
-    #     plotUtils.plotTesting(
-    #         misalignmentInfoVector_test,
-    #         misalignmentInfoVector_predictionClasses
-    #     )

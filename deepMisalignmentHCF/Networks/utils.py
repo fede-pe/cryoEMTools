@@ -162,15 +162,24 @@ def generateTrainingValidationVectors(size, validationRatio):
     return randomIndexes[0: limitRatio], randomIndexes[limitRatio:]
 
 
-def combineAliAndMisaliVectors(aliV, misaliV, subtomoSize,  shuffle=True):
+def combineAliAndMisaliVectors(aliDict, misaliDict, subtomoSize,  shuffle=True):
     """ Generate and subtomos vector and its associated class (aligned or misaligned) from two independent vectors of
     aligned and misaligned subtomos"""
 
-    aliInfoV = np.ones(len(aliV))
-    misaliInfoV = np.zeros((len(misaliV)))
+    subtomoVectorList = []
+    infoVectorList = []
 
-    subtomoV = np.concatenate((aliV, misaliV))
-    infoV = np.concatenate((aliInfoV, misaliInfoV))
+    for key in aliDict.keys():
+        subtomoVectorList.append(aliDict[key][0])
+        subtomoVectorList.append(misaliDict[key][0])
+
+        infoVectorList.append(np.ones(aliDict[key][1]))
+        infoVectorList.append(np.zeros(misaliDict[key][1]))
+
+    subtomoV = np.concatenate(subtomoVectorList, axis=0)
+    infoV = np.concatenate(infoVectorList, axis=0)
+
+    # ---------------------- THE CODE BELLOW IS NOT USABLE AFTER THE LAST MODIFICATION
 
     # # Generate phantom data (Ali as it is, Misali = Ali * -1)
     # aliInfoV = np.ones(len(aliV))
