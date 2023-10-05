@@ -388,15 +388,17 @@ class TrainDynamicModel:
 
         misalignmentInfoVector_prediction = model.predict(normISS_test)
 
-        # print("misalignmentInfoVector_prediction")
-        # print(misalignmentInfoVector_prediction)
-        # print("misalignmentInfoVector_test")
-        # print(misalignmentInfoVector_test)
+        if self.debug:
+            print("misalignmentInfoVector_prediction")
+            print(misalignmentInfoVector_prediction)
+            print("misalignmentInfoVector_test")
+            print(misalignmentInfoVector_test)
 
         # Convert the set of probabilities from the previous command into the set of predicted classes
         misalignmentInfoVector_predictionClasses = np.round(misalignmentInfoVector_prediction)
 
-        # print(misalignmentInfoVector_predictionClasses)
+        if self.debug:
+            print(misalignmentInfoVector_predictionClasses)
 
         np.savetxt(os.path.join(self.stackDir, 'model_prediction.txt'),
                    misalignmentInfoVector_predictionClasses)
