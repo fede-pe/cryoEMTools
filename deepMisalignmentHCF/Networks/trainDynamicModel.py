@@ -321,13 +321,11 @@ class TrainDynamicModel:
         print("------------------------------------------ Model training")
         start_time = time()
 
+        # Split validation/training for aligned data
         for key in self.aliDict.keys():
             # Validation/training ID toggle vectors
             aliID_validation, aliID_train = utils.generateTrainingValidationVectors(self.aliDict[key][1],
                                                                                     VALIDATION_SPLIT)
-
-            misaliID_validation, misaliID_train = utils.generateTrainingValidationVectors(self.misaliDict[key][1],
-                                                                                          VALIDATION_SPLIT)
 
             # Add ID's for training and validation to dictionary
             self.aliDict[key] = (self.aliDict[key][0],
@@ -335,6 +333,20 @@ class TrainDynamicModel:
                                  aliID_train,
                                  aliID_validation)
 
+            if self.debug:
+                print("For dataset %s" % key)
+                print("aliID_validation: " + str(len(aliID_validation)))
+                print(sorted(aliID_validation))
+                print("aliID_train: " + str(len(aliID_train)))
+                print(sorted(aliID_train))
+
+        # Split validation/training for misaligned data
+        for key in self.aliDict.keys():
+            # Validation/training ID toggle vectors
+            misaliID_validation, misaliID_train = utils.generateTrainingValidationVectors(self.misaliDict[key][1],
+                                                                                          VALIDATION_SPLIT)
+
+            # Add ID's for training and validation to dictionary
             self.misaliDict[key] = (self.misaliDict[key][0],
                                     self.misaliDict[key][1],
                                     misaliID_validation,
@@ -342,10 +354,6 @@ class TrainDynamicModel:
 
             if self.debug:
                 print("For dataset %s" % key)
-                print("aliID_validation: " + str(len(aliID_validation)))
-                print(sorted(aliID_validation))
-                print("aliID_train: " + str(len(aliID_train)))
-                print(sorted(aliID_train))
                 print("misaliID_validation: " + str(len(misaliID_validation)))
                 print(sorted(misaliID_validation))
                 print("misaliID_train: " + str(len(misaliID_train)))
