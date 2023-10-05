@@ -43,10 +43,20 @@ def plotClassesDistributionDynamic(aliDict, misaliDict, dirPath):
     misaliSubtomos = []
     populations = []
 
-    for key in aliDict.keys():
+    unionKeys = set(aliDict.keys()) | set(misaliDict.keys())
+
+    for key in unionKeys:
         populations.append(key)
-        aliSubtomos.append(aliDict[key][1])
-        misaliSubtomos.append(misaliDict[key][1])
+
+        if key in aliDict.keys():
+            aliSubtomos.append(aliDict[key][1])
+        else:
+            aliSubtomos.append(0)
+
+        if key in misaliDict.keys():
+            misaliSubtomos.append(misaliDict[key][1])
+        else:
+            misaliSubtomos.append(0)
 
     # Set up positions for bars on X-axis
     bar_width = 0.35

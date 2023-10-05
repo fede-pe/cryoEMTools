@@ -109,18 +109,21 @@ class TrainDynamicModel:
         if self.verboseOutput:
             print("\nClasses distribution:")
 
+            print("\tAligned datasets:")
             for key in self.aliDict.keys():
-                totalAli = self.aliDict[key][1]
-                totalMisali = self.misaliDict[key][1]
-                total = totalAli + totalMisali
-
                 if self.verboseOutput:
-                    print("Dataset %s:\t"
-                          "Aligned: %d (%.3f%%)\t"
-                          "Misaligned: %d (%.3f%%)\t"
+                    print("\t\tDataset %s:\t"
+                          "Aligned: %d\t"
                           % (key,
-                             self.aliDict[key][1], (totalAli / total) * 100,
-                             self.misaliDict[key][1], (totalMisali / total) * 100))
+                             self.aliDict[key][1]))
+
+            print("\tMisaligned datasets:")
+            for key in self.misaliDict.keys():
+                if self.verboseOutput:
+                    print("\t\tDataset %s:\t"
+                          "Misaligned: %d\t"
+                          % (key,
+                             self.misaliDict[key][1]))
 
             if self.verboseOutput:
                 print("\nSet of datasets:\t"
