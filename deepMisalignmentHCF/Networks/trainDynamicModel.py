@@ -362,7 +362,7 @@ class TrainDynamicModel:
     def modelTesting(self):
         """ Method for model testing"""
 
-        print("------------------------------------------ Model training")
+        print("------------------------------------------ Model testing")
         start_time = time()
 
         loadModelDir = os.path.join(self.dirPath, "model.h5")
@@ -388,15 +388,15 @@ class TrainDynamicModel:
 
         misalignmentInfoVector_prediction = model.predict(normISS_test)
 
-        print("misalignmentInfoVector_prediction")
-        print(misalignmentInfoVector_prediction)
-        print("misalignmentInfoVector_test")
-        print(misalignmentInfoVector_test)
+        # print("misalignmentInfoVector_prediction")
+        # print(misalignmentInfoVector_prediction)
+        # print("misalignmentInfoVector_test")
+        # print(misalignmentInfoVector_test)
 
         # Convert the set of probabilities from the previous command into the set of predicted classes
         misalignmentInfoVector_predictionClasses = np.round(misalignmentInfoVector_prediction)
 
-        print(misalignmentInfoVector_predictionClasses)
+        # print(misalignmentInfoVector_predictionClasses)
 
         np.savetxt(os.path.join(self.stackDir, 'model_prediction.txt'),
                    misalignmentInfoVector_predictionClasses)
@@ -415,7 +415,8 @@ class TrainDynamicModel:
         if self.generatePlots:
             plotUtils.plotTesting(
                 misalignmentInfoVector_test,
-                misalignmentInfoVector_predictionClasses
+                misalignmentInfoVector_predictionClasses,
+                self.dirPath
             )
 
         elapsed_time = time() - start_time

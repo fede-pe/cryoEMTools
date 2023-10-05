@@ -100,7 +100,7 @@ def plotTraining(history, epochs, dirPath):
     plt.close()
 
 
-def plotTesting(misalignmentInfoVector_test, misalignmentInfoVector_prediction):
+def plotTesting(misalignmentInfoVector_test, misalignmentInfoVector_prediction, dirPath):
     """ This method generates testing post from the history of the model.
     Variable indicates the column number of the feature in the information matrix."""
 
@@ -139,4 +139,5 @@ def plotTesting(misalignmentInfoVector_test, misalignmentInfoVector_prediction):
 
     sn.heatmap(df_cm, annot=True)
 
-    plt.show()
+    plt.savefig(os.path.join(dirPath, "confussionMatrix.png"))
+    plt.close()
