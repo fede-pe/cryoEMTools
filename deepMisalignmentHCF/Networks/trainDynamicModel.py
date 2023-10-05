@@ -19,7 +19,7 @@ import utils
 # Module variables
 SUBTOMO_SIZE = 32  # Dimensions of the subtomos (cubic, SUBTOMO_SIZE x SUBTOMO_SIZE x SUBTOMO_SIZE shape)
 BATCH_SIZE = 64  # Number of boxes per batch
-EPOCHS = 2  # Number of epochs
+EPOCHS = 50  # Number of epochs
 LEARNING_RATE = 0.0001  # Learning rate
 TESTING_SPLIT = 0.15  # Ratio of data used for testing
 VALIDATION_SPLIT = 0.2  # Ratio of data used for validation
