@@ -145,22 +145,32 @@ class TrainDynamicModel:
         print("------------------------------------------ Data normalization")
         start_time = time()
 
+        print("Aligned datasets:")
         for key in self.aliDict.keys():
             # Normalize input subtomo data stream to N(0,1)
             self.aliDict[key] = (utils.normalizeInputDataStream(self.aliDict[key][0]), self.aliDict[key][1])
+
+            # Test normalization
+            if self.debug:
+                print("\tDataset %s:\t"
+                      "Aligned: mean %s, std %s\t"
+                      % (key,
+                         str(np.mean(self.aliDict[key][0])), str(np.std(self.aliDict[key][0]))))
+
+        print("Misaligned datasets:")
+        for key in self.misaliDict.keys():
+            # Normalize input subtomo data stream to N(0,1)
             self.misaliDict[key] = (utils.normalizeInputDataStream(self.misaliDict[key][0]), self.misaliDict[key][1])
 
             # Test normalization
             if self.debug:
-                print("Dataset %s:\t"
-                      "Aligned: mean %s, std %s\t"
+                print("\tDataset %s:\t"
                       "Misaligned: mean %s, std %s\t"
                       % (key,
-                         str(np.mean(self.aliDict[key][0])), str(np.std(self.aliDict[key][0])),
                          str(np.mean(self.misaliDict[key][0])), str(np.std(self.misaliDict[key][0]))))
 
         norm_time = time() - start_time
-        print("Time spent in data normalization: %0.10f seconds.\n\n" % norm_time)
+        print("Time spent in data normalization: %0.10f seconds.\n" % norm_time)
 
     def dataAugmentation(self):
         """ Method to perform data augmentation strategies to input data """
@@ -361,7 +371,7 @@ class TrainDynamicModel:
 
         elapsed_time = time() - start_time
         print("Time spent training the model: %0.10f seconds.\n\n" % elapsed_time)
-        
+
     def modelTesting(self):
         """ Method for model testing"""
 
