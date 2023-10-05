@@ -341,7 +341,7 @@ class TrainDynamicModel:
                 print(sorted(aliID_train))
 
         # Split validation/training for misaligned data
-        for key in self.aliDict.keys():
+        for key in self.misaliDict.keys():
             # Validation/training ID toggle vectors
             misaliID_validation, misaliID_train = utils.generateTrainingValidationVectors(self.misaliDict[key][1],
                                                                                           VALIDATION_SPLIT)
