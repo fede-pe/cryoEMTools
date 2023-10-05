@@ -178,17 +178,16 @@ class TrainDynamicModel:
         print("------------------------------------------ Data augmentation")
         start_time = time()
 
+        # Data augmentation for aligned subtomos
+        print("Data augmentation for aligned datasets")
+
         for key in self.aliDict.keys():
             if self.debug:
-                print("Data generation for dataset: %s" % key)
+                print("\tData augmentation for dataset: %s" % key)
 
             numberOfAliSubtomos = self.aliDict[key][1]
-            numberOfMisaliSubtomos = self.misaliDict[key][1]
-
             inputSubtomoStreamAli = self.aliDict[key][0]
-            inputSubtomoStreamMisali = self.misaliDict[key][0]
 
-            # Data augmentation for aligned subtomos
             generatedSubtomosAli = []
 
             for i in range(numberOfAliSubtomos):
@@ -208,8 +207,8 @@ class TrainDynamicModel:
                 generatedSubtomosArrayAli[i, :, :, :] = subtomo[:, :, :]
 
             if self.debug:
-                print("Data structure shapes for aligned dataset BEFORE augmentation:")
-                print("Subtomo data shape: " + str(inputSubtomoStreamAli.shape))
+                print("\tData structure shapes for aligned dataset BEFORE augmentation:" +
+                      str(inputSubtomoStreamAli.shape))
 
             inputSubtomoStreamAli = np.concatenate((inputSubtomoStreamAli,
                                                     generatedSubtomosArrayAli))
@@ -217,11 +216,20 @@ class TrainDynamicModel:
             self.aliDict[key] = (inputSubtomoStreamAli, numberOfAliSubtomos)
 
             if self.debug:
-                print("Data structure shapes for aligned dataset AFTER augmentation:")
-                print("Subtomo data shape: " + str(inputSubtomoStreamAli.shape))
-                print("Number of new subtomos generated: %d" % len(generatedSubtomosAli))
+                print("\tData structure shapes for aligned dataset AFTER augmentation:" +
+                      str(inputSubtomoStreamAli.shape))
+                print("\tNumber of new subtomos generated: %d" % len(generatedSubtomosAli))
 
-            # Data augmentation for misaligned subtomos
+        # Data augmentation for misaligned subtomos
+        print("Data augmentation for misaligned datasets")
+
+        for key in self.misaliDict.keys():
+            if self.debug:
+                print("\tData augmentation for dataset: %s" % key)
+
+            numberOfMisaliSubtomos = self.misaliDict[key][1]
+            inputSubtomoStreamMisali = self.misaliDict[key][0]
+
             generatedSubtomosMisali = []
 
             for i in range(numberOfMisaliSubtomos):
@@ -242,8 +250,8 @@ class TrainDynamicModel:
                 generatedSubtomosArrayMisali[i, :, :, :] = subtomo[:, :, :]
 
             if self.debug:
-                print("Data structure shapes for misaligned dataset BEFORE augmentation:")
-                print("Subtomo data shape: " + str(inputSubtomoStreamMisali.shape))
+                print("\tData structure shapes for misaligned dataset BEFORE augmentation:" +
+                      str(inputSubtomoStreamMisali.shape))
 
             inputSubtomoStreamMisali = np.concatenate((inputSubtomoStreamMisali,
                                                        generatedSubtomosArrayMisali))
@@ -251,9 +259,9 @@ class TrainDynamicModel:
             self.misaliDict[key] = (inputSubtomoStreamMisali, numberOfMisaliSubtomos)
 
             if self.debug:
-                print("Data structure shapes for misaligned dataset AFTER augmentation:")
-                print("Subtomo data shape: " + str(inputSubtomoStreamMisali.shape))
-                print("Number of new subtomos generated: %d\n" % len(generatedSubtomosMisali))
+                print("\tData structure shapes for misaligned dataset AFTER augmentation:" +
+                      str(inputSubtomoStreamMisali.shape))
+                print("\tNumber of new subtomos generated: %d" % len(generatedSubtomosMisali))
 
         dataAug_time = time() - start_time
         print("Time spent in data augmentation: %0.10f seconds.\n\n" % dataAug_time)
