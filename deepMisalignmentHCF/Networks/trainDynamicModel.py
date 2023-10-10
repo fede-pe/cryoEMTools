@@ -18,11 +18,11 @@ import utils
 
 # Module variables
 SUBTOMO_SIZE = 32  # Dimensions of the subtomos (cubic, SUBTOMO_SIZE x SUBTOMO_SIZE x SUBTOMO_SIZE shape)
-BATCH_SIZE = 32  # Number of boxes per batch
-EPOCHS = 2  # Number of epochs
+BATCH_SIZE = 64  # Number of boxes per batch
+EPOCHS = 50  # Number of epochs
 LEARNING_RATE = 0.0001  # Learning rate
-TESTING_SPLIT = 0.05  # Ratio of data used for testing
-VALIDATION_SPLIT = 0.3  # Ratio of data used for validation
+TESTING_SPLIT = 0.1  # Ratio of data used for testing
+VALIDATION_SPLIT = 0.15  # Ratio of data used for validation
 
 
 class TrainDynamicModel:
