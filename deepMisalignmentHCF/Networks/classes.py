@@ -19,7 +19,8 @@ class DataGenerator(Sequence):
         self.dim = dim
         self.batch_size = batch_size
         self.number_batches = number_batches
-        self.number_datasets = len(self.aliDict)
+        self.number_datasets_ali = len(self.aliDict)
+        self.number_datasets_misali = len(self.misaliDict)
 
         # Set mode=0 for training and mode=1 for validation
         if mode == 0:
@@ -32,7 +33,8 @@ class DataGenerator(Sequence):
         print("self.dim " + str(self.dim))
         print("self.batch_size " + str(self.batch_size))
         print("self.number_batches " + str(self.number_batches))
-        print("self.number_datasets " + str(self.number_datasets))
+        print("self.number_datasets_ali " + str(self.number_datasets_ali))
+        print("self.number_datasets_misali " + str(self.number_datasets_misali))
         print("self.mode " + str(self.mode))
 
     def __len__(self):
@@ -53,40 +55,68 @@ class DataGenerator(Sequence):
         y = np.zeros(self.batch_size, dtype=int)
 
         # With this workaround we ensure to take batch_size elements evenly distributed by the different datasets
-        dataset_batch_size = self.batch_size // self.number_datasets
-        module_batch_size = self.batch_size % self.number_datasets
+        # ensuring that half of them are aligned and the other half misaligned
+        dataset_batch_size_half = self.batch_size // 2
+        dataset_batch_size_ali = dataset_batch_size_half // self.number_datasets_ali
+        dataset_batch_size_misali = dataset_batch_size_half // self.number_datasets_misali
 
-        numberOfElementsPerDataset = [dataset_batch_size] * self.number_datasets
+        module_batch_size_ali = dataset_batch_size_half % self.number_datasets_ali
+        module_batch_size_misali = dataset_batch_size_half % self.number_datasets_misali
 
-        for i in range(module_batch_size//2):
-            numberOfElementsPerDataset[i] += 2
+        numberOfElementsPerDataset_ali = [dataset_batch_size_ali] * self.number_datasets_ali
+        for i in range(module_batch_size_ali//2):
+            numberOfElementsPerDataset_ali[i] += 2
 
-        # print("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-        # print(numberOfElementsPerDataset)
+        numberOfElementsPerDataset_misali = [dataset_batch_size_misali] * self.number_datasets_misali
+        for i in range(module_batch_size_misali//2):
+            numberOfElementsPerDataset_misali[i] += 2
 
+        print("Number of elements selected for each vector:")
+        print("numberOfElementsPerDataset_ali " + str(numberOfElementsPerDataset_ali))
+        print("numberOfElementsPerDataset_misali" + str(numberOfElementsPerDataset_misali))
+
+        # Fill with ali data
         counter = 0
 
         for i, key in enumerate(self.aliDict.keys()):
-            # Pick numberOfElementsPerDataset/2 elements from ali and misali data
-            aliIDsubset = random.sample(self.aliDict[key][self.mode], numberOfElementsPerDataset[i]//2)
-            misaliIDsubset = random.sample(self.misaliDict[key][self.mode], numberOfElementsPerDataset[i]//2)
+            # Pick numberOfElementsPerDataset_ali from ali data
+            print("-- Data generation for dataset %s " % key)
+            print("Number of elements to be taken from this vector %d " % numberOfElementsPerDataset_ali[i])
+            print("Size of the vector %d " % len(self.aliDict[key][self.mode]))
 
-            # print("Filling vectors for dataset %s" % key)
-            # print("Shape of ali and mismali subsets")
-            # print(np.shape(aliIDsubset))
-            # print(np.shape(misaliIDsubset))
+            aliIDsubset = random.sample(self.aliDict[key][self.mode], numberOfElementsPerDataset_ali[i])
 
             # Save data
-            for j in range(numberOfElementsPerDataset[i]//2):
+            for j in range(numberOfElementsPerDataset_ali[i]):
                 aliIndex = 2 * counter
-                misaliIndex = (2 * counter) + 1
 
                 # Store sample
                 X[aliIndex, :] = self.aliDict[key][0][aliIDsubset[j], :]
-                X[misaliIndex, :] = self.misaliDict[key][0][misaliIDsubset[j], :]
 
                 # Store class
                 y[aliIndex] = 1  # Ali
+
+                counter += 1
+
+        # Fill with misali data
+        counter = 0
+
+        for i, key in enumerate(self.misaliDict.keys()):
+            # Pick numberOfElementsPerDataset/2 elements from misali data
+            print("-- Data generation for dataset %s " % key)
+            print("Number of elements to be taken from this vector %d " % numberOfElementsPerDataset_misali[i])
+            print("Size of the vector %d " % len(self.misaliDict[key][self.mode]))
+
+            misaliIDsubset = random.sample(self.misaliDict[key][self.mode], numberOfElementsPerDataset_misali[i])
+
+            # Save data
+            for j in range(numberOfElementsPerDataset_misali[i]):
+                misaliIndex = (2 * counter) + 1
+
+                # Store sample
+                X[misaliIndex, :] = self.misaliDict[key][0][misaliIDsubset[j], :]
+
+                # Store class
                 y[misaliIndex] = 0  # Misali
 
                 counter += 1
