@@ -134,27 +134,35 @@ def generateNetworkVectorsSplit(outputPath):
                 subtomoPathListMisali.append(line["subTomoPath"])
                 NdimMisali += 1
 
-        inputDataStreamAli = np.zeros((NdimAli, 32, 32, 32), dtype=np.float64)
-        inputDataStreamMisali = np.zeros((NdimMisali, 32, 32, 32), dtype=np.float64)
+        # Check if no aligned subtomogram is added to the set
+        if NdimAli > 0:
+            inputDataStreamAli = np.zeros((NdimAli, 32, 32, 32), dtype=np.float64)
 
-        # Complete inputDataStreamAli and inputDataStreamMisali matrix (it is only possible to iterate over the
-        # csvReader once and it is necessary to know NdimAli and Misali a priori.
-        for i, subtomoPath in enumerate(subtomoPathListAli):
-            subtomoVol = xmipp.Image(subtomoPath).getData()
-            inputDataStreamAli[i, :, :, :] = subtomoVol
+            # Complete inputDataStreamAli matrix (it is only possible to iterate over the
+            # csvReader once, and it is necessary to know NdimAli and Misali a priori).
+            for i, subtomoPath in enumerate(subtomoPathListAli):
+                subtomoVol = xmipp.Image(subtomoPath).getData()
+                inputDataStreamAli[i, :, :, :] = subtomoVol
 
-        for i, subtomoPath in enumerate(subtomoPathListMisali):
-            subtomoVol = xmipp.Image(subtomoPath).getData()
-            inputDataStreamMisali[i, :, :, :] = subtomoVol
+            inputDataStreamAliPath = outputPath + "_Ali.npy"
+            np.save(inputDataStreamAliPath, inputDataStreamAli)
 
-        inputDataStreamAliPath = outputPath + "_Ali.npy"
-        inputDataStreamMisaliPath = outputPath + "_Misali.npy"
+            print("Output aligned subtomo vector saved at " + inputDataStreamAliPath)
 
-        np.save(inputDataStreamAliPath, inputDataStreamAli)
-        np.save(inputDataStreamMisaliPath, inputDataStreamMisali)
+        # Check if no aligned subtomogram is added to the set
+        if NdimMisali > 0:
+            inputDataStreamMisali = np.zeros((NdimMisali, 32, 32, 32), dtype=np.float64)
 
-        print("Output aligned subtomo vector saved at " + inputDataStreamAliPath)
-        print("Output misaligned subtomo vector saved at " + inputDataStreamMisaliPath)
+            # Complete inputDataStreamMisali matrix (it is only possible to iterate over the
+            # csvReader once, and it is necessary to know NdimAli and Misali a priori).
+            for i, subtomoPath in enumerate(subtomoPathListMisali):
+                subtomoVol = xmipp.Image(subtomoPath).getData()
+                inputDataStreamMisali[i, :, :, :] = subtomoVol
+
+            inputDataStreamMisaliPath = outputPath + "_Misali.npy"
+            np.save(inputDataStreamMisaliPath, inputDataStreamMisali)
+
+            print("Output misaligned subtomo vector saved at " + inputDataStreamMisaliPath)
 
 
 # ----------------------------------- Main ------------------------------------------------
