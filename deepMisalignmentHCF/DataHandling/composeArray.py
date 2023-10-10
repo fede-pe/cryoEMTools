@@ -14,7 +14,6 @@ def composeVector(subtomoRegex, outputLocation):
 
     # Read input subtomos
     for file in glob.glob(subtomoRegex):
-        print(file)
         subtomoFiles.append(file)
 
     # Create empty np vector
@@ -27,7 +26,7 @@ def composeVector(subtomoRegex, outputLocation):
 
     np.save(file=outputLocation,
             arr=inputDataStream)
-    print("Output aligned subtomo vector saved at " + outputLocation)
+    print("%d subtomos have been composed in a numpy array and saved at %s." % (len(subtomoFiles), outputLocation))
 
 
 # ----------------------------------- Main ------------------------------------------------
