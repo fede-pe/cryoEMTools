@@ -169,11 +169,14 @@ def combineAliAndMisaliVectors(aliDict, misaliDict, subtomoSize,  shuffle=True):
     subtomoVectorList = []
     infoVectorList = []
 
+    # Append aligned subtomos
     for key in aliDict.keys():
         subtomoVectorList.append(aliDict[key][0])
-        subtomoVectorList.append(misaliDict[key][0])
-
         infoVectorList.append(np.ones(aliDict[key][1]))
+
+    # Append misaligned subtomos
+    for key in misaliDict.keys():
+        subtomoVectorList.append(misaliDict[key][0])
         infoVectorList.append(np.zeros(misaliDict[key][1]))
 
     subtomoV = np.concatenate(subtomoVectorList, axis=0)
