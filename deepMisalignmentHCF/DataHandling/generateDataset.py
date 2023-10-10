@@ -14,7 +14,7 @@ import xmippLib as xmipp
 
 
 def addSubtomosToOutput(pathPatternToSubtomoFiles, alignmentFlag):
-    """ This methods add to the output metadata file (or creates it if it does not exist) the imported subtomos form
+    """ This method add to the output metadata file (or creates it if it does not exist) the imported subtomos form
     the regex, indicating if they are or not aligned. """
 
     fieldNames = ['subTomoPath', 'alignmentToggle']
