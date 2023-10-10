@@ -1,10 +1,33 @@
 """ Module to compose a numpy array with all the .mrc files contained in a regex """
 import argparse
+import glob
+import numpy as np
+
+import xmippLib as xmipp
 
 
 def composeVector(subtomoRegex, outputLocation):
     """ Method to compose a numpy vector saved at outputLocation with all the subtomos
     indicated by  subtomoRegex. """
+
+    subtomoFiles = []
+
+    # Read input subtomos
+    for file in glob.glob(subtomoRegex):
+        print(file)
+        subtomoFiles.append(file)
+
+    # Create empty np vector
+    inputDataStream = np.zeros((len(subtomoFiles), 32, 32, 32), dtype=np.float64)
+
+    # Read images and save in vector
+    for i, subtomoPath in enumerate(subtomoFiles):
+        subtomoVol = xmipp.Image(subtomoPath).getData()
+        inputDataStream[i, :, :, :] = subtomoVol
+
+    np.save(file=outputLocation,
+            arr=inputDataStream)
+    print("Output aligned subtomo vector saved at " + outputLocation)
 
 
 # ----------------------------------- Main ------------------------------------------------
