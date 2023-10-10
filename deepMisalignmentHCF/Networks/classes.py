@@ -5,8 +5,6 @@ import numpy as np
 
 from tensorflow.keras.utils import Sequence
 
-import utils
-
 
 class DataGenerator(Sequence):
     """Generates data for Keras"""
@@ -71,18 +69,18 @@ class DataGenerator(Sequence):
         for i in range(module_batch_size_misali//2):
             numberOfElementsPerDataset_misali[i] += 2
 
-        print("Number of elements selected for each vector:")
-        print("numberOfElementsPerDataset_ali " + str(numberOfElementsPerDataset_ali))
-        print("numberOfElementsPerDataset_misali" + str(numberOfElementsPerDataset_misali))
+        # print("Number of elements selected for each vector:")
+        # print("numberOfElementsPerDataset_ali " + str(numberOfElementsPerDataset_ali))
+        # print("numberOfElementsPerDataset_misali" + str(numberOfElementsPerDataset_misali))
 
         # Fill with ali data
         counter = 0
 
         for i, key in enumerate(self.aliDict.keys()):
             # Pick numberOfElementsPerDataset_ali from ali data
-            print("-- Data generation for dataset %s " % key)
-            print("Number of elements to be taken from this vector %d " % numberOfElementsPerDataset_ali[i])
-            print("Size of the vector %d " % len(self.aliDict[key][self.mode]))
+            # print("-- Data generation for dataset %s " % key)
+            # print("Number of elements to be taken from this vector %d " % numberOfElementsPerDataset_ali[i])
+            # print("Size of the vector %d " % len(self.aliDict[key][self.mode]))
 
             aliIDsubset = random.sample(self.aliDict[key][self.mode], numberOfElementsPerDataset_ali[i])
 
@@ -103,9 +101,9 @@ class DataGenerator(Sequence):
 
         for i, key in enumerate(self.misaliDict.keys()):
             # Pick numberOfElementsPerDataset/2 elements from misali data
-            print("-- Data generation for dataset %s " % key)
-            print("Number of elements to be taken from this vector %d " % numberOfElementsPerDataset_misali[i])
-            print("Size of the vector %d " % len(self.misaliDict[key][self.mode]))
+            # print("-- Data generation for dataset %s " % key)
+            # print("Number of elements to be taken from this vector %d " % numberOfElementsPerDataset_misali[i])
+            # print("Size of the vector %d " % len(self.misaliDict[key][self.mode]))
 
             misaliIDsubset = random.sample(self.misaliDict[key][self.mode], numberOfElementsPerDataset_misali[i])
 
