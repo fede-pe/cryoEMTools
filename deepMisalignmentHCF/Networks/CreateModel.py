@@ -7,7 +7,7 @@ from tensorflow.keras.layers import Input, Conv3D, MaxPool3D, BatchNormalization
     GlobalAveragePooling3D
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import BinaryCrossentropy
-from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, TensorBoard
+from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau, TensorBoard, EarlyStopping
 
 
 def compileModel(model, learningRate):
@@ -87,5 +87,12 @@ def getCallbacks(modelCheckpointFilePath):
         write_images=True,
     )
     myCallbacks.append(tensorboard_callback)
+
+    earlyStopping_callback = EarlyStopping(
+        monitor='val_loss',
+        patience=5
+    )
+
+    myCallbacks.append(earlyStopping_callback)
 
     return myCallbacks
