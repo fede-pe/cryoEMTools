@@ -18,11 +18,11 @@ import utils
 
 # Module variables
 SUBTOMO_SIZE = 32  # Dimensions of the subtomos (cubic, SUBTOMO_SIZE x SUBTOMO_SIZE x SUBTOMO_SIZE shape)
-BATCH_SIZE = 64  # Number of boxes per batch
-EPOCHS = 50  # Number of epochs
+BATCH_SIZE = 32  # Number of boxes per batch
+EPOCHS = 2  # Number of epochs
 LEARNING_RATE = 0.0001  # Learning rate
-TESTING_SPLIT = 0.15  # Ratio of data used for testing
-VALIDATION_SPLIT = 0.2  # Ratio of data used for validation
+TESTING_SPLIT = 0.05  # Ratio of data used for testing
+VALIDATION_SPLIT = 0.3  # Ratio of data used for validation
 
 
 class TrainDynamicModel:
@@ -69,7 +69,8 @@ class TrainDynamicModel:
         if normalize:
             self.normalizeData()
         self.dataAugmentation()
-        self.splitData()
+        self.splitDataTrainTest()
+        self.splitDataTrainValidation()
 
         self.modelTraining()
         self.modelTesting()
@@ -266,7 +267,7 @@ class TrainDynamicModel:
         dataAug_time = time() - start_time
         print("Time spent in data augmentation: %0.10f seconds.\n\n" % dataAug_time)
 
-    def splitData(self):
+    def splitDataTrainTest(self):
         """ Method to split data into train and test"""
 
         print("------------------------------------------ Data split train-test")
@@ -274,7 +275,7 @@ class TrainDynamicModel:
 
         # Aligned subtomos
         if self.debug:
-            print('Data split for aligned dataset')
+            print('Data split for aligned datasets')
 
         for key in self.aliDict.keys():
             if self.debug:
@@ -288,9 +289,9 @@ class TrainDynamicModel:
             self.aliDict_test[key] = (aliTest, len(aliTest))
 
             if self.debug:
-                print('\tData objects final dimensions for dataset %s' % key)
-                print('\tTrain aligned subtomos matrix: ' + str(np.shape(aliTrain)))
-                print('\tTest aligned subtomos matrix: ' + str(np.shape(aliTest)))
+                print('\t\tData objects final dimensions for dataset %s' % key)
+                print('\t\tTrain aligned subtomos matrix: ' + str(np.shape(aliTrain)))
+                print('\t\tTest aligned subtomos matrix: ' + str(np.shape(aliTest)))
 
         # Misaligned subtomos
         if self.debug:
@@ -308,21 +309,27 @@ class TrainDynamicModel:
             self.misaliDict_test[key] = (misaliTest, len(misaliTest))
 
             if self.debug:
-                print('\tData objects final dimensions for dataset %s' % key)
-                print('\tTrain misaligned subtomos matrix: ' + str(np.shape(misaliTrain)))
-                print('\tTest misaligned subtomos matrix: ' + str(np.shape(misaliTest)))
+                print('\t\tData objects final dimensions for dataset %s' % key)
+                print('\t\tTrain misaligned subtomos matrix: ' + str(np.shape(misaliTrain)))
+                print('\t\tTest misaligned subtomos matrix: ' + str(np.shape(misaliTest)))
 
         elapsed_time = time() - start_time
         print("Time spent in data train-test splitting: %0.10f seconds.\n\n" % elapsed_time)
 
-    def modelTraining(self):
-        """ Method for model training """
+    def splitDataTrainValidation(self):
+        """ Method to split data into train and validation"""
 
-        print("------------------------------------------ Model training")
+        print("------------------------------------------ Data split train-validation")
         start_time = time()
 
         # Split validation/training for aligned data
+        if self.debug:
+            print('Data split for aligned datasets')
+
         for key in self.aliDict.keys():
+            if self.debug:
+                print("\tSplit data for dataset: %s" % key)
+
             # Validation/training ID toggle vectors
             aliID_validation, aliID_train = utils.generateTrainingValidationVectors(self.aliDict[key][1],
                                                                                     VALIDATION_SPLIT)
@@ -334,14 +341,18 @@ class TrainDynamicModel:
                                  aliID_validation)
 
             if self.debug:
-                print("For dataset %s" % key)
-                print("aliID_validation: " + str(len(aliID_validation)))
-                print(sorted(aliID_validation))
-                print("aliID_train: " + str(len(aliID_train)))
-                print(sorted(aliID_train))
+                print("\t\tShape of the full set before split %s: " % str(np.shape(self.aliDict[key][0])))
+                print("\t\tSize of train split: %d " % len(aliID_train))
+                print("\t\tSize of validation split: %d " % len(aliID_validation))
 
         # Split validation/training for misaligned data
+        if self.debug:
+            print('Data split for misaligned datasets')
+
         for key in self.misaliDict.keys():
+            if self.debug:
+                print("\tSplit data for dataset: %s" % key)
+
             # Validation/training ID toggle vectors
             misaliID_validation, misaliID_train = utils.generateTrainingValidationVectors(self.misaliDict[key][1],
                                                                                           VALIDATION_SPLIT)
@@ -349,15 +360,22 @@ class TrainDynamicModel:
             # Add ID's for training and validation to dictionary
             self.misaliDict[key] = (self.misaliDict[key][0],
                                     self.misaliDict[key][1],
-                                    misaliID_validation,
-                                    misaliID_train)
+                                    misaliID_train,
+                                    misaliID_validation)
 
             if self.debug:
-                print("For dataset %s" % key)
-                print("misaliID_validation: " + str(len(misaliID_validation)))
-                print(sorted(misaliID_validation))
-                print("misaliID_train: " + str(len(misaliID_train)))
-                print(sorted(misaliID_train))
+                print("\t\tShape of the full set before split %s: " % str(np.shape(self.misaliDict[key][0])))
+                print("\t\tSize of train split: %d " % len(misaliID_train))
+                print("\t\tSize of validation split: %d " % len(misaliID_validation))
+
+        elapsed_time = time() - start_time
+        print("Time spent in data train-test splitting: %0.10f seconds.\n\n" % elapsed_time)
+
+    def modelTraining(self):
+        """ Method for model training """
+
+        print("------------------------------------------ Model training")
+        start_time = time()
 
         # Parameters
         params = {'aliDict': self.aliDict,
