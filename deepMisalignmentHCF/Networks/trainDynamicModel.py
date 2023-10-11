@@ -118,11 +118,19 @@ class TrainDynamicModel:
                 aliDatasetsToMerge.append(self.aliDict[key][0])
                 aliKeysToRemove.append(key)
 
+        if len(aliDatasetsToMerge) == 1:
+            for key in self.misaliDict.keys():
+                if key != aliKeysToRemove[0]:
+                    aliDatasetsToMerge.append(self.misaliDict[key][0])
+                    aliKeysToRemove.append(key)
+                    break
+
         for key in aliKeysToRemove:
             del self.aliDict[key]
 
-        mergedAliDataset = np.concatenate(aliDatasetsToMerge)
-        self.aliDict["mergedAliDataset"] = (mergedAliDataset, len(mergedAliDataset))
+        if len(aliDatasetsToMerge) > 0:
+            mergedAliDataset = np.concatenate(aliDatasetsToMerge)
+            self.aliDict["mergedAliDataset"] = (mergedAliDataset, len(mergedAliDataset))
 
         misaliDatasetToMerge = []
         misaliKeysToRemove = []
@@ -132,11 +140,19 @@ class TrainDynamicModel:
                 misaliDatasetToMerge.append(self.misaliDict[key][0])
                 misaliKeysToRemove.append(key)
 
+        if len(misaliDatasetToMerge) == 1:
+            for key in self.misaliDict.keys():
+                if key != misaliKeysToRemove[0]:
+                    misaliDatasetToMerge.append(self.misaliDict[key][0])
+                    misaliKeysToRemove.append(key)
+                    break
+
         for key in misaliKeysToRemove:
             del self.misaliDict[key]
 
-        mergedMisaliDataset = np.concatenate(misaliDatasetToMerge)
-        self.misaliDict["mergeMisaliDataset"] = (mergedMisaliDataset, len(mergedMisaliDataset))
+        if len(misaliDatasetToMerge) > 0:
+            mergedMisaliDataset = np.concatenate(misaliDatasetToMerge)
+            self.misaliDict["mergeMisaliDataset"] = (mergedMisaliDataset, len(mergedMisaliDataset))
 
         # Update the number of random batches respect to the dataset and batch sizes
         self.numberRandomBatches = self.totalSubtomos // BATCH_SIZE
