@@ -102,8 +102,8 @@ class TrainDynamicModel:
 
         # Merge datasets in case any of them do not reach the minimum size
         minPercentage = min(VALIDATION_SPLIT, TESTING_SPLIT)
-        minSizeAli = BATCH_SIZE // (2 * len(self.aliDict.keys()))
-        minSizeMisali = BATCH_SIZE // (2 * len(self.misaliDict.keys()))
+        minSizeAli = (4 * BATCH_SIZE) // (2 * len(self.aliDict.keys()) * minPercentage)
+        minSizeMisali = (4 * BATCH_SIZE) // (2 * len(self.misaliDict.keys()) * minPercentage)
 
         if self.debug:
             print("Merging datasets...")
@@ -114,7 +114,7 @@ class TrainDynamicModel:
         aliKeysToRemove = []
 
         for key in self.aliDict.keys():
-            if (self.aliDict[key][1] * minPercentage) / 4 < minSizeAli:
+            if self.aliDict[key][1] < minSizeAli:
                 aliDatasetsToMerge.append(self.aliDict[key][0])
                 aliKeysToRemove.append(key)
 
@@ -136,7 +136,7 @@ class TrainDynamicModel:
         misaliKeysToRemove = []
 
         for key in self.misaliDict.keys():
-            if (self.misaliDict[key][1] * minPercentage) / 4 < minSizeMisali:
+            if self.misaliDict[key][1] / minSizeMisali:
                 misaliDatasetToMerge.append(self.misaliDict[key][0])
                 misaliKeysToRemove.append(key)
 
