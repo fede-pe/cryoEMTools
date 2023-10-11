@@ -100,6 +100,29 @@ class TrainDynamicModel:
                 self.totalMisaliSubtomos += len(data)
                 self.totalSubtomos += len(data)
 
+        # Merge datasets in case any of them do not reach the minimum size
+        minPercentage = min(VALIDATION_SPLIT, TESTING_SPLIT)
+        minSizeAli = BATCH_SIZE / (2 * len(self.aliDict.keys()))
+        minSizeMisali = BATCH_SIZE / (2 * len(self.misaliDict.keys()))
+
+        aliDatasetsToMerge = []
+        for key in self.aliDict.keys():
+            if (self.aliDict[key][1] * minPercentage) / 4 < minSizeAli:
+                aliDatasetsToMerge.append(self.aliDict[key][0])
+                self.aliDict.pop(key)
+
+        mergedAliDataset = np.concatenate(aliDatasetsToMerge)
+        self.aliDict["mergedAliDataset"] = (mergedAliDataset, len(mergedAliDataset))
+
+        misaliDatasetToMerge = []
+        for key in self.misaliDict.keys():
+            if (self.misaliDict[key][1] * minPercentage) / 4 < minSizeMisali:
+                misaliDatasetToMerge.append(self.misaliDict[key][0])
+                self.misaliDict.pop(key)
+
+        mergedMisaliDataset = np.concatenate(misaliDatasetToMerge)
+        self.misaliDict["mergeMisaliDataset"] = (mergedMisaliDataset, len(mergedMisaliDataset))
+
         # Update the number of random batches respect to the dataset and batch sizes
         self.numberRandomBatches = self.totalSubtomos // BATCH_SIZE
 
