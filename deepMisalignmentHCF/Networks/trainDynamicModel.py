@@ -136,7 +136,7 @@ class TrainDynamicModel:
         misaliKeysToRemove = []
 
         for key in self.misaliDict.keys():
-            if self.misaliDict[key][1] / minSizeMisali:
+            if self.misaliDict[key][1] < minSizeMisali:
                 misaliDatasetToMerge.append(self.misaliDict[key][0])
                 misaliKeysToRemove.append(key)
 
