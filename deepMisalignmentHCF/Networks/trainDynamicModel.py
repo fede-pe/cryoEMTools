@@ -111,21 +111,29 @@ class TrainDynamicModel:
             print("Minimum size for misaligned datasets %d" % minSizeMisali)
 
         aliDatasetsToMerge = []
+        aliKeysToRemove = []
 
         for key in self.aliDict.keys():
             if (self.aliDict[key][1] * minPercentage) / 4 < minSizeAli:
                 aliDatasetsToMerge.append(self.aliDict[key][0])
-                self.aliDict.pop(key)
+                aliKeysToRemove.append(key)
+
+        for key in aliKeysToRemove:
+            del self.aliDict[key]
 
         mergedAliDataset = np.concatenate(aliDatasetsToMerge)
         self.aliDict["mergedAliDataset"] = (mergedAliDataset, len(mergedAliDataset))
 
         misaliDatasetToMerge = []
+        misaliKeysToRemove = []
 
         for key in self.misaliDict.keys():
             if (self.misaliDict[key][1] * minPercentage) / 4 < minSizeMisali:
                 misaliDatasetToMerge.append(self.misaliDict[key][0])
-                self.misaliDict.pop(key)
+                misaliKeysToRemove.append(key)
+
+        for key in misaliKeysToRemove:
+            del self.misaliDict[key]
 
         mergedMisaliDataset = np.concatenate(misaliDatasetToMerge)
         self.misaliDict["mergeMisaliDataset"] = (mergedMisaliDataset, len(mergedMisaliDataset))
