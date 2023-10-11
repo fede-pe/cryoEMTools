@@ -102,10 +102,16 @@ class TrainDynamicModel:
 
         # Merge datasets in case any of them do not reach the minimum size
         minPercentage = min(VALIDATION_SPLIT, TESTING_SPLIT)
-        minSizeAli = BATCH_SIZE / (2 * len(self.aliDict.keys()))
-        minSizeMisali = BATCH_SIZE / (2 * len(self.misaliDict.keys()))
+        minSizeAli = BATCH_SIZE // (2 * len(self.aliDict.keys()))
+        minSizeMisali = BATCH_SIZE // (2 * len(self.misaliDict.keys()))
+
+        if self.debug:
+            print("Merging datasets...")
+            print("Minimum size for aligned datasets %d" % minSizeAli)
+            print("Minimum size for misaligned datasets %d" % minSizeMisali)
 
         aliDatasetsToMerge = []
+
         for key in self.aliDict.keys():
             if (self.aliDict[key][1] * minPercentage) / 4 < minSizeAli:
                 aliDatasetsToMerge.append(self.aliDict[key][0])
@@ -115,6 +121,7 @@ class TrainDynamicModel:
         self.aliDict["mergedAliDataset"] = (mergedAliDataset, len(mergedAliDataset))
 
         misaliDatasetToMerge = []
+
         for key in self.misaliDict.keys():
             if (self.misaliDict[key][1] * minPercentage) / 4 < minSizeMisali:
                 misaliDatasetToMerge.append(self.misaliDict[key][0])
