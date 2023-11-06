@@ -20,21 +20,34 @@ class PlotSubtomoScores:
         # Use glob to find files matching the input regex
         file_list = glob.glob(self.input_regex)
 
-        histograms = []
+        Ali_strong_histogram = []
+        Ali_weak_histogram = []
+        WM_strong_histogram = []
+        WM_weak_histogram = []
+        SM_strong_histogram = []
+        SM_weak_histogram = []
 
         for file_path in file_list:
+            print("Reading sqlite: %s" % file_path)
+
             # Connect to SQLite database
             conn = sqlite3.connect(file_path)
             cursor = conn.cursor()
 
-            # Execute a SELECT query to retrieve columns c33 and c34
-            cursor.execute("SELECT c33, c34 FROM Objects")
+            # Get column name for properties '_strongMisaliScore', '_weakMisaliScore'
+            label_property_values = ('_strongMisaliScore', '_weakMisaliScore')
+            placeholders = ', '.join(['?'] * len(label_property_values))
 
-            # Fetch all rows
-            rows = cursor.fetchall()
+            cursor.execute(f"SELECT column_name FROM Classes WHERE label_property IN ({placeholders})",
+                           label_property_values)
 
-            # Print columns c33 and c34
-            print(f"File: {file_path}")
+            rows = cursor.fetchall()  # Fetch all rows
+            column_names = (rows[0][0], rows[1][0])
+
+            # Use columns names to extract misalignment score values
+            cursor.execute(f"SELECT {', '.join(column_names)} FROM Objects")
+
+            rows = cursor.fetchall()  # Fetch all rows from the result set
 
             weakMisaliScore = []
             strongMisaliScore = []
@@ -43,25 +56,48 @@ class PlotSubtomoScores:
                 weakMisaliScore.append(row[1])
                 strongMisaliScore.append(row[0])
 
-            histograms.append(strongMisaliScore)
-            histograms.append(weakMisaliScore)
+            # Detect population group
+            group = os.path.basename(file_path).split("-")[0]
+
+            if group == "Ali":
+                Ali_strong_histogram.extend(strongMisaliScore)
+                Ali_weak_histogram.extend(weakMisaliScore)
+            elif group == "WM":
+                WM_strong_histogram.extend(strongMisaliScore)
+                WM_weak_histogram.extend(weakMisaliScore)
+            elif group == "SM":
+                SM_strong_histogram.extend(strongMisaliScore)
+                SM_weak_histogram.extend(weakMisaliScore)
+            else:
+                raise "ERROR: unrecognized alignment group"
 
             # Close the connection
             conn.close()
 
+        print("-- Total number of subtomos")
+        print("Aligned")
+        print("\tStrong misalignment score: %d" % len(Ali_strong_histogram))
+        print("\tWeak misalignment score: %d" % len(Ali_weak_histogram))
+        print("WM")
+        print("\tStrong misalignment score: %d" % len(WM_strong_histogram))
+        print("\tWeak misalignment score: %d" % len(WM_weak_histogram))
+        print("SM")
+        print("\tStrong misalignment score: %d" % len(SM_strong_histogram))
+        print("\tWeak misalignment score: %d" % len(SM_weak_histogram))
+
         fig, axes = plt.subplots(2, 3, figsize=(12, 8))  # 2 rows, 3 columns
 
-        self.generate_histogram(axes[0, 0], histograms[0], 50)
-        self.generate_histogram(axes[1, 0], histograms[1], 50)
-        self.generate_histogram(axes[0, 1], histograms[2], 50)
-        self.generate_histogram(axes[1, 1], histograms[3], 50)
-        self.generate_histogram(axes[0, 2], histograms[4], 50)
-        self.generate_histogram(axes[1, 2], histograms[5], 50)
+        self.generate_histogram(axes[0, 0], SM_strong_histogram, 50)
+        self.generate_histogram(axes[1, 0], SM_weak_histogram, 50)
+        self.generate_histogram(axes[0, 1], WM_strong_histogram, 50)
+        self.generate_histogram(axes[1, 1], WM_weak_histogram, 50)
+        self.generate_histogram(axes[0, 2], Ali_strong_histogram, 50)
+        self.generate_histogram(axes[1, 2], Ali_weak_histogram, 50)
 
         plt.tight_layout()
         plt.savefig(self.out_figure)
 
-        self.calculateF1score(histograms[3], histograms[5])
+        self.calculateF1score(WM_weak_histogram, Ali_weak_histogram)
 
     @staticmethod
     def calculateF1score(v1, v2):
@@ -71,9 +107,6 @@ class PlotSubtomoScores:
 
         lenV1 = len(v1)
         lenV2 = len(v2)
-
-        print(len(v1))
-        print(len(v2))
 
         step_size = 0.001
         values = np.arange(step_size, 1 - step_size, step_size)
@@ -102,8 +135,9 @@ class PlotSubtomoScores:
 
             if i == 0.5:
                 print("sensitivity at 0.5 %f" % ((lenV2 - countV2) / lenV2))
-                print("specificity at 0.5 %f" % (countV1/lenV1))
-                print("F1 score at 0.5 %f" % ((2 * (lenV2 - countV2)) / (2 * (lenV2 - countV2) + countV2 + (lenV1 - countV1))))
+                print("specificity at 0.5 %f" % (countV1 / lenV1))
+                print("F1 score at 0.5 %f" % (
+                        (2 * (lenV2 - countV2)) / (2 * (lenV2 - countV2) + countV2 + (lenV1 - countV1))))
 
             if oddsRatio > maxOddsRatio:
                 maxOddsRatio = oddsRatio
