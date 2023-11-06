@@ -61,6 +61,56 @@ class PlotSubtomoScores:
         plt.tight_layout()
         plt.savefig(self.out_figure)
 
+        self.calculateF1score(histograms[3], histograms[5])
+
+    @staticmethod
+    def calculateF1score(v1, v2):
+        """ Method to calculate odds ration between to vectors """
+        v1 = sorted(v1)
+        v2 = sorted(v2)
+
+        lenV1 = len(v1)
+        lenV2 = len(v2)
+
+        print(len(v1))
+        print(len(v2))
+
+        step_size = 0.001
+        values = np.arange(step_size, 1 - step_size, step_size)
+        # values = [0.5]
+
+        maxOddsRatio = 0
+        maxI = 0
+
+        for i in values:
+            countV1 = 1
+            countV2 = 1
+
+            for element in v1:
+                if element < i:
+                    countV1 += 1
+                else:
+                    break
+
+            for element in v2:
+                if element < i:
+                    countV2 += 1
+                else:
+                    break
+
+            oddsRatio = (2 * (lenV2 - countV2)) / (2 * (lenV2 - countV2) + countV2 + (lenV1 - countV1))
+
+            if i == 0.5:
+                print("sensitivity at 0.5 %f" % ((lenV2 - countV2) / lenV2))
+                print("specificity at 0.5 %f" % (countV1/lenV1))
+                print("F1 score at 0.5 %f" % ((2 * (lenV2 - countV2)) / (2 * (lenV2 - countV2) + countV2 + (lenV1 - countV1))))
+
+            if oddsRatio > maxOddsRatio:
+                maxOddsRatio = oddsRatio
+                maxI = i
+
+        print("maximun odds ratio %f, for threshold %f" % (maxOddsRatio, maxI))
+
     @staticmethod
     def generate_histogram(ax, data, bins):
         """ Method to generate histogram from scores vector """
