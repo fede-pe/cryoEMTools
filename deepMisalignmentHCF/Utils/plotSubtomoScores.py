@@ -87,12 +87,12 @@ class PlotSubtomoScores:
 
         fig, axes = plt.subplots(2, 3, figsize=(12, 8))  # 2 rows, 3 columns
 
-        self.generate_histogram(axes[0, 0], SM_strong_histogram, 50)
-        self.generate_histogram(axes[1, 0], SM_weak_histogram, 50)
-        self.generate_histogram(axes[0, 1], WM_strong_histogram, 50)
-        self.generate_histogram(axes[1, 1], WM_weak_histogram, 50)
-        self.generate_histogram(axes[0, 2], Ali_strong_histogram, 50)
-        self.generate_histogram(axes[1, 2], Ali_weak_histogram, 50)
+        self.generate_histogram(axes[0, 0], SM_strong_histogram, 50, "Strong misalignment")
+        self.generate_histogram(axes[1, 0], SM_weak_histogram, 50, "Weak misalignment")
+        self.generate_histogram(axes[0, 1], WM_strong_histogram, 50, "Strong misalignment")
+        self.generate_histogram(axes[1, 1], WM_weak_histogram, 50, "Weak misalignment")
+        self.generate_histogram(axes[0, 2], Ali_strong_histogram, 50, "Strong misalignment")
+        self.generate_histogram(axes[1, 2], Ali_weak_histogram, 50, "Weak misalignment")
 
         plt.tight_layout()
         plt.savefig(self.out_figure)
@@ -146,9 +146,10 @@ class PlotSubtomoScores:
         print("maximun odds ratio %f, for threshold %f" % (maxOddsRatio, maxI))
 
     @staticmethod
-    def generate_histogram(ax, data, bins):
+    def generate_histogram(ax, data, bins, label):
         """ Method to generate histogram from scores vector """
         ax.hist(data, bins=bins, color='#000000', alpha=0.7)
+        ax.set_xlabel(label)
 
 
 def main():
