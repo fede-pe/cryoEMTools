@@ -8,57 +8,10 @@ class GeneratorPhantomCTF:
         self.input_files = []
         self.number_ctf = None
 
-        # Parameters
-        self._ctfSamplingRate = []
-        self._ctfVoltage = []
-        self._ctfDefocusU = []
-        self._ctfSphericalAberration = []
-        self._ctfChromaticAberration = []
-        self._ctfEnergyLoss = []
-        self._ctfLensStability = []
-        self._ctfConvergenceCone = []
-        self._ctfLongitudinalDisplacement = []
-        self._ctfTransversalDisplacement = []
-        self._ctfQ0 = []
-        self._ctfK = []
-        self._ctfEnvR0 = []
-        self._ctfEnvR1 = []
-        self._ctfEnvR2 = []
-        self._ctfBgGaussianK = []
-        self._ctfBgGaussianSigmaU = []
-        self._ctfBgGaussianCU = []
-        self._ctfBgSqrtK = []
-        self._ctfBgSqrtU = []
-        self._ctfBgBaseline = []
-        self._ctfBgGaussian2K = []
-        self._ctfBgGaussian2SigmaU = []
-        self._ctfBgGaussian2CU = []
-        self._ctfBgR1 = []
-        self._ctfBgR2 = []
-        self._ctfBgR3 = []
-        self._ctfDefocusV = []
-        self._ctfDefocusAngle = []
-        self._ctfBgGaussianSigmaV = []
-        self._ctfBgGaussianCV = []
-        self._ctfBgGaussianAngle = []
-        self._ctfBgSqrtV = []
-        self._ctfBgSqrtAngle = []
-        self._ctfBgGaussian2SigmaV = []
-        self._ctfBgGaussian2CV = []
-        self._ctfBgGaussian2Angle = []
-        self._ctfX0 = []
-        self._ctfXF = []
-        self._ctfY0 = []
-        self._ctfYF = []
-        self._ctfCritFitting = []
-        self._ctfCritCorr13 = []
-        self._ctfCritIceness = []
-        self._CtfDownsampleFactor = []
-        self._ctfCritPsdStdQ = []
-        self._ctfCritPsdPCA1 = []
-        self._ctfCritPsdPCARuns = []
-
+        # CTF parameters
         self.fields = ['_ctfSamplingRate', '_ctfVoltage', '_ctfDefocusU', '_ctfSphericalAberration', '_ctfChromaticAberration', '_ctfEnergyLoss', '_ctfLensStability', '_ctfConvergenceCone', '_ctfLongitudinalDisplacement', '_ctfTransversalDisplacement', '_ctfQ0', '_ctfK', '_ctfEnvR0', '_ctfEnvR1', '_ctfEnvR2', '_ctfBgGaussianK', '_ctfBgGaussianSigmaU', '_ctfBgGaussianCU', '_ctfBgSqrtK', '_ctfBgSqrtU', '_ctfBgBaseline', '_ctfBgGaussian2K', '_ctfBgGaussian2SigmaU', '_ctfBgGaussian2CU', '_ctfBgR1', '_ctfBgR2', '_ctfBgR3', '_ctfDefocusV', '_ctfDefocusAngle', '_ctfBgGaussianSigmaV', '_ctfBgGaussianCV', '_ctfBgGaussianAngle', '_ctfBgSqrtV', '_ctfBgSqrtAngle', '_ctfBgGaussian2SigmaV', '_ctfBgGaussian2CV', '_ctfBgGaussian2Angle', '_ctfX0', '_ctfXF', '_ctfY0', '_ctfYF', '_ctfCritFitting', '_ctfCritCorr13', '_ctfCritIceness', '_CtfDownsampleFactor', '_ctfCritPsdStdQ', '_ctfCritPsdPCA1', '_ctfCritPsdPCARuns']
+
+        self.paramsDict = {key: [] for key in self.fields}
 
         self.readInput()
         self.generatePhantoms()
@@ -99,8 +52,18 @@ class GeneratorPhantomCTF:
         # Use glob to get a list of files matching the regex
         self.input_files = glob.glob(input_files_regex)
 
-    def processParamsFiles(self):ç
-        pass
+    def processParamsFiles(self):
+        for f in self.input_files:
+            with open(f, 'r') as file:
+                # Read each line from the file
+                for line in file:
+                    # Split the line into words
+                    words = line.split()
+
+                    # Check if the first word is in self.fields
+                    if words and words[0] in self.fields:
+                        self.paramsDict[words[0]].append(float(words[1]))
+
 
     def generatePhantoms(self):
         # Your program logic goes here using self.input_files and self.number_ctf
