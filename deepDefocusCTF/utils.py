@@ -3,23 +3,7 @@ import os
 import math
 import xmippLib as xmipp
 import tensorflow as tf
-from tensorflow.python.client import device_lib
-
-print(device_lib.list_local_devices())
-os.environ["CUDA_VISIBLE_DEVICES"] = "/device:XLA_GPU:0"
-from tensorflow.keras.optimizers import Adam
 import matplotlib.pyplot as plt
-from DeepDefocusModel import DeepDefocusMultiOutputModel
-
-BATCH_SIZE = 8  # Tiene que ser multiplos de tu tamaño de muestra
-EPOCHS = 100
-LEARNING_RATE = 0.001
-IM_WIDTH = 512
-IM_HEIGHT = 512
-training_Bool = True
-testing_Bool = True
-plots_Bool = True
-TEST_SIZE = 0.15
 
 
 # ---------------------- UTILS METHODS --------------------------------------
@@ -57,7 +41,7 @@ def rotation(imag, angle, shape, P):
 
 def data_generator(X, Y, rotation_angle=90):
     ops = 1  # number of operations per image
-    X_set_generated = np.zeros((len(X) * ops, IM_HEIGHT, IM_WIDTH, 3))
+    X_set_generated = np.zeros((len(X) * ops, 512, 512, 1))
     Y_set_generated = np.zeros((len(Y) * ops, 2))
     P = np.identity(3)
 
@@ -73,191 +57,240 @@ def data_generator(X, Y, rotation_angle=90):
 
     return X_set_generated, Y_set_generated
 
+def make_data_descriptive_plots(df_metadata, COLUMNS , trainDefocus = True, trainAngle = True, groundTruth = False):
+    if trainDefocus:
+        # HISTOGRAM
+        df_defocus = df_metadata[[COLUMNS['defocus_U'], COLUMNS['defocus_V']]]
+        df_defocus.plot.hist(alpha=0.5)
+        plt.title('Defocus histogram')
+        # plt.show()
+        # BOXPLOT
+        df_defocus.plot.box()
+        plt.title('Defocus boxplot')
+        # plt.show()
+        # SCATTER
+        df_defocus.plot.scatter(x=COLUMNS['defocus_U'], y=COLUMNS['defocus_V'])
+        plt.title('Correlation plot defocus U vs V')
+        # plt.show()
 
-def make_training_plots(history):
+        if groundTruth:
+            df_defocus['ErrorU'] = df_metadata[COLUMNS['defocus_U']] - df_metadata['DEFOCUS_U_Est']
+            df_defocus['ErrorV'] = df_metadata[COLUMNS['defocus_V']] - df_metadata['DEFOCUS_V_Est']
+
+            df_defocus[['ErrorU', 'ErrorV']].plot.hist(alpha=0.5)
+            plt.title('Defocus error histogram')
+            # plt.show()
+            # BOXPLOT
+            df_defocus[['ErrorU', 'ErrorV']].plot.box()  # este box plot est muy pegado
+            plt.title('Defocus error boxplot')
+            # plt.show()
+
+        print(df_defocus.describe())
+
+    if trainAngle:
+        # TODO: more Angles plots
+        # HISTOGRAM
+        df_angle = df_metadata[[COLUMNS['angle'], COLUMNS['cosAngle'], COLUMNS['sinAngle']]]
+        df_angle[COLUMNS['angle']].plot.hist(alpha=0.5)
+        plt.title('Angle')
+        # plt.show()
+
+        if groundTruth:
+            df_angle_error = df_metadata[COLUMNS['angle']] - df_metadata['Angle_Est']
+            df_angle_error.plot.hist(alpha=0.5)
+            plt.title('Angle error')
+            # plt.show()
+            print(df_angle_error.describe())
+
+
+def make_training_plots(history, folder, prefix):
     # plot loss during training to CHECK OVERFITTING
-    plt.title('Loss')
-    plt.plot(history.history['loss'], 'b', label='training loss')
-    plt.plot(history.history['val_loss'], 'r', label='validation loss')
-    plt.xlabel("Epochs")
+    plt.figure(figsize=(10, 6))  # Adjust the figure size as needed
+    plt.plot(history.history['loss'], 'b', label='Training Loss')
+    plt.plot(history.history['val_loss'], 'r', label='Validation Loss')
+    plt.title('Training and Validation Loss')
+    plt.xlabel('Epochs')
     plt.ylabel('Loss')
     plt.legend()
-    plt.show()
+    # Add grid lines for better readability
+    plt.grid(True, linestyle='--', alpha=0.7)
+    # Save the figure
+    plt.savefig(os.path.join(folder, prefix + 'Training.png'))
+    # plt.show()
 
     # Plot Learning Rate decreasing
-    plt.plot(history.epoch, history.history["lr"], "bo-")
+    plt.figure(figsize=(10, 6))  # Adjust the figure size as needed
+    # Plot Learning Rate
+    plt.plot(history.epoch, history.history["lr"], "bo-", label="Learning Rate")
     plt.xlabel("Epoch")
     plt.ylabel("Learning Rate", color='b')
-    plt.tick_params('y', colors='b')
-    plt.gca().set_xlim(0, EPOCHS - 1)
+    plt.tick_params(axis='y', colors='b')
     plt.grid(True)
+    plt.title("Learning Rate and Validation Loss", fontsize=14)
+    # Create a twin Axes sharing the xaxis
     ax2 = plt.gca().twinx()
-    ax2.plot(history.epoch, history.history["val_loss"], "r^-")
+    # Plot Validation Loss
+    ax2.plot(history.epoch, history.history["val_loss"], "r^-", label="Validation Loss")
     ax2.set_ylabel('Validation Loss', color='r')
-    ax2.tick_params('y', colors='r')
-    plt.title("Reduce LR on Plateau", fontsize=14)
-    plt.show()
+    ax2.tick_params(axis='y', colors='r')
+    # Ensure both legends are displayed
+    lines, labels = plt.gca().get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    plt.legend(lines + lines2, labels + labels2, loc='upper left')
+    # Save the figure
+    plt.savefig(os.path.join(folder, prefix + 'Reduce_lr.png'))
+    # plt.show()
 
 
-def make_testing_plots(prediction, real):
+def make_testing_plots(prediction, real, folder):
     # DEFOCUS PLOT
-    x = range(1, len(real[:, 0]) + 1)
+    plt.figure(figsize=(16, 8))  # Adjust the figure size as needed
+    # Plot for Defocus U
     plt.subplot(211)
     plt.title('Defocus U')
-    plt.scatter(x, real[:, 0], c='r', label='dU')
-    plt.scatter(x, prediction[0], c='b', label='dU_pred')
+    x = range(1, len(real[:, 0]) + 1)
+    plt.scatter(x, real[:, 0], c='r', label='Real dU', marker='o')
+    plt.scatter(x, prediction[0], c='b', label='Predicted dU', marker='x')
+    plt.xlabel("Sample Index")
+    plt.ylabel("Defocus U")
+    plt.grid(True)
+    plt.legend()
+    # Plot for Defocus V
     plt.subplot(212)
     plt.title('Defocus V')
-    plt.scatter(x, real[:, 1], c='r', label='dV')
-    plt.scatter(x, prediction[1], c='b', label='dV_pred')
+    plt.scatter(x, real[:, 1], c='r', label='Real dV', marker='o')
+    plt.scatter(x, prediction[1], c='b', label='Predicted dV', marker='x')
+    plt.xlabel("Sample Index")
+    plt.ylabel("Defocus V")
+    plt.grid(True)
     plt.legend()
-    plt.show()
+    # Adjust layout to prevent overlapping titles and labels
+    plt.tight_layout()
+    # Save the figure
+    plt.savefig(os.path.join(folder, 'predicted_vs_real_def.png'))
 
-    # DEFOCUS PREDICTED VS REAL
+    # CORRELATION PLOT
+    plt.figure(figsize=(10, 8))  # Adjust the figure size as needed
+    # Plot for Defocus U
     plt.subplot(211)
     plt.title('Defocus U')
     plt.scatter(real[:, 0], prediction[0])
+    plt.plot([0, max(real[:, 0])], [0, max(real[:, 0])], color='red', linestyle='--')  # Line for perfect correlation
     plt.xlabel('True Values [defocus U]')
     plt.ylabel('Predictions [defocus U]')
-    plt.axis('equal')
-    plt.axis('square')
-    plt.xlim([0, plt.xlim()[1]])
-    plt.ylim([0, plt.ylim()[1]])
-    _ = plt.plot([-100, 100], [-100, 100])
+    plt.xlim([min(plt.xlim()[0], plt.ylim()[0]), max(plt.xlim()[1], plt.ylim()[1])])
+    plt.ylim([min(plt.xlim()[0], plt.ylim()[0]), max(plt.xlim()[1], plt.ylim()[1])])
+    # Plot for Defocus V
     plt.subplot(212)
     plt.title('Defocus V')
     plt.scatter(real[:, 1], prediction[1])
+    plt.plot([0, max(real[:, 0])], [0, max(real[:, 0])], color='red', linestyle='--')  # Line for perfect correlation
     plt.xlabel('True Values [defocus V]')
-    plt.ylabel('Predictions [defocus v]')
-    plt.axis('equal')
-    plt.axis('square')
-    plt.xlim([0, plt.xlim()[1]])
-    plt.ylim([0, plt.ylim()[1]])
-    _ = plt.plot([-100, 100], [-100, 100])
-    plt.show()
+    plt.ylabel('Predictions [defocus V]')
+    plt.xlim([min(plt.xlim()[0], plt.ylim()[0]), max(plt.xlim()[1], plt.ylim()[1])])
+    plt.ylim([min(plt.xlim()[0], plt.ylim()[0]), max(plt.xlim()[1], plt.ylim()[1])])
+    # Adjust layout to prevent overlapping titles and labels
+    plt.tight_layout()
+    # Save the figure
+    plt.savefig(os.path.join(folder, 'correlation_test_def.png'))
+    # plt.show()
 
     # DEFOCUS ERROR
+    # Plot for Defocus U
+    plt.figure(figsize=(10, 8))
     plt.subplot(211)
     plt.title('Defocus U')
-    error = prediction[0] - real[:, 0]
-    plt.hist(error, bins=25)
+    error_u = prediction[0] - real[:, 0].reshape(-1, 1)
+    plt.hist(error_u, bins=25, color='blue', alpha=0.7)  # Adjust color and transparency
     plt.xlabel("Prediction Error Defocus U")
-    _ = plt.ylabel("Count")
+    plt.ylabel("Count")
+    # Plot for Defocus V
     plt.subplot(212)
     plt.title('Defocus V')
-    error = prediction[1] - real[:, 1]
-    plt.hist(error, bins=25)
+    error_v = prediction[1] - real[:, 1].reshape(-1, 1)
+    plt.hist(error_v, bins=25, color='green', alpha=0.7)  # Adjust color and transparency
     plt.xlabel("Prediction Error Defocus V")
-    plt.show()
+    plt.ylabel("Count")
+    # Adjust layout to prevent overlapping titles and labels
+    plt.tight_layout()
+    # Save the figure
+    plt.savefig(os.path.join(folder, 'defocus_prediction_error.png'))
 
 
-def make_testing_angle_plots(prediction, real):
+def make_testing_angle_plots(prediction, real, folder):
     x = range(1, len(real[:, 0]) + 1)
     # DEFOCUS ANGLE PLOT
+    plt.figure(figsize=(10, 8))  # Adjust the figure size as needed
+    # Plot for Sin(2*angle)
     plt.subplot(211)
     plt.title('Sin(2*angle)')
-    plt.scatter(x, real[:, 0], c='r', label='Sin')
-    plt.scatter(x, prediction[:, 0], c='b', label='Sin_pred')
+    plt.scatter(x, real[:, 0], c='r', label='Real Sin', marker='o')
+    plt.scatter(x, prediction[0], c='b', label='Predicted Sin', marker='x')
+    plt.xlabel("Sample Index")
+    plt.ylabel("Sin(2*angle)")
+    plt.legend()
+    # Plot for Cos(2*angle)
     plt.subplot(212)
     plt.title('Cos(2*angle)')
-    plt.scatter(x, real[:, 1], c='r', label='Cos')
-    plt.scatter(x, prediction[:, 1], c='b', label='Cos_pred')
+    plt.scatter(x, real[:, 1], c='r', label='Real Cos', marker='o')
+    plt.scatter(x, prediction[1], c='b', label='Predicted Cos', marker='x')
+    plt.xlabel("Sample Index")
+    plt.ylabel("Cos(2*angle)")
     plt.legend()
-    plt.show()
-
+    # Adjust layout to prevent overlapping titles and labels
+    plt.tight_layout()
+    # Save the figure
+    plt.savefig(os.path.join(folder, 'predicted_vs_real_def.png'))
 
     # DEFOCUS ANGLE PREDICTED VS REAL !OJO NO VA MUY BIEN ESTE PLOT
+    plt.figure(figsize=(10, 8))  # Adjust the figure size as needed
+    # Plot for Sin(2*angle)
     plt.subplot(211)
-    plt.title('Sin ( 2 * angle)')
-    plt.scatter(real[:, 0], prediction[:, 0])
+    plt.title('Sin(2 * angle)')
+    plt.scatter(real[:, 0], prediction[0])
     plt.xlabel('True Values [Sin]')
     plt.ylabel('Predictions [Sin]')
     plt.axis('equal')
     plt.axis('square')
     plt.xlim([0, plt.xlim()[1]])
     plt.ylim([0, plt.ylim()[1]])
-    _ = plt.plot([-100, 100], [-100, 100])
+    _ = plt.plot([-100, 100], [-100, 100], color='red', linestyle='--')  # Line for perfect correlation
+    # Plot for Cos(2*angle)
     plt.subplot(212)
-    plt.title('Cos (2 * angle)')
-    plt.scatter(real[:, 1], prediction[:, 1])
+    plt.title('Cos(2 * angle)')
+    plt.scatter(real[:, 1], prediction[1])
     plt.xlabel('True Values [Cos]')
     plt.ylabel('Predictions [Cos]')
     plt.axis('equal')
     plt.axis('square')
     plt.xlim([0, plt.xlim()[1]])
     plt.ylim([0, plt.ylim()[1]])
-    _ = plt.plot([-100, 100], [-100, 100])
-    plt.show()
-
+    _ = plt.plot([-100, 100], [-100, 100], color='red', linestyle='--')  # Line for perfect correlation
+    # Adjust layout to prevent overlapping titles and labels
+    plt.tight_layout()
+    # Save the figure
+    plt.savefig(os.path.join(folder, 'correlation_test_def_angle.png'))
 
     # DEFOCUS ANGLE ERROR
+    plt.figure(figsize=(10, 8))  # Adjust the figure size as needed
+    # Plot for Sin(2*Angle)
     plt.subplot(211)
-    plt.title('Sin(2*Angle)')
-    error = prediction[:, 0] - real[:, 0]
-    plt.hist(error, bins=25)
+    plt.title('Sin(2*Angle) Prediction Error')
+    error_sin = prediction[0] - real[:, 0].reshape(-1, 1)
+    plt.hist(error_sin, bins=25, color='blue', alpha=0.7)  # Adjust color and transparency
     plt.xlabel("Prediction Error")
-    _ = plt.ylabel("Count")
+    plt.ylabel("Count")
+    # Plot for Cos(2*Angle)
     plt.subplot(212)
-    plt.title('Cos(2*Angle)')
-    error = prediction[:, 1] - real[:, 1]
-    plt.hist(error, bins=0.2)
+    plt.title('Cos(2*Angle) Prediction Error')
+    error_cos = prediction[1] - real[:, 1].reshape(-1, 1)
+    plt.hist(error_cos, bins=25, color='orange', alpha=0.7)  # Adjust color and transparency
     plt.xlabel("Prediction Error")
-    plt.show()
-
-
-# ----------- MODEL ARCHITECTURE  -------------------
-def getModel():
-    model = DeepDefocusMultiOutputModel().assemble_full_model(IM_WIDTH, IM_HEIGHT)
-    model.summary()
-    # plot_model(model, to_file='"deep_defocus_net.png', show_shapes=True)
-    optimizer = Adam(learning_rate=LEARNING_RATE)
-    model.compile(optimizer=optimizer,
-                  loss={'defocus_output': 'mae',
-                        'defocus_angles_output': 'mae'},
-                  loss_weights=None,
-                  metrics={})  # 'defocus_output': 'msle',
-    # 'defocus_angles_output': 'msle'})
-
-    return model
-
-
-def getModelDefocus():
-    model = DeepDefocusMultiOutputModel().assemble_model_defocus(IM_WIDTH, IM_HEIGHT)
-    model.summary()
-    # plot_model(model, to_file='"deep_defocus_net.png', show_shapes=True)
-    optimizer = Adam(learning_rate=LEARNING_RATE)
-    model.compile(optimizer=optimizer,
-                  loss={'defocus_output': 'mae'},
-                  loss_weights=None,
-                  metrics={})
-
-    return model
-
-
-def getModelSeparatedDefocus():
-    model = DeepDefocusMultiOutputModel().assemble_model_separated_defocus(IM_WIDTH, IM_HEIGHT)
-    model.summary()
-    # plot_model(model, to_file='"deep_defocus_net.png', show_shapes=True)
-    optimizer = Adam(learning_rate=LEARNING_RATE)
-    model.compile(optimizer=optimizer,
-                  loss={'defocus_U_output': 'mae', 'defocus_V_output': 'mae'},
-                  loss_weights=None,
-                  metrics={})
-
-    return model
-
-
-def getModelDefocusAngle():
-    model = DeepDefocusMultiOutputModel().assemble_model_angle(IM_HEIGHT, IM_WIDTH)
-    model.summary()
-    optimizer = Adam(learning_rate=LEARNING_RATE)
-    model.compile(optimizer=optimizer,
-                  loss={'defocus_angle_output': 'mae'},
-                  loss_weights=None,
-                  metrics={})  # Añadir una metrica q sea en funcion del angulo despejado
-
-    return model
-
+    plt.ylabel("Count")
+    # Adjust layout to prevent overlapping titles and labels
+    plt.tight_layout()
+    # Save the figure
+    plt.savefig(os.path.join(folder, 'defocus_angle_prediction_error.png'))
 
 def prepareTestData(df):
     Ndim = df.shape[0]

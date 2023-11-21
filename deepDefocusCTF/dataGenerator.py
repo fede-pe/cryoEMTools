@@ -1,22 +1,11 @@
 import tensorflow as tf
 import numpy as np
 import xmippLib as xmipp
-import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_absolute_error
-from utils import startSessionAndInitialize, make_training_plots, make_testing_plots,\
-    getModelDefocusAngle, getModelSeparatedDefocus, prepareTestData
-import tensorflow.keras.callbacks as callbacks
-import os
 
 class CustomDataGen(tf.keras.utils.Sequence):
 
-    def __init__(self, df, X_col, y_col,
-                 batch_size,
-                 input_size=(512, 512, 3),
-                 shuffle=True,
-                 subset=2):
-
+    def __init__(self, df, X_col, y_col, batch_size, input_size=(512, 512, 1), shuffle=True, subset=2):
+                 # input_size=(512, 512, 3),
         self.df = df.copy()
         self.X_col = X_col
         self.y_col = y_col
@@ -24,9 +13,7 @@ class CustomDataGen(tf.keras.utils.Sequence):
         self.input_size = input_size
         self.shuffle = shuffle
         self.subset = subset
-
         self.n = len(self.df)
-
 
     def on_epoch_end(self):
         if self.shuffle:
@@ -34,20 +21,21 @@ class CustomDataGen(tf.keras.utils.Sequence):
 
     def __get_input(self, path, size, subset):
         # How we read xmipp 3 downsample images
-        imagMatrix = np.zeros((size[0], size[1], 3), dtype=np.float64)
+        # imagMatrix = np.zeros((size[0], size[1], 3), dtype=np.float64)
+        imagMatrix = np.zeros((size[0], size[1], 1), dtype=np.float64)
 
         # Replace is done since we want the 3 images not only the one in the metadata file
-        img1Path = path.replace("_psdAt_%d.xmp" % subset, "_psdAt_1.xmp")
+        # img1Path = path.replace("_psdAt_%d.xmp" % subset, "_psdAt_1.xmp")
         img2Path = path.replace("_psdAt_%d.xmp" % subset, "_psdAt_2.xmp")
-        img3Path = path.replace("_psdAt_%d.xmp" % subset, "_psdAt_3.xmp")
+        # img3Path = path.replace("_psdAt_%d.xmp" % subset, "_psdAt_3.xmp")
 
-        img1 = xmipp.Image(img1Path).getData()
+        # img1 = xmipp.Image(img1Path).getData()
         img2 = xmipp.Image(img2Path).getData()
-        img3 = xmipp.Image(img3Path).getData()
+        # img3 = xmipp.Image(img3Path).getData()
 
-        imagMatrix[:, :, 0] = img1
-        imagMatrix[:, :, 1] = img2
-        imagMatrix[:, :, 2] = img3
+        # imagMatrix[:, :, 0] = img1
+        imagMatrix[:, :, 0] = img2
+        # imagMatrix[:, :, 2] = img3
 
         # Normalization
         imageMatrixNorm = (imagMatrix - np.mean(imagMatrix))/np.std(imagMatrix)
@@ -72,14 +60,12 @@ class CustomDataGen(tf.keras.utils.Sequence):
         # Generates data containing batch_size samples
         image_batch = batches[self.X_col['path']] # 'FILE' in our dataframe
 
-        defocus_batch = batches[[self.y_col['defocus_U'], self.y_col['defocus_V']]] #
-        # print(defocus_batch["DEFOCUS_U"])
+        defocus_batch = batches[[self.y_col['defocus_U'], self.y_col['defocus_V']]]
 
         X_batch = np.asarray([self.__get_input(x, self.input_size, subset=self.subset) for x in image_batch])
 
         yU_batch = np.asarray([self.__get_output_U(y) for y in defocus_batch[self.y_col['defocus_U']]])
         yV_batch = np.asarray([self.__get_output_V(y) for y in defocus_batch[self.y_col['defocus_V']]])
-
 
         return X_batch, tuple([yU_batch, yV_batch])
 
@@ -88,17 +74,13 @@ class CustomDataGen(tf.keras.utils.Sequence):
         X, y = self.__get_data(batches)
         return X, y
 
-
     def __len__(self):
         return self.n // self.batch_size
 
 
 class CustomDataGenAngle(tf.keras.utils.Sequence):
 
-    def __init__(self, df, X_col, y_col,batch_size,
-                 input_size=(512, 512, 1),
-                 shuffle=True, subset=2):
-
+    def __init__(self, df, X_col, y_col, batch_size, input_size=(512, 512, 1), shuffle=True, subset=2):
         self.df = df.copy()
         self.X_col = X_col
         self.y_col = y_col
@@ -113,7 +95,6 @@ class CustomDataGenAngle(tf.keras.utils.Sequence):
             self.df = self.df.sample(frac=1).reset_index(drop=True)
 
     def __get_input(self, path, size, subset):
-        # Replace is done since we want the 3 images not only the one in the metadata file
         imgPath = path.replace("_psdAt_%d.xmp" % subset, "_psdAt_2.xmp")
         img = xmipp.Image(imgPath).getData()
         # Normalization
