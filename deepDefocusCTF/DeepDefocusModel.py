@@ -121,32 +121,6 @@ class DeepDefocusMultiOutputModel():
 
         return L
 
-    # def assemble_model_separated_defocus(self, width, height):
-    #     """
-    #     Used to assemble our multi-output model CNN.
-    #     """
-    #     input_shape = (height, width, 3)
-    #     inputs = Input(shape=input_shape, name='input')
-    #
-    #     input1 = Reshape((height, width, 1))(inputs[:, :, :, 0])
-    #     input2 = Reshape((height, width, 1))(inputs[:, :, :, 1])
-    #     input3 = Reshape((height, width, 1))(inputs[:, :, :, 2])
-    #
-    #     defocus_branch_at_1 = self.build_defocus_branch(input1, height, factor=0.0586) # At 1A
-    #     defocus_branch_at_2 = self.build_defocus_branch(input2, height, factor=0.1172) # At 2A
-    #     defocus_branch_at_3 = self.build_defocus_branch(input3, height, factor=0.176) # At 3A
-    #     concatted = Concatenate()([defocus_branch_at_1, defocus_branch_at_2, defocus_branch_at_3])
-    #
-    #     L = Flatten()(concatted)
-    #     L = Dropout(0.3)(L) #Este dropout es muy heavy
-    #     defocusU = self.build_defocusU_branch(L)
-    #     defocusV = self.build_defocusV_branch(L)
-    #
-    #     model = Model(inputs=inputs, outputs=[defocusU, defocusV],
-    #                   name="deep_separated_defocus_net")
-    #
-    #     return model
-
     def build_defocusU_branch(self, convLayer):
         L = Dense(32, activation='relu', kernel_regularizer=regularizers.l1_l2(0.01))(convLayer)
         L = Dropout(0.1)(L)
@@ -192,6 +166,32 @@ class DeepDefocusMultiOutputModel():
 
         return model
 
+    def assemble_model_separated_defocus_branches(self, width, height):
+        """
+        Used to assemble our multi-output model CNN.
+        """
+        input_shape = (height, width, 3)
+        inputs = Input(shape=input_shape, name='input')
+
+        input1 = Reshape((height, width, 1))(inputs[:, :, :, 0])
+        input2 = Reshape((height, width, 1))(inputs[:, :, :, 1])
+        input3 = Reshape((height, width, 1))(inputs[:, :, :, 2])
+
+        defocus_branch_at_1 = self.build_defocus_branch(input1, height, factor=0.0586) # At 1A
+        defocus_branch_at_2 = self.build_defocus_branch(input2, height, factor=0.1172) # At 2A
+        defocus_branch_at_3 = self.build_defocus_branch(input3, height, factor=0.176) # At 3A
+        concatted = Concatenate()([defocus_branch_at_1, defocus_branch_at_2, defocus_branch_at_3])
+
+        L = Flatten()(concatted)
+        L = Dropout(0.3)(L) #Este dropout es muy heavy
+        defocusU = self.build_defocusU_branch(L)
+        defocusV = self.build_defocusV_branch(L)
+
+        model = Model(inputs=inputs, outputs=[defocusU, defocusV],
+                      name="deep_separated_defocus_net")
+
+        return model
+
     def assemble_model_angle(self, height, width):
         """
         Used to assemble our multi-output model CNN.
@@ -205,9 +205,6 @@ class DeepDefocusMultiOutputModel():
 
         sin_branch = self.build_sin_branch(L)
         cos_branch = self.build_cos_branch(L)
-
-        # L = Dense(32, activation='relu', kernel_regularizer=regularizers.l1_l2(0.01))(L)
-        # L = Dense(2, activation='linear', name='defocus_angle_output')(L)
 
         model = Model(inputs=input, outputs=[sin_branch, cos_branch],
                       name="deep_defocus_angle_net")
@@ -265,7 +262,7 @@ class DeepDefocusMultiOutputModel():
                       loss={'sinAngle_output': 'mae',
                             'cosAngle_output': 'mae'},
                       loss_weights=None,
-                      metrics=[angle_error_metric])  # Añadir una metrica q sea en funcion del angulo despejado
+                      metrics=[angle_error_metric])  # TODO : This metric should be align with the mae have a look
 
         return model
 

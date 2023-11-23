@@ -57,33 +57,34 @@ def data_generator(X, Y, rotation_angle=90):
 
     return X_set_generated, Y_set_generated
 
-def make_data_descriptive_plots(df_metadata, COLUMNS , trainDefocus = True, trainAngle = True, groundTruth = False):
+def make_data_descriptive_plots(df_metadata, folder, COLUMNS , trainDefocus = True, trainAngle = True, groundTruth = False):
     if trainDefocus:
         # HISTOGRAM
         df_defocus = df_metadata[[COLUMNS['defocus_U'], COLUMNS['defocus_V']]]
-        df_defocus.plot.hist(alpha=0.5)
+        df_defocus.plot.hist(alpha=0.5, bins=25)
         plt.title('Defocus histogram')
-        # plt.show()
+        plt.savefig(os.path.join(folder, 'defocus_histogram.png'))
         # BOXPLOT
         df_defocus.plot.box()
         plt.title('Defocus boxplot')
-        # plt.show()
+        plt.savefig(os.path.join(folder, 'defocus_boxplot.png'))
         # SCATTER
         df_defocus.plot.scatter(x=COLUMNS['defocus_U'], y=COLUMNS['defocus_V'])
         plt.title('Correlation plot defocus U vs V')
-        # plt.show()
+        plt.savefig(os.path.join(folder, 'defocus_correlation.png'))
 
         if groundTruth:
             df_defocus['ErrorU'] = df_metadata[COLUMNS['defocus_U']] - df_metadata['DEFOCUS_U_Est']
             df_defocus['ErrorV'] = df_metadata[COLUMNS['defocus_V']] - df_metadata['DEFOCUS_V_Est']
 
-            df_defocus[['ErrorU', 'ErrorV']].plot.hist(alpha=0.5)
+            df_defocus[['ErrorU', 'ErrorV']].plot.hist(alpha=0.5, bins=25)
             plt.title('Defocus error histogram')
-            # plt.show()
+            plt.savefig(os.path.join(folder, 'defocus_error_hist.png'))
             # BOXPLOT
-            df_defocus[['ErrorU', 'ErrorV']].plot.box()  # este box plot est muy pegado
+            plt.figure()
+            df_defocus[['ErrorU', 'ErrorV']].plot.box()  # este box plot esta muy pegado
             plt.title('Defocus error boxplot')
-            # plt.show()
+            plt.savefig(os.path.join(folder, 'defocus_error_boxplot.png'))
 
         print(df_defocus.describe())
 
@@ -91,17 +92,24 @@ def make_data_descriptive_plots(df_metadata, COLUMNS , trainDefocus = True, trai
         # TODO: more Angles plots
         # HISTOGRAM
         df_angle = df_metadata[[COLUMNS['angle'], COLUMNS['cosAngle'], COLUMNS['sinAngle']]]
-        df_angle[COLUMNS['angle']].plot.hist(alpha=0.5)
-        plt.title('Angle')
-        # plt.show()
+        # df_angle[COLUMNS['angle']].plot.hist(alpha=0.5, bins=25)
+        plt.figure()
+        plt.hist(df_angle[COLUMNS['angle']], bins=25, alpha=0.5, color='skyblue', edgecolor='black')
+        plt.title('Angle Histogram')
+        plt.xlabel('Angle')
+        plt.ylabel('Frequency')
+        plt.grid(True)
+        plt.savefig(os.path.join(folder, 'angle_histogram.png'))
+        print(df_angle.head())
 
         if groundTruth:
             df_angle_error = df_metadata[COLUMNS['angle']] - df_metadata['Angle_Est']
-            df_angle_error.plot.hist(alpha=0.5)
+            plt.figure()
+            df_angle_error.plot.hist(alpha=0.5, bins=25)
             plt.title('Angle error')
-            # plt.show()
+            plt.savefig(os.path.join(folder, 'angle_error_hist.png'))
+            print('Df angle error')
             print(df_angle_error.describe())
-
 
 def make_training_plots(history, folder, prefix):
     # plot loss during training to CHECK OVERFITTING
@@ -294,7 +302,7 @@ def make_testing_angle_plots(prediction, real, folder):
 
 def prepareTestData(df):
     Ndim = df.shape[0]
-    imagMatrix = np.zeros((Ndim, 512, 512, 3), dtype=np.float64)
+    imagMatrix = np.zeros((Ndim, 512, 512, 1), dtype=np.float64)
     defocusVector = np.zeros((Ndim, 2), dtype=np.float64)
     angleVector = np.zeros((Ndim, 2), dtype=np.float64)
     i = 0
@@ -307,17 +315,17 @@ def prepareTestData(df):
         sinAngle = df.loc[index, 'Sin(2*angle)']
         cosAngle = df.loc[index, 'Cos(2*angle)']
         # Replace is done since we want the 3 images not only the one in the metadata file
-        img1Path = storedFile.replace("_psdAt_%d.xmp" % subset, "_psdAt_1.xmp")
+        # img1Path = storedFile.replace("_psdAt_%d.xmp" % subset, "_psdAt_1.xmp")
         img2Path = storedFile.replace("_psdAt_%d.xmp" % subset, "_psdAt_2.xmp")
-        img3Path = storedFile.replace("_psdAt_%d.xmp" % subset, "_psdAt_3.xmp")
+        # img3Path = storedFile.replace("_psdAt_%d.xmp" % subset, "_psdAt_3.xmp")
 
-        img1 = xmipp.Image(img1Path).getData()
+        # img1 = xmipp.Image(img1Path).getData()
         img2 = xmipp.Image(img2Path).getData()
-        img3 = xmipp.Image(img3Path).getData()
+        # img3 = xmipp.Image(img3Path).getData()
 
-        imagMatrix[i, :, :, 0] = img1
-        imagMatrix[i, :, :, 1] = img2
-        imagMatrix[i, :, :, 2] = img3
+        # imagMatrix[i, :, :, 0] = img1
+        imagMatrix[i, :, :, 0] = img2
+        # imagMatrix[i, :, :, 2] = img3
 
         defocusVector[i, 0] = int(defocus_U)
         defocusVector[i, 1] = int(defocus_V)

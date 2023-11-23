@@ -16,7 +16,7 @@ from DeepDefocusModel import DeepDefocusMultiOutputModel
 import datetime
 
 BATCH_SIZE = 16
-EPOCHS = 5
+EPOCHS = 200
 TEST_SIZE = 0.15
 LEARNING_RATE_DEF = 0.0001
 LEARNING_RATE_ANG = 0.001
@@ -35,11 +35,11 @@ if __name__ == "__main__":
 
     metadataDir = sys.argv[1]
     modelDir = sys.argv[2]
-    input_size = (512, 512, 3)
+    input_size = (512, 512, 1)
     input_size_angle = (512, 512, 1)
     # This two condition should dissapear as both are going to be in the same model
-    trainDefocus = False
-    trainAngle = True
+    trainDefocus = True
+    trainAngle = False
     ground_Truth = False
     testing_Bool = True
     plots_Bool = True
@@ -52,16 +52,16 @@ if __name__ == "__main__":
     path_metadata = os.path.join(metadataDir, "metadata.csv")
     df_metadata = pd.read_csv(path_metadata)
 
-    old_path = '/home/dmarchan/DM/TFM/TestNewPhantomData/'
-    new_path = '/home/dmarchan/data_hilbert_tres/TestNewPhantomData/'
-    df_metadata[COLUMNS['file']] = df_metadata[COLUMNS['file']].str.replace(old_path, new_path)
-
+    # Todo esto es solo por esta vez
+    # old_path = '/home/dmarchan/DM/TFM/TestNewPhantomData/'
+    # new_path = '/home/dmarchan/data_hilbert_tres/TestNewPhantomData'
+    # df_metadata[COLUMNS['file']] = df_metadata[COLUMNS['file']].str.replace(old_path, new_path)
     # ----------- STATISTICS ------------------
     print(df_metadata.describe())
 
     # ---------------- DESCRIPTIVE PLOTS ------------------------
     if plots_Bool:
-        make_data_descriptive_plots(df_metadata, COLUMNS, trainDefocus, trainAngle, ground_Truth)
+        make_data_descriptive_plots(df_metadata, modelDir, COLUMNS, trainDefocus, trainAngle, ground_Truth)
 
     # ----------- SPLIT DATA: TRAIN, VALIDATE and TEST ------------
     # TODO: generate more data with the dataGenerator
@@ -99,10 +99,10 @@ if __name__ == "__main__":
                                   # write_graph=True, write_grads=False, write_images=False,
                                   # embeddings_freq=0, embeddings_layer_names=None,
                                   # embeddings_metadata=None, embeddings_data=None),
-            callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, verbose=1,
+            callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=10, verbose=1,
                                         mode='auto',
                                         min_delta=0.0001, cooldown=0, min_lr=0),
-            callbacks.EarlyStopping(monitor='val_loss', patience=15)
+            callbacks.EarlyStopping(monitor='val_loss', patience=20)
             ]
 
         # ----------- TRAINING DEFOCUS MODEL-------------------
