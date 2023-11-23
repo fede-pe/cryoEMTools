@@ -157,10 +157,11 @@ class GeneratorPhantomCTF:
             with open(file_path, 'w') as file:
                 # Write the header
                 file.write("# XMIPP_STAR_1 *\n"
-                           "#\n")
+                           "#\n"
+                           "data_fullMicrograph\n")
 
                 for key, values in random_dict.items():
-                    line = f"{key} {values}\n"
+                    line = f" {key} {values}\n"
                     file.write(line)
 
         print("%d phantom ctfparam files generated successfully!" % self.number_ctf)
