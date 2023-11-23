@@ -181,6 +181,8 @@ class GeneratorPhantomCTF:
             print(command % params)
             _ = subprocess.check_output(command % params, shell=True)
 
+        print("%d phantom micrographs generated successfully!" % self.number_ctf)
+
     def generateNoiseMicrograph(self):
         # Generate Gaussian noise
         mean = 0
