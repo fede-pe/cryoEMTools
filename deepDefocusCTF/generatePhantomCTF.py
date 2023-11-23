@@ -193,7 +193,7 @@ class GeneratorPhantomCTF:
         std = 1
         shape = (4096, 4096)
 
-        noisy_image = np.random.normal(mean, std, shape).astype(np.uint8)
+        noisy_image = np.random.normal(mean, std, shape).astype(np.float32)
 
         with mrcfile.new(self.noiseMicrographLocation, overwrite=True) as mrc:
             mrc.set_data(noisy_image)
