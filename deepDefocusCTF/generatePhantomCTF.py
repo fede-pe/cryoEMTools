@@ -1,12 +1,16 @@
+import subprocess
 import argparse
 import os
 import re
 import glob
+import numpy as np
+import mrcfile
 from random import choice, uniform
 
 
 class GeneratorPhantomCTF:
     def __init__(self):
+        # Input params
         self.input_files = []
         self.number_ctf = None
         self.min_defocus = 0
@@ -28,12 +32,16 @@ class GeneratorPhantomCTF:
 
         self.paramsDict = {key: [] for key in self.fields}
 
+        self.noiseMicrographLocation = os.path.join(self.output_location, "noiseMicrograph.mrc")
+
         self.readInput()
         self.processParamsFiles()
         self.generatePhantomFiles()
+        self.generatePhantomMicrographs()
 
     def readInput(self):
-        parser = argparse.ArgumentParser(description="Generate new CTFs based on a characterized population.")
+        parser = argparse.ArgumentParser(description="Generate new CTFs based on a characterized population.\n"
+                                                     "IMPORTANT: source xmipp binaries and install mrcfile pip package")
 
         # Add the inputFiles parameter with type=str
         parser.add_argument(
@@ -154,6 +162,36 @@ class GeneratorPhantomCTF:
                     file.write(line)
 
         print("%d phantom ctfparam files generated successfully!" % self.number_ctf)
+
+    def generatePhantomMicrographs(self):
+        for i in range(self.number_ctf):
+            self.generateNoiseMicrograph()
+
+            params = {
+                'inputMic': self.noiseMicrographLocation,
+                'outputMic': os.path.join(self.output_location, "simulated_ctf_%d.mrc" % i),
+                'ctfParam': os.path.join(self.output_location, "simulated_ctf_%d.ctfparam" % i),
+            }
+
+            command = "xmipp_transform_filter " \
+                      "-i %(inputMic)s " \
+                      "-o %(outputMic)s " \
+                      "--fourier ctf %(ctfParam)s "
+
+            print(command % params)
+            output = subprocess.check_output(command % params, shell=True)
+            print(output)
+
+    def generateNoiseMicrograph(self):
+        # Generate Gaussian noise
+        mean = 0
+        std = 1
+        shape = (4096, 4096)
+
+        noisy_image = np.random.normal(mean, std, shape).astype(np.uint8)
+
+        with mrcfile.new(self.noiseMicrographLocation, overwrite=True) as mrc:
+            mrc.set_data(noisy_image)
 
 
 if __name__ == '__main__':
