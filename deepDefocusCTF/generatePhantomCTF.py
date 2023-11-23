@@ -118,7 +118,12 @@ class GeneratorPhantomCTF:
 
     def generatePhantomFiles(self):
         for i in range(self.number_ctf):
-            random_dict = {key: choice(values) for key, values in self.paramsDict.items()}
+            # Randomly pick a position
+            first_key = next(iter(self.paramsDict))
+            random_position = choice(range(len(self.paramsDict[first_key])))
+
+            # Use the randomly picked position for all keys
+            random_dict = {key: values[random_position] for key, values in self.paramsDict.items()}
 
             file_path = os.path.join(self.output_location, "simulated_ctf_%d.ctfparam" % i)
 
