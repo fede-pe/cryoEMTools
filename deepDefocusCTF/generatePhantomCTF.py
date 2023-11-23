@@ -157,7 +157,7 @@ class GeneratorPhantomCTF:
             with open(file_path, 'w') as file:
                 # Write the header
                 file.write("# XMIPP_STAR_1 *\n"
-                           "#")
+                           "#\n")
 
                 for key, values in random_dict.items():
                     line = f"{key} {values}\n"
