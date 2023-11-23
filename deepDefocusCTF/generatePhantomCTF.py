@@ -32,7 +32,7 @@ class GeneratorPhantomCTF:
 
         self.paramsDict = {key: [] for key in self.fields}
 
-        self.noiseMicrographLocation = os.path.join(self.output_location, "noiseMicrograph.mrc")
+        self.noiseMicrographLocation = ""
 
         self.readInput()
         self.processParamsFiles()
@@ -100,6 +100,8 @@ class GeneratorPhantomCTF:
         self.max_defocus = args.maxDefocus
         self.astigmatism = args.astigmatism
         self.output_location = args.outputLocation
+
+        self.noiseMicrographLocation = os.path.join(self.output_location, "noiseMicrograph.mrc")
 
         # Use the re module to work with the regex
         try:
@@ -179,7 +181,8 @@ class GeneratorPhantomCTF:
                       "--fourier ctf %(ctfParam)s "
 
             print(command % params)
-            _ = subprocess.check_output(command % params, shell=True)
+            output = subprocess.check_output(command % params, shell=True)
+            print(output)
 
         print("%d phantom micrographs generated successfully!" % self.number_ctf)
 
