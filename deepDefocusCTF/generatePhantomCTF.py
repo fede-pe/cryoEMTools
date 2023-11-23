@@ -179,8 +179,7 @@ class GeneratorPhantomCTF:
                       "--fourier ctf %(ctfParam)s "
 
             print(command % params)
-            output = subprocess.check_output(command % params, shell=True)
-            print(output)
+            _ = subprocess.check_output(command % params, shell=True)
 
     def generateNoiseMicrograph(self):
         # Generate Gaussian noise
