@@ -14,6 +14,8 @@ from utils import startSessionAndInitialize, make_data_descriptive_plots, make_t
 from dataGenerator import CustomDataGen, CustomDataGenAngle
 from DeepDefocusModel import DeepDefocusMultiOutputModel
 import datetime
+from sklearn.preprocessing import RobustScaler
+import numpy as np
 
 BATCH_SIZE = 16
 EPOCHS = 200
@@ -52,6 +54,18 @@ if __name__ == "__main__":
     path_metadata = os.path.join(metadataDir, "metadata.csv")
     df_metadata = pd.read_csv(path_metadata)
 
+    # Stack the 'defocus_U' and 'defocus_V' columns into a single column
+    stacked_data = df_metadata[[COLUMNS['defocus_U'], COLUMNS['defocus_V']]].stack().reset_index(drop=True)
+    # Reshape the stacked data to a 2D array
+    stacked_data_2d = stacked_data.values.reshape(-1, 1)
+    # Instantiate the RobustScaler
+    scaler = RobustScaler()
+    # Fit the scaler to the stacked data
+    scaler.fit(stacked_data_2d)
+
+    df_metadata['DEFOCUS_U_SCALED'] = scaler.transform(df_metadata[COLUMNS['defocus_U']].values.reshape(-1, 1))
+    df_metadata['DEFOCUS_V_SCALED'] = scaler.transform(df_metadata[COLUMNS['defocus_V']].values.reshape(-1, 1))
+
     # Todo esto es solo por esta vez
     # old_path = '/home/dmarchan/DM/TFM/TestNewPhantomData/'
     # new_path = '/home/dmarchan/data_hilbert_tres/TestNewPhantomData'
@@ -77,17 +91,17 @@ if __name__ == "__main__":
         # OJO: The number of batches is equal to len(df)//batch_size
         traingen = CustomDataGen(df_train,
                                  X_col={'path': 'FILE'},
-                                 y_col={'defocus_U': 'DEFOCUS_U', 'defocus_V': 'DEFOCUS_V'},
+                                 y_col={'defocus_U': 'DEFOCUS_U_SCALED', 'defocus_V': 'DEFOCUS_V_SCALED'},
                                  batch_size=BATCH_SIZE, input_size=input_size)
 
         valgen = CustomDataGen(df_validate,
                                X_col={'path': 'FILE'},
-                               y_col={'defocus_U': 'DEFOCUS_U', 'defocus_V': 'DEFOCUS_V'},
+                               y_col={'defocus_U': 'DEFOCUS_U_SCALED', 'defocus_V': 'DEFOCUS_V_SCALED'},
                                batch_size=BATCH_SIZE, input_size=input_size)
 
         testgen = CustomDataGen(df_test,
                                 X_col={'path': 'FILE'},
-                                y_col={'defocus_U': 'DEFOCUS_U', 'defocus_V': 'DEFOCUS_V'},
+                                y_col={'defocus_U': 'DEFOCUS_U_SCALED', 'defocus_V': 'DEFOCUS_V_SCALED'},
                                 batch_size=1,
                                 input_size=input_size)  # BATCH_SIZE here is crucial since it needs to be a multiple of the len(df_test)
 
@@ -226,8 +240,12 @@ if __name__ == "__main__":
         imagesTest, defocusTest, anglesTest = prepareTestData(df_test)
         if trainDefocus:
             print("Testing defocus model")
-            defocusPrediction = model.predict(testgen)  # Predict with the generator can be dangerous,
+            defocusPrediction_scaled = model.predict(testgen)  # Predict with the generator can be dangerous,
             # it needs to be a multiple of len(test)
+            # Transform back
+            defocusPrediction = np.zeros_like(defocusPrediction_scaled)
+            defocusPrediction[0] = scaler.inverse_transform(defocusPrediction_scaled[0].reshape(-1, 1))
+            defocusPrediction[1] = scaler.inverse_transform(defocusPrediction_scaled[1].reshape(-1, 1))
 
             mae_u = mean_absolute_error(defocusTest[:, 0], defocusPrediction[0])
             print("Final mean absolute error defocus_U val_loss: ", mae_u)

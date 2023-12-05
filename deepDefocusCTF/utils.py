@@ -71,6 +71,9 @@ def make_data_descriptive_plots(df_metadata, folder, COLUMNS , trainDefocus = Tr
         # SCATTER
         df_defocus.plot.scatter(x=COLUMNS['defocus_U'], y=COLUMNS['defocus_V'])
         plt.title('Correlation plot defocus U vs V')
+        plt.plot([0, df_defocus[COLUMNS['defocus_U']].max()],
+                 [0, df_defocus[COLUMNS['defocus_U']].max()],
+                 color='red')
         plt.savefig(os.path.join(folder, 'defocus_correlation.png'))
 
         if groundTruth:
@@ -82,7 +85,7 @@ def make_data_descriptive_plots(df_metadata, folder, COLUMNS , trainDefocus = Tr
             plt.savefig(os.path.join(folder, 'defocus_error_hist.png'))
             # BOXPLOT
             plt.figure()
-            df_defocus[['ErrorU', 'ErrorV']].plot.box()  # este box plot esta muy pegado
+            df_defocus[['ErrorU', 'ErrorV']].plot.box()
             plt.title('Defocus error boxplot')
             plt.savefig(os.path.join(folder, 'defocus_error_boxplot.png'))
 
@@ -123,7 +126,7 @@ def make_training_plots(history, folder, prefix):
     # Add grid lines for better readability
     plt.grid(True, linestyle='--', alpha=0.7)
     # Save the figure
-    plt.savefig(os.path.join(folder, prefix + 'Training.png'))
+    plt.savefig(os.path.join(folder, prefix + 'Training_and_Loss.png'))
     # plt.show()
 
     # Plot Learning Rate decreasing

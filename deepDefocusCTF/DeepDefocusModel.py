@@ -265,37 +265,3 @@ class DeepDefocusMultiOutputModel():
                       metrics=[angle_error_metric])  # TODO : This metric should be align with the mae have a look
 
         return model
-
-
-class Autoencoder:
-    def __init__(self, input_shape=(512, 512, 1), latent_dim=8):
-        self.input_shape = input_shape
-        self.latent_dim = latent_dim
-        self.autoencoder = self.build_autoencoder()
-
-    def build_autoencoder(self):
-        input_img = Input(shape=self.input_shape)
-
-        x = Conv2D(16, (3, 3), activation='relu', padding='same')(input_img)
-        x = MaxPooling2D((2, 2), padding='same')(x)
-
-        x = Conv2D(8, (3, 3), activation='relu', padding='same')(x)
-        encoded = MaxPooling2D((2, 2), padding='same')(x)
-
-        # Decoder part
-        x = Conv2D(8, (3, 3), activation='relu', padding='same')(encoded)
-        x = UpSampling2D((2, 2))(x)
-        x = Conv2D(16, (3, 3), activation='relu', padding='same')(x)
-        x = UpSampling2D((2, 2))(x)
-        decoded = Conv2D(1, (3, 3), activation='sigmoid', padding='same')(x)
-
-        autoencoder = Model(input_img, decoded)
-        autoencoder.compile(optimizer='adam', loss='mean_squared_error')
-
-        return autoencoder
-
-    def train_autoencoder(self, data_generator, epochs=50):
-        self.autoencoder.fit(data_generator, epochs=epochs)
-
-    def extract_features(self, input_data):
-        return self.autoencoder.predict(input_data)
