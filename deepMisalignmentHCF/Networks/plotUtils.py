@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sn
+import os
 
 
 def plotClassesDistribution(misalignmentInfoVector):
@@ -34,26 +35,52 @@ def plotClassesDistribution(misalignmentInfoVector):
     plt.show()
 
 
-def plotClassesDistributionDynamic(numberOfAlignedSubtomos, numberOfMisalignedSubtomos):
-    """ This method plots and histogram of the classes distributions from the dataset between aligned and misaligned
-    subtomos in dynamic training mode. """
+def plotClassesDistributionDynamic(aliDict, misaliDict, dirPath):
+    """ This method plots and histogram of the classes distributions from each dataset between aligned and misaligned
+    subtomos. """
 
-    title = "Classes distribution"
+    aliSubtomos = []
+    misaliSubtomos = []
+    populations = []
 
-    classes = ["Aligned", "Misaligned"]
-    classesHeight = [numberOfAlignedSubtomos, numberOfMisalignedSubtomos]
+    unionKeys = set(aliDict.keys()) | set(misaliDict.keys())
 
-    # Histogram plot
-    plt.style.use('ggplot')
+    for key in unionKeys:
+        populations.append(key)
 
-    plt.title(title)
+        if key in aliDict.keys():
+            aliSubtomos.append(aliDict[key][1])
+        else:
+            aliSubtomos.append(0)
 
-    plt.bar(classes, classesHeight, color='r')
+        if key in misaliDict.keys():
+            misaliSubtomos.append(misaliDict[key][1])
+        else:
+            misaliSubtomos.append(0)
 
-    plt.show()
+    # Set up positions for bars on X-axis
+    bar_width = 0.35
+    index = np.arange(len(populations))
+
+    # Create bar plot
+    fig, ax = plt.subplots()
+    _ = ax.bar(index, aliSubtomos, bar_width, label='AliSubtomos')
+    _ = ax.bar(index + bar_width, misaliSubtomos, bar_width, label='MisaliSubtomos')
+
+    # Customize the plot
+    ax.set_xlabel('Population')
+    ax.set_ylabel('Number of subtomos')
+    ax.set_title('Classes distribution')
+    ax.set_xticks(index + bar_width / 2)
+    ax.set_xticklabels(populations)
+    ax.legend()
+
+    # Display the plot
+    plt.savefig(os.path.join(dirPath, "classesDistribution.png"))
+    plt.close()
 
 
-def plotTraining(history, epochs):
+def plotTraining(history, epochs, dirPath):
     """ This method generates training post from the history of the model."""
 
     # Loss plot
@@ -66,7 +93,8 @@ def plotTraining(history, epochs):
     plt.ylabel('Loss')
 
     plt.legend()
-    plt.show()
+    plt.savefig(os.path.join(dirPath, "loss.png"))
+    plt.close()
 
     plt.tick_params('y', colors='b')
     plt.gca().set_xlim(0, epochs - 1)
@@ -78,10 +106,11 @@ def plotTraining(history, epochs):
     ax2.tick_params('y', colors='r')
 
     plt.title("Reduce LR on Plateau", fontsize=14)
-    plt.show()
+    plt.savefig(os.path.join(dirPath, "learningRate.png"))
+    plt.close()
 
 
-def plotTesting(misalignmentInfoVector_test, misalignmentInfoVector_prediction):
+def plotTesting(misalignmentInfoVector_test, misalignmentInfoVector_prediction, dirPath):
     """ This method generates testing post from the history of the model.
     Variable indicates the column number of the feature in the information matrix."""
 
@@ -120,4 +149,5 @@ def plotTesting(misalignmentInfoVector_test, misalignmentInfoVector_prediction):
 
     sn.heatmap(df_cm, annot=True)
 
-    plt.show()
+    plt.savefig(os.path.join(dirPath, "confussionMatrix.png"))
+    plt.close()
