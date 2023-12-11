@@ -20,13 +20,11 @@ _MATRICES = [Z_ROTATION_180, Y_ROTATION_180, Z_Y_ROTATION_180]
 
 
 def normalizeInputDataStream(inputSubtomoStream):
-    """ Method to normalize the input subtomo data stream to """
-    std = inputSubtomoStream.std()
-    mean = inputSubtomoStream.mean()
+    """ Method to normalize the input subtomo data stream element by element """
+    for n, _ in enumerate(inputSubtomoStream):
+        inputSubtomoStream[n] = (inputSubtomoStream[n] - inputSubtomoStream[n].mean()) / inputSubtomoStream[n].std()
 
-    normalizedInputDataStream = (inputSubtomoStream - mean) / std
-
-    return normalizedInputDataStream
+    return inputSubtomoStream
 
 
 def produceClassesDistributionInfo(misalignmentInfoVector, verbose=True):
@@ -106,7 +104,7 @@ def dataAugmentationSubtomo(subtomo, alignment, shape):
 
 
 def dataAugmentationSubtomoDynamic(subtomo, shape):
-    """ This methods takes a subtomo used as a reference and returns a rotated version of this for data augmentation
+    """ This method takes a subtomo used as a reference and returns a rotated version of this for data augmentation
     in dynamic training mode.
     Given a subtomo there is only 3 possible transformation (the combination of 180º rotations in Y and Z axis) in order
     to match the missing wedge between the input and the output subtomo.
@@ -164,15 +162,27 @@ def generateTrainingValidationVectors(size, validationRatio):
     return randomIndexes[0: limitRatio], randomIndexes[limitRatio:]
 
 
-def combineAliAndMisaliVectors(aliV, misaliV, subtomoSize,  shuffle=True):
+def combineAliAndMisaliVectors(aliDict, misaliDict, subtomoSize,  shuffle=True):
     """ Generate and subtomos vector and its associated class (aligned or misaligned) from two independent vectors of
     aligned and misaligned subtomos"""
 
-    aliInfoV = np.ones(len(aliV))
-    misaliInfoV = np.zeros((len(misaliV)))
+    subtomoVectorList = []
+    infoVectorList = []
 
-    subtomoV = np.concatenate((aliV, misaliV))
-    infoV = np.concatenate((aliInfoV, misaliInfoV))
+    # Append aligned subtomos
+    for key in aliDict.keys():
+        subtomoVectorList.append(aliDict[key][0])
+        infoVectorList.append(np.ones(aliDict[key][1]))
+
+    # Append misaligned subtomos
+    for key in misaliDict.keys():
+        subtomoVectorList.append(misaliDict[key][0])
+        infoVectorList.append(np.zeros(misaliDict[key][1]))
+
+    subtomoV = np.concatenate(subtomoVectorList, axis=0)
+    infoV = np.concatenate(infoVectorList, axis=0)
+
+    # ---------------------- THE CODE BELLOW IS NOT USABLE AFTER THE LAST MODIFICATION
 
     # # Generate phantom data (Ali as it is, Misali = Ali * -1)
     # aliInfoV = np.ones(len(aliV))
