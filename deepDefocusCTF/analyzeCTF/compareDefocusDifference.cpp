@@ -29,6 +29,8 @@ int main(int argc, char **argv)
     CTFDescription CTF;
     CTF.enable_CTF=true;
     CTF.enable_CTFnoise=false;
+    CTF.DeltafU = 20000;
+    CTF.DeltafV = 20000;
     CTF.read(fnCTF);
     CTF.produceSideInfo();
 
