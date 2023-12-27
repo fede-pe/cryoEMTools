@@ -76,9 +76,13 @@ int main(int argc, char **argv)
 		if (radialCounter[i] > 0)
 		{
 			radialResolution[i] /= radialCounter[i];
-			std::cout << radialResolution[i] << "\t" << radialCounter[i] << std::endl;
 		}
 	}
 	
+	for (size_t i = 0; i < radialResolution.size(); i++)
+	{
+		std::cout << radialResolution[i] << "\t" << i << std::endl;
+	}
+
     return 0;
 }
