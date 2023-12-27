@@ -36,9 +36,9 @@ int main(int argc, char **argv)
 	std::cout << "Map dimensions: " << xSize << ", " << ySize << ", " << zSize << std::endl;
 	#endif
 	
-	size_t xSize_half = xSize/2;
-	size_t ySize_half = ySize/2;
-	size_t zSize_half = zSize/2;
+	int xSize_half = xSize/2;
+	int ySize_half = ySize/2;
+	int zSize_half = zSize/2;
 
 	size_t maxRadius = int(sqrt(xSize*xSize + ySize*ySize + zSize*zSize));
 
@@ -76,7 +76,7 @@ int main(int argc, char **argv)
 	for (size_t i = 0; i < radialCounter.size(); i++)
 	{
 		std::cout << radialCounter[i] <<  std::endl;
-		
+
 		if (radialCounter[i] > 0)
 		{
 			radialResolution[i] /= radialCounter[i];
