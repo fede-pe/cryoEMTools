@@ -15,6 +15,8 @@
 #include <iostream>
 #include <core/xmipp_image.h>
 
+#define DEBUG
+
 
 int main(int argc, char **argv)
 {
@@ -29,12 +31,20 @@ int main(int argc, char **argv)
 	size_t xSize = XSIZE(tom);
 	size_t ySize = YSIZE(tom);
 	size_t zSize = ZSIZE(tom);
+
+	#ifdef DEBUG
+	std::cout << "Map dimensions: " << xSize << ", " << ySize << ", " << zSize << std::endl;
+	#endif
 	
 	size_t xSize_half = xSize/2;
 	size_t ySize_half = ySize/2;
 	size_t zSize_half = zSize/2;
 
-	size_t maxRadius = std::max({xSize, ySize, zSize});
+	size_t maxRadius = int(sqrt(xSize*xSize + ySize*ySize + zSize*zSize));
+
+	#ifdef DEBUG
+	std::cout << "Maximum radius: " << maxRadius << std::endl;
+	#endif
 
 	std::vector<double> radialResolution(0, maxRadius);
 	std::vector<double> radialCounter(0, maxRadius);
@@ -65,6 +75,8 @@ int main(int argc, char **argv)
 
 	for (size_t i = 0; i < radialCounter.size(); i++)
 	{
+		std::cout << radialCounter[i] <<  std::endl;
+		
 		if (radialCounter[i] > 0)
 		{
 			radialResolution[i] /= radialCounter[i];
