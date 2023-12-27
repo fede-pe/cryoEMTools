@@ -24,18 +24,17 @@ int main(int argc, char **argv)
 	tomoMap.read(fnTomo);
 	auto &tom = tomoMap();
 
-	double minRes = argv[2];
+	double minRes = strtod(argv[2], nullptr);
 
-	size_t xSize;
-	size_t ySize;
-	size_t zSize;
-	tiltSeriesImages.getDimensions(xSize, ySize, zSize);
+	size_t xSize = XSIZE(tom);
+	size_t ySize = YSIZE(tom);
+	size_t zSize = ZSIZE(tom);
 	
 	size_t xSize_half = xSize/2;
 	size_t ySize_half = ySize/2;
 	size_t zSize_half = zSize/2;
 
-	size_t maxRadius = std::max(xSize, ySize, zSize);
+	size_t maxRadius = std::max({xSize, ySize, zSize});
 
 	std::vector<double> radialResolution(0, maxRadius);
 	std::vector<double> radialCounter(0, maxRadius);
@@ -52,7 +51,7 @@ int main(int argc, char **argv)
 			{
 				size_t r2 = j2i2 + k*k;
 				
-				auto value = DIRECT_A3D_ELEM(tom, zSize_half + k, ySize_half + i, xSize_half + j);
+				double value = DIRECT_A3D_ELEM(tom, zSize_half + k, ySize_half + i, xSize_half + j);
 
 				if (value < minRes)
 				{
