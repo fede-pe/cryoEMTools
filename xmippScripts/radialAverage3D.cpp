@@ -68,6 +68,7 @@ int main(int argc, char **argv)
 		if (radialCounter[i] > 0)
 		{
 			radialResolution[i] /= radialCounter[i];
+			std::cout << radialResolution[i] << std::endl;
 		}
 	}
 	
