@@ -15,8 +15,6 @@
 #include <iostream>
 #include <core/xmipp_image.h>
 
-#define DEBUG
-
 
 int main(int argc, char **argv)
 {
@@ -28,9 +26,9 @@ int main(int argc, char **argv)
 
 	double minRes = strtod(argv[2], nullptr);
 
-	size_t xSize = XSIZE(tom);
-	size_t ySize = YSIZE(tom);
-	size_t zSize = ZSIZE(tom);
+	int xSize = XSIZE(tom);
+	int ySize = YSIZE(tom);
+	int zSize = ZSIZE(tom);
 
 	#ifdef DEBUG
 	std::cout << "Map dimensions: " << xSize << ", " << ySize << ", " << zSize << std::endl;
@@ -46,8 +44,8 @@ int main(int argc, char **argv)
 	std::cout << "Maximum radius: " << maxRadius << std::endl;
 	#endif
 
-	std::vector<double> radialResolution(0, maxRadius);
-	std::vector<double> radialCounter(0, maxRadius);
+	std::vector<double> radialResolution(maxRadius, 0);
+	std::vector<double> radialCounter(maxRadius, 0);
 
 	for (int i = -xSize_half; i < xSize_half; i++)
 	{
@@ -61,7 +59,7 @@ int main(int argc, char **argv)
 			{
 				size_t r2 = j2i2 + k*k;
 				
-				double value = DIRECT_A3D_ELEM(tom, zSize_half + k, ySize_half + i, xSize_half + j);
+				double value = DIRECT_A3D_ELEM(tom, zSize_half + k, ySize_half + j, xSize_half + i);				
 
 				if (value < minRes)
 				{
@@ -75,12 +73,10 @@ int main(int argc, char **argv)
 
 	for (size_t i = 0; i < radialCounter.size(); i++)
 	{
-		std::cout << radialCounter[i] <<  std::endl;
-
 		if (radialCounter[i] > 0)
 		{
 			radialResolution[i] /= radialCounter[i];
-			std::cout << radialResolution[i] << std::endl;
+			std::cout << radialResolution[i] << "\t" << radialCounter[i] << std::endl;
 		}
 	}
 	
