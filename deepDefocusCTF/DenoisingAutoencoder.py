@@ -1,7 +1,8 @@
 import pandas as pd
 import os
 from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, BatchNormalization, Dropout, Flatten, Dense, GlobalAveragePooling2D,\
-    Lambda, Concatenate, Reshape, UpSampling2D
+    Lambda, Concatenate, Reshape, UpSampling2D, Conv2DTranspose
+import tensorflow as tf
 # from tensorflow.keras.preprocessing.image import ImageDataGenerator, load_img, img_to_array
 import tensorflow.keras.callbacks as callbacks
 from tensorflow.keras.models import Model
@@ -13,12 +14,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import xmippLib as xmipp
 import datetime
-import cv2
 from skimage.metrics import structural_similarity as ssim
 
 
-BATCH_SIZE = 8
-EPOCHS = 100
+BATCH_SIZE = 16
+EPOCHS = 20
 
 class DenoisingAutoencoder:
     def __init__(self, modelDir='/', input_shape=(512, 512, 1), latent_dim=8):
@@ -36,12 +36,14 @@ class DenoisingAutoencoder:
         x = Conv2D(8, (3, 3), activation='relu', padding='same')(x)
         encoded = MaxPooling2D((2, 2), padding='same')(x)
 
+        dense_layer = Dense(4, activation='sigmoid')(encoded)
+
         # Decoder
-        x = Conv2D(8, (3, 3), activation='relu', padding='same')(encoded)
+        x = Conv2D(8, (3, 3), activation='relu', padding='same')(dense_layer)
         x = UpSampling2D((2, 2))(x)
         x = Conv2D(16, (3, 3), activation='relu', padding='same')(x)
         x = UpSampling2D((2, 2))(x)
-        decoded = Conv2D(1, (3, 3), activation='sigmoid', padding='same')(x)
+        decoded = Conv2D(1, (3, 3), activation='linear', padding='same')(x)
 
         autoencoder = Model(inputs=input_img, outputs=decoded, name="denoising_autoencoder")
         autoencoder.summary()
@@ -101,12 +103,38 @@ class PSDDataGenerator(Sequence):
 
         for idx in batch_indices:
             file = self.dataframe.iloc[idx]['FILE']
+            # # Here you would need to take the FILE_NOISELESS AND FILE_NOISY
             img = xmipp.Image(file).getData()
-            # Normalization
+            # # Normalization
             imageNorm = (img - np.mean(img)) / np.std(img)
+            # imageNorm = self.centerWindow(file)
             batch_images.append(imageNorm)
 
         return np.array(batch_images), np.array(batch_images)  # Input and target are the same for denoising autoencoder
+        # return np.array(batch_images), np.array(batch_noiseless_images)  # todo use a noiseless representation of the image
+
+    def centerWindow(self, image_path, objective_res=1.5):
+        sampling_rate = 1
+        img = xmipp.Image(image_path)
+        img_data = img.getData()
+        xDim = np.shape(img_data)[1]
+        window_size = int(xDim * (sampling_rate / objective_res))
+        # Calculate the center coordinates
+        center_x, center_y = img_data.shape[0] // 2, img_data.shape[1] // 2
+        # Calculate the half-size of the window
+        half_window_size = window_size // 2
+        # Extract the center window
+        window_img = img.window2D(center_x - half_window_size, center_y - half_window_size,
+                                  center_x + half_window_size, center_y + half_window_size)
+
+        window_data = window_img.getData()
+
+        window_image_norm = (window_data - np.mean(window_data)) / np.std(window_data)
+
+        # window_image = image_norm[center_x - half_window_size:center_x + half_window_size,
+        #                 center_y - half_window_size:center_y + half_window_size]
+
+        return window_image_norm
 
 def psnr(original, denoised):
     """
@@ -132,35 +160,56 @@ def calculate_ssim(original, denoised):
 if __name__ == "__main__":
 
     input_size = (512, 512, 1)
+    plots_Bool = True
     # ----------- INITIALIZING SYSTEM ------------------
-    # startSessionAndInitialize()
+    startSessionAndInitialize()
 
     # ----------- LOADING DATA ------------------
     print("Loading data...")
-    metadataDir = '/home/dmarchan/TFM/TestNew'
-    modelDir = '/home/dmarchan/TFM/TestNewAutoencoder'
+    metadataDir = '/home/dmarchan/DM/TFM/TestNewData'
+    modelDir = '/home/dmarchan/DM/TFM/TestNewAutoencoder'
     path_metadata = os.path.join(metadataDir, "metadata.csv")
     df_metadata = pd.read_csv(path_metadata)
     print(df_metadata.head())
 
     # ----------- SPLIT DATA: TRAIN, VALIDATE and TEST ------------
-    df_train, df_test = train_test_split(df_metadata, test_size=0.20)
-
-    df_train, df_validate = train_test_split(df_metadata, test_size=0.20)
-    _, df_test = train_test_split(df_metadata, test_size=0.10)
+    df_training, df_test = train_test_split(df_metadata, test_size=0.10)
+    df_train, df_validate = train_test_split(df_training, test_size=0.20)
 
     # ----------- TRAINING MODELS-------------------
     train_generator = PSDDataGenerator(df_train, batch_size=BATCH_SIZE)
     val_generator = PSDDataGenerator(df_validate, batch_size=BATCH_SIZE)
     test_generator = PSDDataGenerator(df_test, batch_size=1)
 
-    # Instantiate the DenoisingAutoencoder class
-    denoising_autoencoder = DenoisingAutoencoder(modelDir=modelDir, input_shape=(512, 512, 1), latent_dim=8)
+    # Check if GPUs are available
+    gpus = tf.config.experimental.list_physical_devices('GPU')
+    if gpus:
+        try:
+            # Enable GPU memory growth
+            for gpu in gpus:
+                tf.config.experimental.set_memory_growth(gpu, True)
 
-    # Train the autoencoder on your noisy PSD images
-    history = denoising_autoencoder.train_autoencoder(train_generator, epochs=EPOCHS, val_generator=val_generator)
+            # Create a MirroredStrategy
+            strategy = tf.distribute.MirroredStrategy()
 
-    make_training_plots(history, denoising_autoencoder.modelDir, "autoencoder_")
+            with strategy.scope():
+                # Define and compile your model within the strategy scope
+                print("Training autoencoder model")
+                # Instantiate the DenoisingAutoencoder class
+                denoising_autoencoder = DenoisingAutoencoder(modelDir=modelDir, input_shape=(512, 512, 1), latent_dim=8)
+
+            # Train the autoencoder on your noisy PSD images
+            history_auto = denoising_autoencoder.train_autoencoder(train_generator,
+                                                                   epochs=EPOCHS,
+                                                                   val_generator=val_generator)
+
+            if plots_Bool:
+                make_training_plots(history_auto, denoising_autoencoder.modelDir, "autoencoder_")
+
+        except Exception as e:
+            print(e)
+    else:
+        print("No GPU devices available.")
 
     # Denoise PSD images using the trained autoencoder
     denoised_images = denoising_autoencoder.denoise_images(test_generator)

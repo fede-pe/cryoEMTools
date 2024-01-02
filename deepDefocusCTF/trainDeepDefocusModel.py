@@ -12,14 +12,14 @@ import pandas as pd
 from utils import startSessionAndInitialize, make_data_descriptive_plots, make_training_plots, prepareTestData, \
     make_testing_plots, make_testing_angle_plots
 from dataGenerator import CustomDataGen, CustomDataGenAngle
-from DeepDefocusModel import DeepDefocusMultiOutputModel
+from DeepDefocusModel import DeepDefocusMultiOutputModel, extract_CNN_layer_features
 import datetime
 from sklearn.preprocessing import RobustScaler
 import numpy as np
 
 BATCH_SIZE = 16
-EPOCHS = 200
-TEST_SIZE = 0.15
+EPOCHS = 300
+TEST_SIZE = 0.10
 LEARNING_RATE_DEF = 0.0001
 LEARNING_RATE_ANG = 0.001
 
@@ -37,12 +37,12 @@ if __name__ == "__main__":
 
     metadataDir = sys.argv[1]
     modelDir = sys.argv[2]
-    input_size = (512, 512, 1)
+    input_size = (256, 256, 1)
     input_size_angle = (512, 512, 1)
     # This two condition should dissapear as both are going to be in the same model
     trainDefocus = True
     trainAngle = False
-    ground_Truth = False
+    ground_Truth = False # True
     testing_Bool = True
     plots_Bool = True
 
@@ -82,9 +82,8 @@ if __name__ == "__main__":
     # DATA GENERATOR
     # print('Generating images...')
     # X_set_generated, Y_set_generated = data_generator(imagMatrix_Norm, defocusVector[:, :2])
-
-    df_train, df_validate = train_test_split(df_metadata, test_size=0.20)
-    _, df_test = train_test_split(df_metadata, test_size=0.10)
+    df_training, df_test = train_test_split(df_metadata, test_size=TEST_SIZE)
+    df_train, df_validate = train_test_split(df_training, test_size=0.20)
 
     # ----------- TRAINING MODELS-------------------
     if trainDefocus:
@@ -107,20 +106,35 @@ if __name__ == "__main__":
 
         path_logs_defocus = os.path.join(modelDir, "logs_defocus/" + datetime.datetime.now().strftime("%Y_%m_%d-%H_%M_%S"))
 
+        # import xmippLib as xmipp
+        # import matplotlib.pyplot as plt
+
+        # one_image_data_path = df_test.head(1)['FILE'].values[0]
+        # img = xmipp.Image(one_image_data_path)
+        # img.convertPSD()
+        # img_data = img.getData()
+        # plt.figure()
+        # plt.imshow(img_data, cmap='gray', origin='lower')
+        # plt.axis('off')
+        # plt.show()
+        # exit(0)
+
+
         callbacks_list_def = [
             callbacks.CSVLogger(os.path.join(path_logs_defocus, 'defocus.csv'), separator=',', append=False),
             callbacks.TensorBoard(log_dir=path_logs_defocus, histogram_freq=1),
-                                  # write_graph=True, write_grads=False, write_images=False,
-                                  # embeddings_freq=0, embeddings_layer_names=None,
-                                  # embeddings_metadata=None, embeddings_data=None),
-            callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=10, verbose=1,
+            callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=8, verbose=1,
                                         mode='auto',
                                         min_delta=0.0001, cooldown=0, min_lr=0),
-            callbacks.EarlyStopping(monitor='val_loss', patience=20)
+            callbacks.EarlyStopping(monitor='val_loss', patience=20),
+            callbacks.ModelCheckpoint(filepath=os.path.join(path_logs_defocus, 'Best_Weights'),
+                                      save_weights_only=True,
+                                      save_best_only=True,
+                                      monitor='val_loss',
+                                      verbose=0)
             ]
 
         # ----------- TRAINING DEFOCUS MODEL-------------------
-        print("Training defocus model")
         # Check if GPUs are available
         gpus = tf.config.experimental.list_physical_devices('GPU')
         if gpus:
@@ -136,10 +150,10 @@ if __name__ == "__main__":
                     # Define and compile your model within the strategy scope
                     print("Training defocus model")
                     start_time = time()
-                    model = DeepDefocusMultiOutputModel().getModelSeparatedDefocus(learning_rate=LEARNING_RATE_DEF)
+                    model_defocus = DeepDefocusMultiOutputModel(width=input_size[0], height=input_size[1]).getModelSeparatedDefocus(learning_rate=LEARNING_RATE_DEF)
 
                 # Train the model using fit method
-                history_defocus = model.fit(traingen,
+                history_defocus = model_defocus.fit(traingen,
                                             validation_data=valgen,
                                             epochs=EPOCHS,
                                             callbacks=callbacks_list_def,
@@ -150,6 +164,10 @@ if __name__ == "__main__":
 
                 if plots_Bool:
                     make_training_plots(history_defocus, path_logs_defocus, "defocus_")
+
+                    # Probar a cargar
+                one_image_data_path = df_test.head(1)['FILE'].values[0]
+                extract_CNN_layer_features(path_logs_defocus, one_image_data_path, layers=9)
 
             except Exception as e:
                 print(e)
@@ -237,10 +255,13 @@ if __name__ == "__main__":
         print("Test mode")
         # loadModelDir = os.path.join(modelDir, 'model.h5')
         # model = load_model(loadModelDir)
+        #model_defocus = DeepDefocusMultiOutputModel().getModelSeparatedDefocus(learning_rate=LEARNING_RATE_DEF)
+        #model_defocus.load_weights(filepath=os.path.join(path_logs_defocus, 'Best_Weights'))
+
         imagesTest, defocusTest, anglesTest = prepareTestData(df_test)
         if trainDefocus:
             print("Testing defocus model")
-            defocusPrediction_scaled = model.predict(testgen)  # Predict with the generator can be dangerous,
+            defocusPrediction_scaled = model_defocus.predict(testgen)
             # it needs to be a multiple of len(test)
             # Transform back
             defocusPrediction = np.zeros_like(defocusPrediction_scaled)
@@ -252,6 +273,13 @@ if __name__ == "__main__":
 
             mae_v = mean_absolute_error(defocusTest[:, 1], defocusPrediction[1])
             print("Final mean absolute error defocus_V val_loss: ", mae_v)
+
+            mae_test_path = os.path.join(path_logs_defocus, "mae_test_results.txt")
+            with open(mae_test_path, "w") as f:
+                f.write("Final mean absolute error defocus_U val_loss: {}\n".format(mae_u))
+                f.write("Final mean absolute error defocus_V val_loss: {}\n".format(mae_v))
+
+            print("Results written to mae_test_results.txt")
 
             if plots_Bool:
                 make_testing_plots(defocusPrediction, defocusTest, path_logs_defocus)

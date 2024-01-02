@@ -11,7 +11,7 @@ GROUND_TRUTH_PATH = '/home/dmarchan/data_hilbert_tres/TestNewPhantomData/simulat
 
 
 def loadGroundTruthValues(fnGT):
-    ''' Use to load a .txt with the ground truth values of the simulated CTFs '''
+    """ Use to load a .txt with the ground truth values of the simulated CTFs """
     print('Loading ground truth defocus values')
     df = pd.read_csv(fnGT, sep=" ", header=None, index_col=False)
     df.columns = ["COUNTER", "FILE", "DEFOCUS_U", "DEFOCUS_V", "Angle"]
@@ -20,7 +20,7 @@ def loadGroundTruthValues(fnGT):
 def getDefocusAnglesGT(df, entryFn):
     ''' Based on a Filename get the ground truth values for that image '''
     entryFn = os.path.basename(entryFn)
-    end = entryFn.find("_ctf")
+    end = entryFn.find("_xmipp")
     entryFn = entryFn[:end]
     found_entry = df[df["FILE"].str.contains(entryFn)]
     # print(found_entry)
@@ -40,9 +40,9 @@ def importCTF(fnDir, dataFlag, useGroundTruth):
     fnDirBase = re.sub(pattern, "", fnDir)
     con = sqlite3.connect(dbRoot)
     print("Opened database successfully: ", dbRoot)
-    # id = ID, Enabled = ENABLED, c67 = _xmipp_enhanced_psd, c01 = _defocusU, c02 = _defocusV, C03 = _defocusAngle
+    # id = ID, Enabled = ENABLED, c05 = _psdFile, c01 = _defocusU, c02 = _defocusV, C03 = _defocusAngle
     # C65 = _xmipp_ctfVoltage
-    query = "SELECT id, enabled, c67, c01, C02, C03, C58 from Objects" # C67 normally changes
+    query = "SELECT id, enabled, c05, c01, C02, C03, C58 from Objects"
     print('query: ', query)
     cursor = con.execute(query)
 
@@ -68,12 +68,11 @@ def importCTF(fnDir, dataFlag, useGroundTruth):
         dCosA = np.cos(2 * dAngle)
         kV = row[6]
         if dataFlag == 1:
-            if enabled == 1: # Este enabled puede que nos de problemas al no encontrar a veces las imagenes
-                if useGroundTruth:
-                    fileList.append((id, dU, dV, dSinA, dCosA, dAngle, kV, file,
-                                     dU_estimated, dV_estimated, dAngle_estimated))
-                else:
-                    fileList.append((id, dU, dV, dSinA, dCosA, dAngle, kV, file))
+            if useGroundTruth:
+                fileList.append((id, dU, dV, dSinA, dCosA, dAngle, kV, file,
+                                 dU_estimated, dV_estimated, dAngle_estimated))
+            else:
+                fileList.append((id, dU, dV, dSinA, dCosA, dAngle, kV, file))
         else:
             fileList.append(file)
         if verbose == 1:
@@ -137,7 +136,7 @@ if __name__ == "__main__":
     dirOut = sys.argv[2]
     subset = int(sys.argv[3])
     dataFlag = int(sys.argv[4])
-    allPSDs = importCTF(fnDir, dataFlag, useGroundTruth=True)
-    createMetadataCTF(allPSDs, dirOut, subset, dataFlag, useGroundTruth=True)
+    allPSDs = importCTF(fnDir, dataFlag, useGroundTruth=False)
+    createMetadataCTF(allPSDs, dirOut, subset, dataFlag, useGroundTruth=False)
 
     exit(0)

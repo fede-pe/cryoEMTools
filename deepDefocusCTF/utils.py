@@ -319,11 +319,11 @@ def prepareTestData(df):
         cosAngle = df.loc[index, 'Cos(2*angle)']
         # Replace is done since we want the 3 images not only the one in the metadata file
         # img1Path = storedFile.replace("_psdAt_%d.xmp" % subset, "_psdAt_1.xmp")
-        img2Path = storedFile.replace("_psdAt_%d.xmp" % subset, "_psdAt_2.xmp")
+        # img2Path = storedFile.replace("_psdAt_%d.xmp" % subset, "_psdAt_2.xmp")
         # img3Path = storedFile.replace("_psdAt_%d.xmp" % subset, "_psdAt_3.xmp")
 
         # img1 = xmipp.Image(img1Path).getData()
-        img2 = xmipp.Image(img2Path).getData()
+        img2 = xmipp.Image(storedFile).getData()
         # img3 = xmipp.Image(img3Path).getData()
 
         # imagMatrix[i, :, :, 0] = img1
@@ -339,3 +339,27 @@ def prepareTestData(df):
         i += 1
 
     return imagMatrix, defocusVector, angleVector
+
+def centerWindow(image_path, objective_res=2, sampling_rate=1, enhanced=False):
+    img = xmipp.Image(image_path)
+    img_data = img.getData()
+    if not enhanced:
+        img.convertPSD()
+    xDim = np.shape(img_data)[1]
+    window_size = int(xDim * (sampling_rate / objective_res))
+    # Calculate the center coordinates
+    center_x, center_y = img_data.shape[0] // 2, img_data.shape[1] // 2
+    # Calculate the half-size of the window
+    half_window_size = window_size // 2
+    # Extract the center window
+    window_img = img.window2D(center_x - half_window_size + 1, center_y - half_window_size + 1,
+                              center_x + half_window_size, center_y + half_window_size)
+
+    window_data = window_img.getData()
+
+    image_norm = (window_data - np.mean(window_data)) / np.std(window_data)
+
+    # window_image = image_norm[center_x - half_window_size:center_x + half_window_size,
+    #                 center_y - half_window_size:center_y + half_window_size]
+
+    return image_norm

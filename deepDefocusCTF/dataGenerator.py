@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import xmippLib as xmipp
+from utils import centerWindow
 
 class CustomDataGen(tf.keras.utils.Sequence):
 
@@ -30,9 +31,10 @@ class CustomDataGen(tf.keras.utils.Sequence):
         # imagMatrix[:, :, 0] = img2
         # imagMatrix[:, :, 2] = img3
 
-        img = xmipp.Image(path).getData()
+        # img = xmipp.Image(path).getData()
         # Normalization
-        imageMatrixNorm = (img - np.mean(img))/np.std(img)
+        # imageMatrixNorm = (img - np.mean(img))/np.std(img)
+        imageMatrixNorm = centerWindow(path, objective_res=2, sampling_rate=1, enhanced=False)
 
         return imageMatrixNorm
 
