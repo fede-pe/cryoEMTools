@@ -34,7 +34,7 @@ class CustomDataGen(tf.keras.utils.Sequence):
         # img = xmipp.Image(path).getData()
         # Normalization
         # imageMatrixNorm = (img - np.mean(img))/np.std(img)
-        imageMatrixNorm = centerWindow(path, objective_res=2, sampling_rate=1, enhanced=False)
+        imageMatrixNorm = centerWindow(path, objective_res=2, sampling_rate=1)
 
         return imageMatrixNorm
 

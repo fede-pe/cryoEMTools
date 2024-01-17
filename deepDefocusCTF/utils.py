@@ -317,18 +317,10 @@ def prepareTestData(df):
         defocus_V = df.loc[index, 'DEFOCUS_V']
         sinAngle = df.loc[index, 'Sin(2*angle)']
         cosAngle = df.loc[index, 'Cos(2*angle)']
-        # Replace is done since we want the 3 images not only the one in the metadata file
-        # img1Path = storedFile.replace("_psdAt_%d.xmp" % subset, "_psdAt_1.xmp")
-        # img2Path = storedFile.replace("_psdAt_%d.xmp" % subset, "_psdAt_2.xmp")
-        # img3Path = storedFile.replace("_psdAt_%d.xmp" % subset, "_psdAt_3.xmp")
 
-        # img1 = xmipp.Image(img1Path).getData()
         img2 = xmipp.Image(storedFile).getData()
-        # img3 = xmipp.Image(img3Path).getData()
 
-        # imagMatrix[i, :, :, 0] = img1
         imagMatrix[i, :, :, 0] = img2
-        # imagMatrix[i, :, :, 2] = img3
 
         defocusVector[i, 0] = int(defocus_U)
         defocusVector[i, 1] = int(defocus_V)
@@ -340,11 +332,9 @@ def prepareTestData(df):
 
     return imagMatrix, defocusVector, angleVector
 
-def centerWindow(image_path, objective_res=2, sampling_rate=1, enhanced=False):
+def centerWindow(image_path, objective_res=2, sampling_rate=1):
     img = xmipp.Image(image_path)
     img_data = img.getData()
-    if not enhanced:
-        img.convertPSD()
     xDim = np.shape(img_data)[1]
     window_size = int(xDim * (sampling_rate / objective_res))
     # Calculate the center coordinates
@@ -363,3 +353,45 @@ def centerWindow(image_path, objective_res=2, sampling_rate=1, enhanced=False):
     #                 center_y - half_window_size:center_y + half_window_size]
 
     return image_norm
+
+def rotation(image_path, angle):
+    '''Rotate a np.array and return also the transformation matrix
+    #imag: np.array
+    #angle: angle in degrees
+    #shape: output shape
+    #P: transform matrix (further transformation in addition to the rotation)'''
+    from scipy.ndimage import rotate
+
+    img = xmipp.Image(image_path)
+    image = img.getData()
+
+    # plt.figure(figsize=(5, 5))
+    # plt.imshow(image, cmap='gray')
+    # plt.show()
+
+    # P = np.identity(3)
+    # (hsrc, wsrc) = image.shape
+    # angle *= math.pi / 180
+    # T = np.asarray([[1, 0, -wsrc / 2], [0, 1, -hsrc / 2], [0, 0, 1]])
+    # R = np.asarray([[math.cos(angle), math.sin(angle), 0], [-math.sin(angle), math.cos(angle), 0], [0, 0, 1]])
+    # M = np.matmul(np.matmul(np.linalg.inv(T), np.matmul(R, T)), P)
+
+    rotated_image = rotate(image, angle=angle, reshape=False)
+
+    image_transformed = xmipp.Image()
+    image_transformed.setData(rotated_image)
+    # image_transformed = image_transformed.applyWarpAffine(list(M.flatten()), image.shape, True)
+
+    # plt.figure(figsize=(5, 5))
+    # plt.imshow(image_transformed.getData(), cmap='gray')
+    # plt.show()
+
+    return image_transformed
+
+def sum_angles(angle1, angle2):
+    # Sum the angles
+    total_angle = angle1 + angle2
+    # Use modulo to reset the sum to 0 when it reaches or exceeds 180 degrees
+    total_angle = total_angle % 180
+
+    return total_angle
