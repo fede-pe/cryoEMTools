@@ -1,9 +1,6 @@
 import os
 import sys
 from time import time
-from tensorflow.python.client import device_lib
-# print(device_lib.list_local_devices())
-# os.environ["CUDA_VISIBLE_DEVICES"] = "/device:XLA_GPU:0"
 import tensorflow as tf
 import tensorflow.keras.callbacks as callbacks
 from sklearn.metrics import mean_absolute_error
@@ -65,11 +62,6 @@ if __name__ == "__main__":
 
     df_metadata['DEFOCUS_U_SCALED'] = scaler.transform(df_metadata[COLUMNS['defocus_U']].values.reshape(-1, 1))
     df_metadata['DEFOCUS_V_SCALED'] = scaler.transform(df_metadata[COLUMNS['defocus_V']].values.reshape(-1, 1))
-
-    # Todo esto es solo por esta vez
-    # old_path = '/home/dmarchan/DM/TFM/TestNewPhantomData/'
-    # new_path = '/home/dmarchan/data_hilbert_tres/TestNewPhantomData'
-    # df_metadata[COLUMNS['file']] = df_metadata[COLUMNS['file']].str.replace(old_path, new_path)
     # ----------- STATISTICS ------------------
     print(df_metadata.describe())
 
@@ -78,10 +70,6 @@ if __name__ == "__main__":
         make_data_descriptive_plots(df_metadata, modelDir, COLUMNS, trainDefocus, trainAngle, ground_Truth)
 
     # ----------- SPLIT DATA: TRAIN, VALIDATE and TEST ------------
-    # TODO: generate more data with the dataGenerator
-    # DATA GENERATOR
-    # print('Generating images...')
-    # X_set_generated, Y_set_generated = data_generator(imagMatrix_Norm, defocusVector[:, :2])
     df_training, df_test = train_test_split(df_metadata, test_size=TEST_SIZE)
     df_train, df_validate = train_test_split(df_training, test_size=0.20)
 
@@ -105,20 +93,6 @@ if __name__ == "__main__":
                                 input_size=input_size)  # BATCH_SIZE here is crucial since it needs to be a multiple of the len(df_test)
 
         path_logs_defocus = os.path.join(modelDir, "logs_defocus/" + datetime.datetime.now().strftime("%Y_%m_%d-%H_%M_%S"))
-
-        # import xmippLib as xmipp
-        # import matplotlib.pyplot as plt
-
-        # one_image_data_path = df_test.head(1)['FILE'].values[0]
-        # img = xmipp.Image(one_image_data_path)
-        # img.convertPSD()
-        # img_data = img.getData()
-        # plt.figure()
-        # plt.imshow(img_data, cmap='gray', origin='lower')
-        # plt.axis('off')
-        # plt.show()
-        # exit(0)
-
 
         callbacks_list_def = [
             callbacks.CSVLogger(os.path.join(path_logs_defocus, 'defocus.csv'), separator=',', append=False),
@@ -176,9 +150,6 @@ if __name__ == "__main__":
 
     # ----------- SAVING DEFOCUS MODEL AND VAL INFORMATION -------------------
     # TODO: NOT FOR THE MOMENT
-    # myValLoss = np.zeros(1)
-    # myValLoss[0] = history.history['val_loss'][-1]
-    # np.savetxt(os.path.join(modelDir, 'model.txt'), myValLoss)
     # model.save(os.path.join(modelDir, 'model.h5'))
 
     # ----------- TRAINING ANGLE MODEL-------------------
@@ -204,9 +175,6 @@ if __name__ == "__main__":
         callbacks_list_ang = [
             callbacks.CSVLogger(os.path.join(path_logs_angle, 'angle.csv'), separator=',', append=False),
             callbacks.TensorBoard(log_dir=path_logs_angle, histogram_freq=1),
-                                  # write_graph=True, write_grads=False, write_images=False,
-                                  # embeddings_freq=0, embeddings_layer_names=None,
-                                  # embeddings_metadata=None, embeddings_data=None),
             callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, verbose=1,
                                         mode='auto',
                                         min_delta=0.0001, cooldown=0, min_lr=0),

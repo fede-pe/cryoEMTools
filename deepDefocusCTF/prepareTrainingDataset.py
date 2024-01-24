@@ -2,7 +2,6 @@ import os
 import sys
 import numpy as np
 import re
-import shutil
 import sqlite3
 import pandas as pd
 from utils import rotation, sum_angles
@@ -106,7 +105,7 @@ def createMetadataCTF(fileList, stackDir, subset, dataFlag, useGroundTruth):
             fnRoot = df_metadata.loc[index, 'FILE']
             fnBase = os.path.split(fnRoot)[1]  # name of the file
             destRoot = os.path.join(stackDir, fnBase)
-            #shutil.copy(fnRoot, destRoot)
+            # shutil.copy(fnRoot, destRoot)
             img = xmipp.Image(fnRoot)
             img.convertPSD()
             img.write(destRoot)
@@ -215,7 +214,9 @@ def augmentate_entries(entries_in_interval, number_extra_cases):
 
         else:
             print('extra_cases/entries > 2')
-            extra_rotations = number_extra_cases / len(entries_in_interval)
+            extra_rotations = int(number_extra_cases / len(entries_in_interval))
+            extra_rotations = min(extra_rotations, 4)
+
             print('Number of extra rotations ' + str(extra_rotations))
             random_entries = entries_in_interval.copy()
             for index, row in entries_in_interval.iterrows():
@@ -254,9 +255,9 @@ def augmentate_entries(entries_in_interval, number_extra_cases):
 def generateData(dirOut):
     if os.path.exists(os.path.join(dirOut, "metadata.csv")):
         df = pd.read_csv(os.path.join(dirOut, "metadata.csv"))
-        dict_intervals = studyDataFrame(df, num_bins=10)
+        dict_intervals = studyDataFrame(df, num_bins=15)
         df_defocus_1 = df[['DEFOCUS_U', 'DEFOCUS_V']]
-        df_defocus_1.plot.hist(alpha=0.5, bins=10)
+        df_defocus_1.plot.hist(alpha=0.5, bins=15)
         plt.show()
         result_df = df
 
@@ -279,7 +280,7 @@ def generateData(dirOut):
 
         print(result_df)
         df_defocus = result_df['DEFOCUS_U']
-        df_defocus.plot.hist(alpha=0.5, bins=10)
+        df_defocus.plot.hist(alpha=0.5, bins=15)
         plt.show()
         result_df.to_csv(os.path.join(dirOut, "metadata.csv"), index=False)
     else:

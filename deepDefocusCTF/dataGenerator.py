@@ -19,21 +19,6 @@ class CustomDataGen(tf.keras.utils.Sequence):
             self.df = self.df.sample(frac=1).reset_index(drop=True)
 
     def __get_input(self, path):
-        # How we read xmipp 3 downsample images
-        # imagMatrix = np.zeros((size[0], size[1], 3), dtype=np.float64)
-        # Replace is done since we want the 3 images not only the one in the metadata file
-        # img1Path = path.replace("_psdAt_%d.xmp" % subset, "_psdAt_1.xmp")
-        # img2Path = path.replace("_psdAt_%d.xmp" % subset, "_psdAt_2.xmp")
-        # img3Path = path.replace("_psdAt_%d.xmp" % subset, "_psdAt_3.xmp")
-        # img1 = xmipp.Image(img1Path).getData()
-        # img3 = xmipp.Image(img3Path).getData()
-        # imagMatrix[:, :, 0] = img1
-        # imagMatrix[:, :, 0] = img2
-        # imagMatrix[:, :, 2] = img3
-
-        # img = xmipp.Image(path).getData()
-        # Normalization
-        # imageMatrixNorm = (img - np.mean(img))/np.std(img)
         imageMatrixNorm = centerWindow(path, objective_res=2, sampling_rate=1)
 
         return imageMatrixNorm

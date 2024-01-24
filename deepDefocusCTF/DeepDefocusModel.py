@@ -1,4 +1,3 @@
-import numpy as np
 from tensorflow.keras.models import Model
 from tensorflow.keras.utils import plot_model
 from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D, BatchNormalization, Dropout, Flatten, Dense, \
@@ -9,7 +8,7 @@ from tensorflow.keras import backend as K
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
-from utils import centerWindow
+from utils import centerWindow, call_ctf_function
 import os
 
 
@@ -102,25 +101,25 @@ class DeepDefocusMultiOutputModel():
         This branch is composed of three Conv -> BN -> Pool -> Dropout blocks,
         followed by the Dense output layer.        """
          #Defining the architecture of the CNN
-        h = Conv2D(filters=16, kernel_size=(8,8),
+        h = Conv2D(filters=16, kernel_size=(8, 8),
                    activation='relu', padding='same', name='conv2d_1'+suffix)(input)
-        h = Conv2D(filters=16, kernel_size=(8,8),
+        h = Conv2D(filters=16, kernel_size=(8, 8),
                    activation='relu', padding='same', name='conv2d_2'+suffix)(h)
         h = BatchNormalization()(h)
 
-        h = MaxPool2D(pool_size=(2,2), name='pool_1'+suffix)(h)
+        h = MaxPool2D(pool_size=(2, 2), name='pool_1'+suffix)(h)
 
-        h = Conv2D(filters=16, kernel_size=(6,6),
+        h = Conv2D(filters=16, kernel_size=(6, 6),
                    activation='relu', padding='same', name='conv2d_3'+suffix)(h)
-        h = Conv2D(filters=16, kernel_size=(6,6),
+        h = Conv2D(filters=16, kernel_size=(6, 6),
                    activation='relu', padding='same', name='conv2d_4'+suffix)(h)
         h = BatchNormalization()(h)
 
-        h = MaxPool2D(pool_size=(2,2), name='pool_2'+suffix)(h)
+        h = MaxPool2D(pool_size=(2, 2), name='pool_2'+suffix)(h)
 
-        h = Conv2D(filters=16, kernel_size=(4,4),
+        h = Conv2D(filters=16, kernel_size=(4, 4),
                    activation='relu', padding='same', name='conv2d_5'+suffix)(h)
-        h = Conv2D(filters=16, kernel_size=(4,4),
+        h = Conv2D(filters=16, kernel_size=(4, 4),
                    activation='relu', padding='same', name='conv2d_6'+suffix)(h)
         h = BatchNormalization()(h)
 
@@ -205,27 +204,6 @@ class DeepDefocusMultiOutputModel():
                       name="deep_separated_defocus_net")
 
         return model
-
-    #def assemble_model_separated_defocus_new(self, width, height):
-    #    """
-    #    Used to assemble our multi-output model CNN.
-    #    """
-    #    input_shape = (height, width, 1)
-    #    input_layer = Input(shape=input_shape, name='input')
-
-    #    defocus_branch_U = self.build_defocus_branch_new(input_layer, suffix="_U")
-    #    defocus_branch_V = self.build_defocus_branch_new(input_layer, suffix="_V")
-
-    #    Lu = Dropout(0.2)(defocus_branch_U)
-    #    Lv = Dropout(0.2)(defocus_branch_V)
-
-    #    defocusU = self.build_defocusU_branch(Lu)
-    #    defocusV = self.build_defocusV_branch(Lv)
-
-    #    model = Model(inputs=input_layer, outputs=[defocusU, defocusV],
-    #                  name="deep_separated_defocus_net")
-
-    #    return model
 
     def assemble_model_separated_defocus_branches(self, width, height):
         """
@@ -328,10 +306,46 @@ class DeepDefocusMultiOutputModel():
         return model
 
 
+def exampleCTFApplyingFunction(df_metadata):
+    defocusU = df_metadata.head(1)['DEFOCUS_U'].values[0]
+    defocusV = df_metadata.head(1)['DEFOCUS_V'].values[0]
+    kV = df_metadata.head(1)['kV'].values[0]
+    defocusA = df_metadata.head(1)['Angle'].values[0]
+
+    cs = 2.7e7
+    sampling_rate = 1
+
+    x = np.linspace(-1 / 2 * sampling_rate, 1 / 2 * sampling_rate, 512)
+    y = np.linspace(-1 / 2 * sampling_rate, 1 / 2 * sampling_rate, 512)
+
+    ctf_array = call_ctf_function(kV=kV, x=x, y=y, defocusU=defocusU, defocusV=defocusV, Cs=cs,
+                                  phase_shift_PP=0, angle_ast=defocusA)
+
+    ctf_array2 = call_ctf_function(kV=kV, x=x, y=y, defocusU=defocusU + 200, defocusV=defocusV + 200, Cs=cs,
+                                   phase_shift_PP=0, angle_ast=defocusA)
+
+    from scipy.stats import pearsonr
+    import matplotlib.pyplot as plt
+
+    correlation_coefficient, _ = pearsonr(ctf_array.flatten(), ctf_array2.flatten())
+
+    # Plot the first image
+    plt.subplot(1, 2, 1)
+    plt.imshow(ctf_array, cmap='gray')
+    plt.title('Image 1')
+
+    # Overlay the second image on top of the first
+    plt.subplot(1, 2, 2)
+    plt.imshow(ctf_array - ctf_array2, cmap='gray')  # Background image
+    # plt.imshow(ctf_array2, cmap='viridis', alpha=0.5)  # Overlay image with some transparency
+    plt.title('Difference')
+
+    plt.show()
+
+    print(correlation_coefficient)
+
 def extract_CNN_layer_features(modelDir, image_example_path, layers):
-    # img = xmipp.Image(image_example_path).getData()
-    # one_image_data = (img - np.mean(img)) / np.std(img)
-    one_image_data = centerWindow(image_example_path, objective_res=2, sampling_rate=1, enhanced=False)
+    one_image_data = centerWindow(image_example_path, objective_res=2, sampling_rate=1)
     one_image_data = one_image_data.reshape((-1, 256, 256, 1))
 
     model_defocus = DeepDefocusMultiOutputModel(width=256, height=256).getModelSeparatedDefocus(learning_rate=0.001)
@@ -361,7 +375,6 @@ def extract_CNN_layer_features(modelDir, image_example_path, layers):
     plt.subplots_adjust(wspace=0.01, hspace=0.01)
     plt.savefig(os.path.join(features_path, "features_layer_%s" % str(0)))
     # For the rest of the layers
-    # for layer in range(1, layers * 3, 3):
     for layer in range(1, layers, 1):
         feature_benchmark = extracted_benchmark[layer]
         print('\n feature_benchmark shape:', feature_benchmark.shape)

@@ -4,6 +4,7 @@ import math
 import xmippLib as xmipp
 import tensorflow as tf
 import matplotlib.pyplot as plt
+import math
 
 
 # ---------------------- UTILS METHODS --------------------------------------
@@ -57,7 +58,8 @@ def data_generator(X, Y, rotation_angle=90):
 
     return X_set_generated, Y_set_generated
 
-def make_data_descriptive_plots(df_metadata, folder, COLUMNS , trainDefocus = True, trainAngle = True, groundTruth = False):
+
+def make_data_descriptive_plots(df_metadata, folder, COLUMNS, trainDefocus=True, trainAngle=True, groundTruth=False):
     if trainDefocus:
         # HISTOGRAM
         df_defocus = df_metadata[[COLUMNS['defocus_U'], COLUMNS['defocus_V']]]
@@ -113,6 +115,7 @@ def make_data_descriptive_plots(df_metadata, folder, COLUMNS , trainDefocus = Tr
             plt.savefig(os.path.join(folder, 'angle_error_hist.png'))
             print('Df angle error')
             print(df_angle_error.describe())
+
 
 def make_training_plots(history, folder, prefix):
     # plot loss during training to CHECK OVERFITTING
@@ -303,6 +306,7 @@ def make_testing_angle_plots(prediction, real, folder):
     # Save the figure
     plt.savefig(os.path.join(folder, 'defocus_angle_prediction_error.png'))
 
+
 def prepareTestData(df):
     Ndim = df.shape[0]
     imagMatrix = np.zeros((Ndim, 512, 512, 1), dtype=np.float64)
@@ -332,6 +336,7 @@ def prepareTestData(df):
 
     return imagMatrix, defocusVector, angleVector
 
+
 def centerWindow(image_path, objective_res=2, sampling_rate=1):
     img = xmipp.Image(image_path)
     img_data = img.getData()
@@ -354,6 +359,7 @@ def centerWindow(image_path, objective_res=2, sampling_rate=1):
 
     return image_norm
 
+
 def rotation(image_path, angle):
     '''Rotate a np.array and return also the transformation matrix
     #imag: np.array
@@ -365,33 +371,53 @@ def rotation(image_path, angle):
     img = xmipp.Image(image_path)
     image = img.getData()
 
-    # plt.figure(figsize=(5, 5))
-    # plt.imshow(image, cmap='gray')
-    # plt.show()
-
-    # P = np.identity(3)
-    # (hsrc, wsrc) = image.shape
-    # angle *= math.pi / 180
-    # T = np.asarray([[1, 0, -wsrc / 2], [0, 1, -hsrc / 2], [0, 0, 1]])
-    # R = np.asarray([[math.cos(angle), math.sin(angle), 0], [-math.sin(angle), math.cos(angle), 0], [0, 0, 1]])
-    # M = np.matmul(np.matmul(np.linalg.inv(T), np.matmul(R, T)), P)
-
     rotated_image = rotate(image, angle=angle, reshape=False)
 
     image_transformed = xmipp.Image()
     image_transformed.setData(rotated_image)
-    # image_transformed = image_transformed.applyWarpAffine(list(M.flatten()), image.shape, True)
-
-    # plt.figure(figsize=(5, 5))
-    # plt.imshow(image_transformed.getData(), cmap='gray')
-    # plt.show()
 
     return image_transformed
+
 
 def sum_angles(angle1, angle2):
     # Sum the angles
     total_angle = angle1 + angle2
-    # Use modulo to reset the sum to 0 when it reaches or exceeds 180 degrees
+    # Use module to reset the sum to 0 when it reaches or exceeds 180 degrees
     total_angle = total_angle % 180
 
     return total_angle
+
+
+def ctf_function(x, y, e_wavelength, defocusU, defocusV, Cs, phase_shift_PP, angle_ast):
+    angle_g = np.arctan2(y, x)
+    angle_ast = np.radians(angle_ast)
+
+    dz = (defocusU * (np.cos(angle_g - angle_ast) ** 2) + defocusV * (np.sin(angle_g - angle_ast) ** 2))
+    freq = np.sqrt((x ** 2) + (y ** 2))
+
+    return ctf_1d(dz, lambda_e=e_wavelength, freq=freq, cs=Cs)
+
+def ctf_1d(dz, lambda_e, freq, cs):
+    term1 = np.pi * dz * lambda_e * (freq**2)
+    term2 = np.pi / 2 * cs * (lambda_e**3) * (freq**4)
+    return -np.cos(term1 - term2)
+
+def call_ctf_function(kV, x, y, defocusU, defocusV, Cs, phase_shift_PP, angle_ast):
+    if kV == 200:
+        e_wavelength = 2.75e-2
+    else:
+        e_wavelength = 2.24e-2
+
+    # Generate x, y values for a grid
+    X, Y = np.meshgrid(x, y)
+
+    # Calculate function values for the chosen parameters
+    ctf_values = ctf_function(X, Y, e_wavelength, defocusU, defocusV, Cs, phase_shift_PP, angle_ast)
+    # Plot the function
+    # plt.imshow(ctf_values, cmap="Greys")
+    # plt.title('CTF Function Plot')
+    # plt.xlabel('x')
+    # plt.ylabel('y')
+    # plt.show()
+
+    return ctf_values
