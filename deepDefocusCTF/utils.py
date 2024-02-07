@@ -1,15 +1,15 @@
 import numpy as np
 import os
-import math
 import xmippLib as xmipp
 import tensorflow as tf
 import matplotlib.pyplot as plt
 import math
 
-
 # ---------------------- UTILS METHODS --------------------------------------
 
 def startSessionAndInitialize():
+    tf.compat.v1.reset_default_graph()
+    tf.compat.v1.keras.backend.clear_session()
     print('Enable dynamic memory allocation')
     config = tf.compat.v1.ConfigProto()
     config.gpu_options.allow_growth = True
@@ -59,7 +59,7 @@ def data_generator(X, Y, rotation_angle=90):
     return X_set_generated, Y_set_generated
 
 
-def make_data_descriptive_plots(df_metadata, folder, COLUMNS, trainDefocus=True, trainAngle=True, groundTruth=False):
+def make_data_descriptive_plots(df_metadata, folder, COLUMNS, trainDefocus=True, groundTruth=False):
     if trainDefocus:
         # HISTOGRAM
         df_defocus = df_metadata[[COLUMNS['defocus_U'], COLUMNS['defocus_V']]]
@@ -93,7 +93,6 @@ def make_data_descriptive_plots(df_metadata, folder, COLUMNS, trainDefocus=True,
 
         print(df_defocus.describe())
 
-    if trainAngle:
         # TODO: more Angles plots
         # HISTOGRAM
         df_angle = df_metadata[[COLUMNS['angle'], COLUMNS['cosAngle'], COLUMNS['sinAngle']]]
@@ -164,7 +163,7 @@ def make_testing_plots(prediction, real, folder):
     plt.title('Defocus U')
     x = range(1, len(real[:, 0]) + 1)
     plt.scatter(x, real[:, 0], c='r', label='Real dU', marker='o')
-    plt.scatter(x, prediction[0], c='b', label='Predicted dU', marker='x')
+    plt.scatter(x, prediction[:, 0], c='b', label='Predicted dU', marker='x')
     plt.xlabel("Sample Index")
     plt.ylabel("Defocus U")
     plt.grid(True)
@@ -173,7 +172,7 @@ def make_testing_plots(prediction, real, folder):
     plt.subplot(212)
     plt.title('Defocus V')
     plt.scatter(x, real[:, 1], c='r', label='Real dV', marker='o')
-    plt.scatter(x, prediction[1], c='b', label='Predicted dV', marker='x')
+    plt.scatter(x, prediction[:, 1], c='b', label='Predicted dV', marker='x')
     plt.xlabel("Sample Index")
     plt.ylabel("Defocus V")
     plt.grid(True)
@@ -188,7 +187,7 @@ def make_testing_plots(prediction, real, folder):
     # Plot for Defocus U
     plt.subplot(211)
     plt.title('Defocus U')
-    plt.scatter(real[:, 0], prediction[0])
+    plt.scatter(real[:, 0], prediction[:, 0])
     plt.plot([0, max(real[:, 0])], [0, max(real[:, 0])], color='red', linestyle='--')  # Line for perfect correlation
     plt.xlabel('True Values [defocus U]')
     plt.ylabel('Predictions [defocus U]')
@@ -197,7 +196,7 @@ def make_testing_plots(prediction, real, folder):
     # Plot for Defocus V
     plt.subplot(212)
     plt.title('Defocus V')
-    plt.scatter(real[:, 1], prediction[1])
+    plt.scatter(real[:, 1], prediction[:, 1])
     plt.plot([0, max(real[:, 0])], [0, max(real[:, 0])], color='red', linestyle='--')  # Line for perfect correlation
     plt.xlabel('True Values [defocus V]')
     plt.ylabel('Predictions [defocus V]')
@@ -214,14 +213,14 @@ def make_testing_plots(prediction, real, folder):
     plt.figure(figsize=(10, 8))
     plt.subplot(211)
     plt.title('Defocus U')
-    error_u = prediction[0] - real[:, 0].reshape(-1, 1)
+    error_u = prediction[:, 0] - real[:, 0]
     plt.hist(error_u, bins=25, color='blue', alpha=0.7)  # Adjust color and transparency
     plt.xlabel("Prediction Error Defocus U")
     plt.ylabel("Count")
     # Plot for Defocus V
     plt.subplot(212)
     plt.title('Defocus V')
-    error_v = prediction[1] - real[:, 1].reshape(-1, 1)
+    error_v = prediction[:, 1] - real[:, 1]
     plt.hist(error_v, bins=25, color='green', alpha=0.7)  # Adjust color and transparency
     plt.xlabel("Prediction Error Defocus V")
     plt.ylabel("Count")
@@ -232,54 +231,36 @@ def make_testing_plots(prediction, real, folder):
 
 
 def make_testing_angle_plots(prediction, real, folder):
-    x = range(1, len(real[:, 0]) + 1)
+    prediction = np.squeeze(prediction)
+    real = np.squeeze(real)
+
+    x = range(1, len(real) + 1)
     # DEFOCUS ANGLE PLOT
-    plt.figure(figsize=(10, 8))  # Adjust the figure size as needed
-    # Plot for Sin(2*angle)
-    plt.subplot(211)
-    plt.title('Sin(2*angle)')
-    plt.scatter(x, real[:, 0], c='r', label='Real Sin', marker='o')
-    plt.scatter(x, prediction[0], c='b', label='Predicted Sin', marker='x')
+    plt.figure(figsize=(16, 8))
+    # Plot for angle
+    plt.title('Predicted vs real Angle)')
+    plt.scatter(x, real, c='r', label='Real angle', marker='o')
+    plt.scatter(x, prediction, c='b', label='Predicted angle', marker='x')
     plt.xlabel("Sample Index")
-    plt.ylabel("Sin(2*angle)")
-    plt.legend()
-    # Plot for Cos(2*angle)
-    plt.subplot(212)
-    plt.title('Cos(2*angle)')
-    plt.scatter(x, real[:, 1], c='r', label='Real Cos', marker='o')
-    plt.scatter(x, prediction[1], c='b', label='Predicted Cos', marker='x')
-    plt.xlabel("Sample Index")
-    plt.ylabel("Cos(2*angle)")
+    plt.ylabel("Angle)")
     plt.legend()
     # Adjust layout to prevent overlapping titles and labels
     plt.tight_layout()
     # Save the figure
-    plt.savefig(os.path.join(folder, 'predicted_vs_real_def.png'))
+    plt.savefig(os.path.join(folder, 'predicted_vs_real_def_angle.png'))
 
-    # DEFOCUS ANGLE PREDICTED VS REAL !OJO NO VA MUY BIEN ESTE PLOT
+    # DEFOCUS ANGLE PREDICTED VS REAL
     plt.figure(figsize=(10, 8))  # Adjust the figure size as needed
-    # Plot for Sin(2*angle)
-    plt.subplot(211)
-    plt.title('Sin(2 * angle)')
-    plt.scatter(real[:, 0], prediction[0])
-    plt.xlabel('True Values [Sin]')
-    plt.ylabel('Predictions [Sin]')
+    # Plot for Angle
+    plt.title('Correlation angle')
+    plt.scatter(real, prediction)
+    plt.xlabel('True Values angle')
+    plt.ylabel('Predictions angle')
     plt.axis('equal')
     plt.axis('square')
     plt.xlim([0, plt.xlim()[1]])
     plt.ylim([0, plt.ylim()[1]])
-    _ = plt.plot([-100, 100], [-100, 100], color='red', linestyle='--')  # Line for perfect correlation
-    # Plot for Cos(2*angle)
-    plt.subplot(212)
-    plt.title('Cos(2 * angle)')
-    plt.scatter(real[:, 1], prediction[1])
-    plt.xlabel('True Values [Cos]')
-    plt.ylabel('Predictions [Cos]')
-    plt.axis('equal')
-    plt.axis('square')
-    plt.xlim([0, plt.xlim()[1]])
-    plt.ylim([0, plt.ylim()[1]])
-    _ = plt.plot([-100, 100], [-100, 100], color='red', linestyle='--')  # Line for perfect correlation
+    plt.plot([0, max(real)], [0, max(real)], color='red', linestyle='--')  # Line for perfect correlation
     # Adjust layout to prevent overlapping titles and labels
     plt.tight_layout()
     # Save the figure
@@ -287,18 +268,10 @@ def make_testing_angle_plots(prediction, real, folder):
 
     # DEFOCUS ANGLE ERROR
     plt.figure(figsize=(10, 8))  # Adjust the figure size as needed
-    # Plot for Sin(2*Angle)
-    plt.subplot(211)
-    plt.title('Sin(2*Angle) Prediction Error')
-    error_sin = prediction[0] - real[:, 0].reshape(-1, 1)
+    # Plot for Angle
+    plt.title('Angle Prediction Error')
+    error_sin = prediction - real
     plt.hist(error_sin, bins=25, color='blue', alpha=0.7)  # Adjust color and transparency
-    plt.xlabel("Prediction Error")
-    plt.ylabel("Count")
-    # Plot for Cos(2*Angle)
-    plt.subplot(212)
-    plt.title('Cos(2*Angle) Prediction Error')
-    error_cos = prediction[1] - real[:, 1].reshape(-1, 1)
-    plt.hist(error_cos, bins=25, color='orange', alpha=0.7)  # Adjust color and transparency
     plt.xlabel("Prediction Error")
     plt.ylabel("Count")
     # Adjust layout to prevent overlapping titles and labels
@@ -311,7 +284,7 @@ def prepareTestData(df):
     Ndim = df.shape[0]
     imagMatrix = np.zeros((Ndim, 512, 512, 1), dtype=np.float64)
     defocusVector = np.zeros((Ndim, 2), dtype=np.float64)
-    angleVector = np.zeros((Ndim, 2), dtype=np.float64)
+    angleVector = np.zeros((Ndim, 1), dtype=np.float64)
     i = 0
 
     for index in df.index.to_list():
@@ -319,8 +292,7 @@ def prepareTestData(df):
         subset = df.loc[index, 'SUBSET']
         defocus_U = df.loc[index, 'DEFOCUS_U']
         defocus_V = df.loc[index, 'DEFOCUS_V']
-        sinAngle = df.loc[index, 'Sin(2*angle)']
-        cosAngle = df.loc[index, 'Cos(2*angle)']
+        angle = df.loc[index, 'Angle']
 
         img2 = xmipp.Image(storedFile).getData()
 
@@ -329,8 +301,7 @@ def prepareTestData(df):
         defocusVector[i, 0] = int(defocus_U)
         defocusVector[i, 1] = int(defocus_V)
 
-        angleVector[i, 0] = sinAngle
-        angleVector[i, 1] = cosAngle
+        angleVector[i, 0] = angle
 
         i += 1
 
@@ -359,7 +330,6 @@ def centerWindow(image_path, objective_res=2, sampling_rate=1):
 
     return image_norm
 
-
 def rotation(image_path, angle):
     '''Rotate a np.array and return also the transformation matrix
     #imag: np.array
@@ -378,7 +348,6 @@ def rotation(image_path, angle):
 
     return image_transformed
 
-
 def sum_angles(angle1, angle2):
     # Sum the angles
     total_angle = angle1 + angle2
@@ -387,37 +356,80 @@ def sum_angles(angle1, angle2):
 
     return total_angle
 
-
-def ctf_function(x, y, e_wavelength, defocusU, defocusV, Cs, phase_shift_PP, angle_ast):
-    angle_g = np.arctan2(y, x)
-    angle_ast = np.radians(angle_ast)
-
-    dz = (defocusU * (np.cos(angle_g - angle_ast) ** 2) + defocusV * (np.sin(angle_g - angle_ast) ** 2))
-    freq = np.sqrt((x ** 2) + (y ** 2))
-
-    return ctf_1d(dz, lambda_e=e_wavelength, freq=freq, cs=Cs)
-
-def ctf_1d(dz, lambda_e, freq, cs):
-    term1 = np.pi * dz * lambda_e * (freq**2)
-    term2 = np.pi / 2 * cs * (lambda_e**3) * (freq**4)
-    return -np.cos(term1 - term2)
-
-def call_ctf_function(kV, x, y, defocusU, defocusV, Cs, phase_shift_PP, angle_ast):
+def call_ctf_function(kV, sampling_rate, size, defocusU, defocusV, Cs, phase_shift_PP, angle_ast):
     if kV == 200:
         e_wavelength = 2.75e-2
     else:
         e_wavelength = 2.24e-2
+
+    x = np.linspace(-1 / 2 * sampling_rate, 1 / 2 * sampling_rate, size)
+    y = np.linspace(-1 / 2 * sampling_rate, 1 / 2 * sampling_rate, size)
 
     # Generate x, y values for a grid
     X, Y = np.meshgrid(x, y)
 
     # Calculate function values for the chosen parameters
     ctf_values = ctf_function(X, Y, e_wavelength, defocusU, defocusV, Cs, phase_shift_PP, angle_ast)
-    # Plot the function
-    # plt.imshow(ctf_values, cmap="Greys")
-    # plt.title('CTF Function Plot')
-    # plt.xlabel('x')
-    # plt.ylabel('y')
-    # plt.show()
 
     return ctf_values
+
+def ctf_function(x, y, e_wavelength, defocusU, defocusV, Cs, phase_shift_PP, angle_ast):
+    angle_g = np.arctan2(y, x)
+    angle_ast = np.radians(angle_ast).astype(np.float32)
+
+    dz = (defocusU * (np.cos(angle_g - angle_ast) ** 2) + defocusV * (np.sin(angle_g - angle_ast) ** 2)).astype(np.float32)
+    freq = np.sqrt((x ** 2) + (y ** 2)).astype(np.float32)
+
+    # print("NumPy - angle_g:", angle_g, "angle_ast:", angle_ast, "dz:", dz, "freq:", freq)
+
+    return ctf_1d(dz, lambda_e=e_wavelength, freq=freq, cs=Cs)
+
+def ctf_1d(dz, lambda_e, freq, cs):
+    term1 = np.pi * dz * lambda_e * (freq**2)
+    term2 = np.pi / 2 * cs * (lambda_e**3) * (freq**4)
+    # print("NumPy - term1:", term1, "term2:", term2)
+
+    return -np.cos(term1 - term2).astype(np.float32)
+
+def call_ctf_function_tf(kV, sampling_rate, size, defocusU, defocusV, Cs, phase_shift_PP, angle_ast):
+    if kV == 200:
+        e_wavelength = 2.75e-2
+    else:
+        e_wavelength = 2.24e-2
+
+    # Generate x, y values for a grid using TensorFlow
+    x = tf.linspace(-1 / 2 * sampling_rate, 1 / 2 * sampling_rate, size)
+    y = tf.linspace(-1 / 2 * sampling_rate, 1 / 2 * sampling_rate, size)
+
+    # Generate grid using TensorFlow meshgrid
+    X, Y = tf.meshgrid(x, y)
+
+    # Calculate function values for the chosen parameters
+    ctf_values = ctf_function_tf(X, Y, e_wavelength, defocusU, defocusV, Cs, phase_shift_PP, angle_ast)
+
+    return ctf_values
+def ctf_function_tf(x, y, e_wavelength, defocusU, defocusV, Cs, phase_shift_PP, angle_ast):
+    angle_g = tf.atan2(y, x)
+    # Assuming angle_ast is a tensor
+    angle_ast = tf.multiply(angle_ast, np.pi / 180.0)
+    dz = defocusU * tf.math.square(tf.math.cos(angle_g - angle_ast)) + defocusV * tf.math.square(tf.math.sin(angle_g - angle_ast))
+    freq = tf.sqrt(tf.square(x) + tf.square(y))
+    # print("TF - angle_g:", angle_g, "angle_ast:", angle_ast, "dz:", dz, "freq:", freq)
+
+    return ctf_1d_tf(dz, lambda_e=e_wavelength, freq=freq, cs=Cs)
+
+def ctf_1d_tf(dz, lambda_e, freq, cs):
+    term1 = tf.multiply(tf.constant(np.pi, dtype=tf.float32), tf.multiply(tf.multiply(dz, lambda_e), tf.square(freq)))
+    term2 = tf.multiply(tf.constant(np.pi / 2, dtype=tf.float32), tf.multiply(tf.multiply(cs, tf.pow(lambda_e, 3)), tf.pow(freq, 4)))
+    # print("TF - term1:", term1, "term2:", term2)
+
+    return -tf.cos(term1 - term2)
+
+def normalize_angle(angle_degrees):
+    # Step 1: Normalize to [0, 1]
+    normalized_angle = angle_degrees % 360.0 / 360.0
+
+    # Step 2: Map to [-1, 1]
+    normalized_angle_mapped = 2.0 * normalized_angle - 1.0
+
+    return normalized_angle_mapped

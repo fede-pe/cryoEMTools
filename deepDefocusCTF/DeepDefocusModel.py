@@ -8,28 +8,96 @@ from tensorflow.keras import backend as K
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
-from utils import centerWindow, call_ctf_function
+from utils import centerWindow, call_ctf_function_tf, call_ctf_function
 import os
+from scipy.stats import pearsonr
 
 
 def angle_error_metric(y_true, y_pred):
-    # Extract predicted sin and cos values from the model's output
-    pred_sin = y_pred[0]
-    pred_cos = y_pred[1]
-    # Calculate the predicted angle
-    pred_angle = tf.atan2(pred_sin, pred_cos)
-    # Extract true sin and cos values from the ground truth
-    true_sin = y_true[0]
-    true_cos = y_true[1]
-    # Calculate the true angle
-    true_angle = tf.atan2(true_sin, true_cos)
-    # Calculate the absolute error in radians
-    angle_error = K.abs(pred_angle - true_angle)
-    # Convert the angle error to degrees if needed
-    angle_error_degrees = angle_error * (180 / np.pi)
+    # Extract angles predicted and true values from the model's output
+    angle_true = y_true[:, 2] * 180
+    angle_pred = y_pred[:, 2] * 180
+    # Calculate the absolute error in degrees
+    angle_error_degrees = K.abs(angle_pred - angle_true)
     # Return the mean angle error
     return K.mean(angle_error_degrees)
 
+def mae_defocus_error(y_true, y_pred, defocus_scaler):
+    median_ = defocus_scaler.center_
+    iqr_ = defocus_scaler.scale_
+
+    y_true_unscaled = (y_true[:, 0:2] * iqr_) + median_
+    y_pred_unscaled = (y_pred[:, 0:2] * iqr_) + median_
+
+    metric_value = tf.reduce_mean(tf.abs(y_true_unscaled - y_pred_unscaled))
+
+    return metric_value
+
+def corr_CTF_metric(y_true, y_pred, defocus_scaler, cs, kV):
+    sampling_rate = 1
+    size = 512
+    epsilon = 1e-8
+
+    # Extract unscaled defocus values from y_true
+    y_true = tf.cast(y_true, tf.float32)
+    y_pred = tf.cast(y_pred, tf.float32)
+
+    angle_true = y_true[:, 2]
+    angle_pred = y_pred[:, 2]
+
+    median_ = defocus_scaler.center_
+    iqr_ = defocus_scaler.scale_
+
+    y_true_unscaled = (y_true * iqr_) + median_
+    y_pred_unscaled = (y_pred * iqr_) + median_
+
+    # Example: Access individual output tensors
+    defocus_U_true = y_true_unscaled[:, 0]  # Assuming defocus_U is the first output
+    defocus_V_true = y_true_unscaled[:, 1]  # Assuming defocus_V is the second output
+    defocus_U_pred = y_pred_unscaled[:, 0]  # Assuming defocus_U is the first output
+    defocus_V_pred = y_pred_unscaled[:, 1]  # Assuming defocus_V is the second output
+
+    # ------
+    def elementwise_loss(defocus_U_true, defocus_U_pred, defocus_V_true, defocus_V_pred,
+                         angle_true, angle_pred):
+        # Extract true sin and cos values
+        # Calculate the true angle
+        true_angle = angle_true * 180
+        pred_angle = angle_pred * 180
+
+        ctf_array_true = call_ctf_function_tf(kV=kV, sampling_rate=sampling_rate, size=size, defocusU=defocus_U_true,
+                                              defocusV=defocus_V_true, Cs=cs, phase_shift_PP=0, angle_ast=true_angle)
+
+        ctf_array_pred = call_ctf_function_tf(kV=kV, sampling_rate=sampling_rate, size=size, defocusU=defocus_U_pred,
+                                              defocusV=defocus_V_pred, Cs=cs, phase_shift_PP=0, angle_ast=pred_angle)
+
+        # Flatten the arrays to make them 1D
+        ctf_array_true_flat = tf.reshape(ctf_array_true, [-1])
+        ctf_array_pred_flat = tf.reshape(ctf_array_pred, [-1])
+
+        # Calculate mean-centered vectors
+        mean_true = tf.reduce_mean(ctf_array_true_flat)
+        mean_pred = tf.reduce_mean(ctf_array_pred_flat)
+
+        centered_true = ctf_array_true_flat - mean_true
+        centered_pred = ctf_array_pred_flat - mean_pred
+
+        # Calculate Pearson correlation coefficient
+        numerator = tf.reduce_sum(tf.multiply(centered_true, centered_pred))
+        denominator_true = tf.sqrt(tf.reduce_sum(tf.square(centered_true)))
+        denominator_pred = tf.sqrt(tf.reduce_sum(tf.square(centered_pred)))
+
+        correlation_coefficient = numerator / (denominator_true * denominator_pred + epsilon)
+        correlation_coefficient_loss = 1 - correlation_coefficient
+
+        return correlation_coefficient_loss
+
+    elementwise_losses = tf.map_fn(lambda x: elementwise_loss(x[0], x[1], x[2], x[3], x[4], x[5]),
+                                   (defocus_U_true, defocus_U_pred, defocus_V_true, defocus_V_pred,
+                                    angle_true, angle_pred),
+                                   dtype=tf.float32)
+
+    return tf.reduce_mean(elementwise_losses)
 
 class DeepDefocusMultiOutputModel():
     """
@@ -41,27 +109,6 @@ class DeepDefocusMultiOutputModel():
     def __init__(self, width=512, height=512):
         self.IM_WIDTH = width
         self.IM_HEIGHT = height
-
-    def make_default_hidden_layers(self, inputs):
-        """
-        Used to generate a default set of hidden layers. The structure used in this network is defined as:
-
-        Conv2D -> BatchNormalization -> Pooling -> Dropout
-        """
-        x = Conv2D(filters=16, kernel_size=(3, 3), padding="same", activation='relu')(inputs)
-        x = BatchNormalization(axis=-1)(x)
-        x = MaxPooling2D(pool_size=(3, 3))(x)
-        x = Dropout(0.2)(x)
-        x = Conv2D(32, (3, 3), padding="same", activation='relu')(x)
-        x = BatchNormalization(axis=-1)(x)
-        x = MaxPooling2D(pool_size=(2, 2))(x)
-        x = Dropout(0.2)(x)
-        x = Conv2D(32, (3, 3), padding="same", activation='relu')(x)
-        x = BatchNormalization(axis=-1)(x)
-        x = MaxPooling2D(pool_size=(2, 2))(x)
-        x = Dropout(0.2)(x)
-
-        return x
 
     def build_defocus_branch(self, input, Xdim, factor):
         """
@@ -100,7 +147,7 @@ class DeepDefocusMultiOutputModel():
         Used to build the defocus in V branch of our multi-regression network.
         This branch is composed of three Conv -> BN -> Pool -> Dropout blocks,
         followed by the Dense output layer.        """
-         #Defining the architecture of the CNN
+
         h = Conv2D(filters=16, kernel_size=(8, 8),
                    activation='relu', padding='same', name='conv2d_1'+suffix)(input)
         h = Conv2D(filters=16, kernel_size=(8, 8),
@@ -122,6 +169,11 @@ class DeepDefocusMultiOutputModel():
         h = Conv2D(filters=16, kernel_size=(4, 4),
                    activation='relu', padding='same', name='conv2d_6'+suffix)(h)
         h = BatchNormalization()(h)
+        h = Conv2D(filters=16, kernel_size=(2, 2),
+                   activation='relu', padding='same', name='conv2d_7' + suffix)(h)
+        h = Conv2D(filters=16, kernel_size=(2, 2),
+                   activation='relu', padding='same', name='conv2d_8' + suffix)(h)
+        h = BatchNormalization()(h)
 
         h = Flatten(name='flatten'+suffix)(h)
 
@@ -132,29 +184,57 @@ class DeepDefocusMultiOutputModel():
         Used to build the angle branch (cos and sin) of our multi-regression network.
         This branch is composed of three Conv -> BN -> Pool -> Dropout blocks,
         followed by the Dense output layer.        """
-        L = Conv2D(16, (int(Xdim * factor), int(Xdim * factor)), activation="relu", padding="valid")(input)
+        L = Conv2D(16, (int(Xdim * factor), int(Xdim * factor)), activation="relu", padding="valid", name='conv2d_1_ang')(input)
         L = BatchNormalization()(L)  # It is used for improving the speed, performance and stability
         L = MaxPooling2D((2, 2))(L)
 
         Xconv1dim = np.shape(L)[1]
 
-        L = Conv2D(8, (int(Xconv1dim / 10), int(Xconv1dim / 10)), activation="relu", padding="valid")(L)
+        L = Conv2D(8, (int(Xconv1dim / 10), int(Xconv1dim / 10)), activation="relu", padding="valid", name='conv2d_2_ang')(L)
         L = BatchNormalization()(L)
         L = MaxPooling2D()(L)
 
         Xconv2dim = np.shape(L)[1]
 
-        L = Conv2D(4, (int(Xconv2dim / 10), int(Xconv2dim / 10)), activation="relu", padding="valid")(L)
+        L = Conv2D(4, (int(Xconv2dim / 5), int(Xconv2dim / 5)), activation="relu", padding="valid", name='conv2d_3_ang')(L)
         L = BatchNormalization()(L)
         L = MaxPooling2D()(L)
-        # L = Conv2D(2, (int(Xconv3dim / 10), int(Xconv3dim / 10)), activation="relu", padding="valid")(L)
-        # L = Conv2D(2, (3, 3), activation="relu", padding="valid")(L)
-        # L = BatchNormalization()(L)
-        # L = MaxPooling2D()(L)
 
-        L = Flatten()(L)
+        L = Flatten(name='flatten_ang')(L)
 
         return L
+
+    def build_angle_branch_new(self, input, suffix):
+        """
+        Used to build the defocus in V branch of our multi-regression network.
+        This branch is composed of three Conv -> BN -> Pool -> Dropout blocks,
+        followed by the Dense output layer.        """
+         #Defining the architecture of the CNN
+        h = Conv2D(filters=16, kernel_size=(64, 64),
+                   activation='relu', padding='same', name='conv2d_1'+suffix)(input)
+        #h = Conv2D(filters=16, kernel_size=(50, 50),
+        #           activation='relu', padding='same', name='conv2d_2'+suffix)(h)
+        h = BatchNormalization()(h)
+
+        h = MaxPool2D(pool_size=(2, 2), name='pool_1'+suffix)(h)
+
+        h = Conv2D(filters=16, kernel_size=(8, 8),
+                   activation='relu', padding='same', name='conv2d_3'+suffix)(h)
+        h = Conv2D(filters=16, kernel_size=(8, 8),
+                   activation='relu', padding='same', name='conv2d_4'+suffix)(h)
+        h = BatchNormalization()(h)
+
+        h = MaxPool2D(pool_size=(2, 2), name='pool_2'+suffix)(h)
+
+        h = Conv2D(filters=16, kernel_size=(4, 4),
+                   activation='relu', padding='same', name='conv2d_5'+suffix)(h)
+        #h = Conv2D(filters=16, kernel_size=(4, 4),
+        #           activation='relu', padding='same', name='conv2d_6'+suffix)(h)
+        h = BatchNormalization()(h)
+
+        h = Flatten(name='flatten'+suffix)(h)
+
+        return h
 
     def build_defocusU_branch(self, convLayer):
         L = Dense(64, activation='relu', kernel_initializer='normal', kernel_regularizer=regularizers.l1_l2(0.01),
@@ -176,134 +256,162 @@ class DeepDefocusMultiOutputModel():
         defocusV = Dense(1, activation='linear', name='defocus_V_output')(L)
         return defocusV
 
-    def build_sin_branch(self, convLayer):
-        L = Dense(32, activation='relu', kernel_regularizer=regularizers.l1_l2(0.01))(convLayer)
-        sinA = Dense(1, activation='linear', name='sinAngle_output')(L)
-        return sinA
+    def build_angle_branch(self, convLayer):
+        L = Dense(64, activation='relu', kernel_regularizer=regularizers.l1_l2(0.01), name="denseAngle_1")(convLayer)
+        L = Dropout(0.1, name="DropA_1")(L)
+        L = Dense(16, activation='relu', name="denseAngle_2")(L)
 
-    def build_cos_branch(self, convLayer):
-        L = Dense(32, activation='relu', kernel_regularizer=regularizers.l1_l2(0.01))(convLayer)
-        cosA = Dense(1, activation='linear', name='cosAngle_output')(L)
-        return cosA
+        angle = Dense(1, activation='sigmoid', name='angle_output')(L)
+
+        return angle
 
     def assemble_model_separated_defocus(self, width, height):
-        """
-        Used to assemble our multi-output model CNN.
-        """
         input_shape = (height, width, 1)
         input_layer = Input(shape=input_shape, name='input')
 
-        defocus_branch_at_2 = self.build_defocus_branch_new(input_layer, suffix="")
-
+        # DEFOCUS U and V
+        defocus_branch_at_2 = self.build_defocus_branch_new(input_layer, suffix="defocus")
         L = Dropout(0.2)(defocus_branch_at_2)
 
         defocusU = self.build_defocusU_branch(L)
         defocusV = self.build_defocusV_branch(L)
 
-        model = Model(inputs=input_layer, outputs=[defocusU, defocusV],
+        # DEFOCUS ANGLE
+        defocus_angles_branch = self.build_angle_branch_new(input_layer, suffix="angle")
+        La = Dropout(0.2)(defocus_angles_branch)
+
+        angle = self.build_angle_branch(La)
+
+        # OUTPUT
+        concatenated = Concatenate(name='ctf_values')([defocusU, defocusV, angle])
+
+        model = Model(inputs=input_layer, outputs=concatenated,
                       name="deep_separated_defocus_net")
-
-        return model
-
-    def assemble_model_separated_defocus_branches(self, width, height):
-        """
-        Used to assemble our multi-output model CNN.
-        """
-        input_shape = (height, width, 3)
-        inputs = Input(shape=input_shape, name='input')
-
-        input1 = Reshape((height, width, 1))(inputs[:, :, :, 0])
-        input2 = Reshape((height, width, 1))(inputs[:, :, :, 1])
-        input3 = Reshape((height, width, 1))(inputs[:, :, :, 2])
-
-        defocus_branch_at_1 = self.build_defocus_branch(input1, height, factor=0.0586)  # At 1A
-        defocus_branch_at_2 = self.build_defocus_branch(input2, height, factor=0.1172)  # At 2A
-        defocus_branch_at_3 = self.build_defocus_branch(input3, height, factor=0.176)  # At 3A
-        concatted = Concatenate()([defocus_branch_at_1, defocus_branch_at_2, defocus_branch_at_3])
-
-        L = Flatten()(concatted)
-        L = Dropout(0.3)(L)  # Este dropout es muy heavy
-        defocusU = self.build_defocusU_branch(L)
-        defocusV = self.build_defocusV_branch(L)
-
-        model = Model(inputs=inputs, outputs=[defocusU, defocusV],
-                      name="deep_separated_defocus_net")
-
-        return model
-
-    def assemble_model_angle(self, height, width):
-        """
-        Used to assemble our multi-output model CNN.
-        """
-        input_shape = (height, width, 1)
-        input = Input(shape=input_shape, name='input')
-
-        defocus_angles_branch = self.build_defocus_angle_branch(input, height, factor=0.9)
-
-        L = Dropout(0.2)(defocus_angles_branch)
-
-        sin_branch = self.build_sin_branch(L)
-        cos_branch = self.build_cos_branch(L)
-
-        model = Model(inputs=input, outputs=[sin_branch, cos_branch],
-                      name="deep_defocus_angle_net")
-
-        return model
-
-    def assemble_full_model(self, width, height):
-        """
-        Used to assemble our multi-output model CNN.
-        """
-        input_shape = (height, width, 3)
-        inputs = Input(shape=input_shape, name='input')
-        defocus_branch = self.build_defocus_branch(inputs)
-        defocus_angles_branch = self.build_defocus_angle_branch(inputs)
-        # concatted = Concatenate()([defocus_branch, defocus_angles_branch])
-        model = Model(inputs=inputs, outputs=[defocus_branch, defocus_angles_branch],
-                      name="deep_defocus_net")
 
         return model
 
     # ----------- GET MODEL -------------------
-    def getFullModel(self, learning_rate):
-        model = self.assemble_full_model(self.IM_WIDTH, self.IM_HEIGHT)
+    def getFullModel(self, learning_rate, defocus_scaler, cs, kV):
+        model = self.assemble_model_separated_defocus(self.IM_WIDTH, self.IM_HEIGHT)
         model.summary()
-        # plot_model(model, to_file='"deep_defocus_net.png', show_shapes=True)
-        optimizer = Adam(learning_rate=learning_rate)
-        model.compile(optimizer=optimizer,
-                      loss={'defocus_output': 'mae',
-                            'defocus_angles_output': 'mae'},
-                      loss_weights=None,
-                      metrics={})  # 'defocus_output': 'msle',
-        # 'defocus_angles_output': 'msle'})
+
+        optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate, clipvalue=1.0)
+
+        loss = lambda y_true, y_pred: custom_loss_CTF_with_scaler(y_true, y_pred, defocus_scaler, cs, kV)
+
+        def angle_error(y_true, y_pred):
+            return angle_error_metric(y_true, y_pred)
+
+        def mae_defocus(y_true, y_pred):
+            return mae_defocus_error(y_true, y_pred, defocus_scaler)
+
+        def corr_CTF(y_true, y_pred):
+            return corr_CTF_metric(y_true, y_pred, defocus_scaler, cs, kV)
+
+        model.compile(optimizer=optimizer, loss=loss, metrics=[angle_error, mae_defocus, corr_CTF], loss_weights=None)
 
         return model
 
-    def getModelSeparatedDefocus(self, learning_rate):
-        model = self.assemble_model_separated_defocus(self.IM_WIDTH, self.IM_HEIGHT) # Cambio aqui
-        model.summary()
-        # plot_model(model, to_file='"deep_defocus_net.png', show_shapes=True)
-        optimizer = Adam(learning_rate=learning_rate)
-        model.compile(optimizer=optimizer,
-                      loss={'defocus_U_output': 'mae',
-                            'defocus_V_output': 'mae'},
-                      loss_weights=None,
-                      metrics={})
 
-        return model
+# Custom loss function for CTF based on a mathematical formula
+def custom_loss_CTF_with_scaler(y_true, y_pred, defocus_scaler, cs, kV):
+    sampling_rate = 1
+    size = 512
+    epsilon = 1e-8
+    #print("Shape of y_true:", y_true.shape)
+    #print("Shape of y_pred:", y_pred.shape)
 
-    def getModelDefocusAngle(self, learning_rate):
-        model = self.assemble_model_angle(self.IM_WIDTH, self.IM_HEIGHT)
-        model.summary()
-        optimizer = Adam(learning_rate=learning_rate)
-        model.compile(optimizer=optimizer,
-                      # loss={'defocus_angle_output': 'mae'},
-                      loss={'sinAngle_output': 'mae',
-                            'cosAngle_output': 'mae'},
-                      loss_weights=None,
-                      metrics=[angle_error_metric])  # TODO : This metric should be align with the mae have a look
+    # Extract unscaled defocus values from y_true
+    y_true = tf.cast(y_true, tf.float32)
+    y_pred = tf.cast(y_pred, tf.float32)
 
-        return model
+    defocus_U_true_scaled = y_true[:, 0]  # Assuming defocus_U is the first output
+    defocus_V_true_scaled = y_true[:, 1]  # Assuming defocus_V is the second output
+
+    defocus_U_pred_scaled = y_pred[:, 0]  # Assuming defocus_U is the first output
+    defocus_V_pred_scaled = y_pred[:, 1]  # Assuming defocus_V is the second output
+
+    angle_true = y_true[:, 2]
+    angle_pred = y_pred[:, 2]
+
+    median_ = defocus_scaler.center_
+    iqr_ = defocus_scaler.scale_
+
+    y_true_unscaled = (y_true * iqr_) + median_
+    y_pred_unscaled = (y_pred * iqr_) + median_
+
+    #y_true_unscaled = y_true * defocus_scaler
+    #y_pred_unscaled = y_pred * defocus_scaler
+
+    # Example: Access individual output tensors
+    defocus_U_true = y_true_unscaled[:, 0]  # Assuming defocus_U is the first output
+    defocus_V_true = y_true_unscaled[:, 1]  # Assuming defocus_V is the second output
+    defocus_U_pred = y_pred_unscaled[:, 0]  # Assuming defocus_U is the first output
+    defocus_V_pred = y_pred_unscaled[:, 1]  # Assuming defocus_V is the second output
+
+    # ------
+    def elementwise_loss(defocus_U_true, defocus_U_pred, defocus_V_true, defocus_V_pred,
+                         angle_true, angle_pred):
+        # Extract true sin and cos values
+        # Calculate the true angle
+        true_angle = angle_true * 180
+        pred_angle = angle_pred * 180
+
+        ctf_array_true = call_ctf_function_tf(kV=kV, sampling_rate=sampling_rate, size=size, defocusU=defocus_U_true,
+                                              defocusV=defocus_V_true, Cs=cs, phase_shift_PP=0, angle_ast=true_angle)
+
+        ctf_array_pred = call_ctf_function_tf(kV=kV, sampling_rate=sampling_rate, size=size, defocusU=defocus_U_pred,
+                                              defocusV=defocus_V_pred, Cs=cs, phase_shift_PP=0, angle_ast=pred_angle)
+
+        # Print intermediate values for debugging
+        #tf.print("ctf_array_true:", ctf_array_true)
+        #tf.print("ctf_array_pred:", ctf_array_pred)
+
+        # Flatten the arrays to make them 1D
+        ctf_array_true_flat = tf.reshape(ctf_array_true, [-1])
+        ctf_array_pred_flat = tf.reshape(ctf_array_pred, [-1])
+
+        # Calculate mean-centered vectors
+        mean_true = tf.reduce_mean(ctf_array_true_flat)
+        mean_pred = tf.reduce_mean(ctf_array_pred_flat)
+
+        centered_true = ctf_array_true_flat - mean_true
+        centered_pred = ctf_array_pred_flat - mean_pred
+
+        # Calculate Pearson correlation coefficient
+        numerator = tf.reduce_sum(tf.multiply(centered_true, centered_pred))
+        denominator_true = tf.sqrt(tf.reduce_sum(tf.square(centered_true)))
+        denominator_pred = tf.sqrt(tf.reduce_sum(tf.square(centered_pred)))
+
+        correlation_coefficient = numerator / (denominator_true * denominator_pred + epsilon)
+        correlation_coefficient_loss = 1 - correlation_coefficient
+
+        #return correlation_coefficient_loss
+        return tf.abs(ctf_array_true - ctf_array_pred) # MSE or MAE
+
+    #tf.print("defocus_U_true:", defocus_U_true)
+    #tf.print("defocus_V_true:", defocus_V_true)
+    #tf.print("defocus_U_pred:", defocus_U_pred)
+    #tf.print("defocus_V_pred:", defocus_V_pred)
+    #tf.print("Angle_true:", angle_true)
+    #tf.print("Angle_pred:", angle_pred)
+
+
+    elementwise_losses = tf.map_fn(lambda x: elementwise_loss(x[0], x[1], x[2], x[3], x[4], x[5]),
+                                   (defocus_U_true, defocus_U_pred, defocus_V_true, defocus_V_pred,
+                                    angle_true, angle_pred),
+                                   dtype=tf.float32)
+
+    defocus_U_loss = tf.reduce_mean(tf.abs(defocus_U_true_scaled - defocus_U_pred_scaled))
+    defocus_V_loss = tf.reduce_mean(tf.abs(defocus_V_true_scaled - defocus_V_pred_scaled))
+
+    angle_loss = tf.reduce_mean(tf.abs(angle_true - angle_pred))
+    image_loss = tf.reduce_mean(elementwise_losses)
+
+    # Aggregate the elementwise losses
+    aggregated_loss = image_loss + defocus_U_loss + defocus_V_loss + angle_loss
+
+    return aggregated_loss
 
 
 def exampleCTFApplyingFunction(df_metadata):
@@ -314,41 +422,85 @@ def exampleCTFApplyingFunction(df_metadata):
 
     cs = 2.7e7
     sampling_rate = 1
+    size = 512
+    epsilon = 1e-8
 
-    x = np.linspace(-1 / 2 * sampling_rate, 1 / 2 * sampling_rate, 512)
-    y = np.linspace(-1 / 2 * sampling_rate, 1 / 2 * sampling_rate, 512)
+    ctf_array_ts = call_ctf_function_tf(kV=kV, sampling_rate=sampling_rate, size=size, defocusU=defocusU, defocusV=defocusV, Cs=cs,
+                                        phase_shift_PP=0, angle_ast=defocusA)
 
-    ctf_array = call_ctf_function(kV=kV, x=x, y=y, defocusU=defocusU, defocusV=defocusV, Cs=cs,
+    ctf_array2_ts = call_ctf_function_tf(kV=kV, sampling_rate=sampling_rate, size=size, defocusU=defocusU, defocusV=defocusV, Cs=cs,
+                                         phase_shift_PP=0, angle_ast=defocusA + 45)
+
+    ctf_array = call_ctf_function(kV=kV, sampling_rate=sampling_rate, size=size, defocusU=defocusU,
+                                  defocusV=defocusV, Cs=cs,
                                   phase_shift_PP=0, angle_ast=defocusA)
 
-    ctf_array2 = call_ctf_function(kV=kV, x=x, y=y, defocusU=defocusU + 200, defocusV=defocusV + 200, Cs=cs,
-                                   phase_shift_PP=0, angle_ast=defocusA)
+    ctf_array2 = call_ctf_function(kV=kV, sampling_rate=sampling_rate, size=size, defocusU=defocusU,
+                                   defocusV=defocusV, Cs=cs,
+                                   phase_shift_PP=0, angle_ast=defocusA + 45)
+    def pearson_correlation_ts(array1, array2):
+        # Flatten the arrays to make them 1D
+        ctf_array_true_flat = tf.reshape(array1, [-1])
+        ctf_array_pred_flat = tf.reshape(array2, [-1])
 
-    from scipy.stats import pearsonr
-    import matplotlib.pyplot as plt
+        # Calculate mean-centered vectors
+        mean_true = tf.reduce_mean(ctf_array_true_flat)
+        mean_pred = tf.reduce_mean(ctf_array_pred_flat)
 
-    correlation_coefficient, _ = pearsonr(ctf_array.flatten(), ctf_array2.flatten())
+        centered_true = ctf_array_true_flat - mean_true
+        centered_pred = ctf_array_pred_flat - mean_pred
+
+        # Calculate Pearson correlation coefficient
+        numerator = tf.reduce_sum(tf.multiply(centered_true, centered_pred))
+        denominator_true = tf.sqrt(tf.reduce_sum(tf.square(centered_true)))
+        denominator_pred = tf.sqrt(tf.reduce_sum(tf.square(centered_pred)))
+
+        correlation_coefficient = numerator / (denominator_true * denominator_pred + epsilon)
+
+        return correlation_coefficient
+
+    def pearson_correlation(array1, array2):
+        from scipy.stats import pearsonr
+        # Flatten the images into 1D arrays
+        flat_image1 = array1.flatten()
+        flat_image2 = array2.flatten()
+
+        # Calculate Pearson correlation coefficient
+        correlation_coefficient, p_value = pearsonr(flat_image1, flat_image2)
+
+        return correlation_coefficient
+
+    correlation_coefficient_TS = pearson_correlation_ts(ctf_array_ts, ctf_array2_ts)
+    print(correlation_coefficient_TS)
+    #
+    correlation_coefficient = pearson_correlation(ctf_array, ctf_array2)
+    print(correlation_coefficient)
+
+    # Check if the values are approximately equal
+    # if np.allclose(ctf_array,  ctf_array_ts.numpy(), rtol=1e-5, atol=1e-8):
+    #     print("The CTF values from NumPy and TensorFlow functions are approximately equal.")
+    # else:
+    #     print("The CTF values from NumPy and TensorFlow functions are not equal.")
 
     # Plot the first image
+    plt.figure()
     plt.subplot(1, 2, 1)
-    plt.imshow(ctf_array, cmap='gray')
+    plt.imshow(ctf_array_ts.numpy(), cmap='gray')
     plt.title('Image 1')
 
     # Overlay the second image on top of the first
     plt.subplot(1, 2, 2)
-    plt.imshow(ctf_array - ctf_array2, cmap='gray')  # Background image
+    plt.imshow(ctf_array_ts.numpy() - ctf_array2_ts.numpy(), cmap='gray')  # Background image
     # plt.imshow(ctf_array2, cmap='viridis', alpha=0.5)  # Overlay image with some transparency
     plt.title('Difference')
 
     plt.show()
 
-    print(correlation_coefficient)
-
-def extract_CNN_layer_features(modelDir, image_example_path, layers):
+def extract_CNN_layer_features(modelDir, image_example_path, layers, defocus_scaler):
     one_image_data = centerWindow(image_example_path, objective_res=2, sampling_rate=1)
     one_image_data = one_image_data.reshape((-1, 256, 256, 1))
 
-    model_defocus = DeepDefocusMultiOutputModel(width=256, height=256).getModelSeparatedDefocus(learning_rate=0.001)
+    model_defocus = DeepDefocusMultiOutputModel(width=256, height=256).getFullModel(learning_rate=0.001, defocus_scaler=defocus_scaler, cs=2.7e7, kV=200)
     model_defocus.load_weights(filepath=os.path.join(modelDir, 'Best_Weights'))
     features_path = os.path.join(modelDir, "featuresExtraction/")
 
