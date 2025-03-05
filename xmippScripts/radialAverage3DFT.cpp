@@ -2,32 +2,37 @@
  *
  * Authors:     Federico P. de Isidro-Gómez
  *
- * This program calculate the radial 3D average of a volume.
+ * This program calculate the radial 3D average of the Fourier transfrom of 
+ * a volume.
  * 
  * To compile this standalone version run:
  * 
- *      scipion3 run xmipp_compile radialAverage3D.cpp 
+ *      scipion3 run xmipp_compile radialAverage3DFT.cpp 
  * 
  ***************************************************************************/
 
 
 #include <iostream>
 #include <core/xmipp_image.h>
+#include <algorithm>
 
 
 int main(int argc, char **argv)
 {
-    FileName fnTomo=argv[1];
+    FileName fnVol=argv[1];
 
-	Image<double> tomoMap;
-	tomoMap.read(fnTomo);
-	auto &tom = tomoMap();
+	Image<double> volMap;
+	volMap.read(fnVol);
 
-	double minRes = strtod(argv[2], nullptr);
+	FourierTransformer ft;
 
-	int xSize = XSIZE(tom);
-	int ySize = YSIZE(tom);
-	int zSize = ZSIZE(tom);
+	MultidimArray< std::complex<double> > fftVol;
+	ft.FourierTransform(volMap(), fftVol, false);
+
+
+	int xSize = XSIZE(fftVol);
+	int ySize = YSIZE(fftVol);
+	int zSize = ZSIZE(fftVol);
 
 	#ifdef DEBUG
 	std::cout << "Map dimensions: " << xSize << ", " << ySize << ", " << zSize << std::endl;
@@ -37,13 +42,18 @@ int main(int argc, char **argv)
 	int ySize_half = ySize/2;
 	int zSize_half = zSize/2;
 
-	size_t maxRadius = int(sqrt(xSize*xSize + ySize*ySize + zSize*zSize));
+	int maxRadius = std::max(xSize, std::max(ySize, zSize));
+
+	std::cout << "xSize " << xSize << std::endl;
+	std::cout << "ySize " << ySize << std::endl;
+	std::cout << "zSize " << zSize << std::endl;
+	std::cout << "maxRadius " << maxRadius << std::endl;
 
 	#ifdef DEBUG
 	std::cout << "Maximum radius: " << maxRadius << std::endl;
 	#endif
 
-	std::vector<double> radialResolution(maxRadius, 0);
+	std::vector<double> radialAvg(maxRadius, 0);
 	std::vector<double> radialCounter(maxRadius, 0);
 
 	for (int i = -xSize_half; i < xSize_half; i++)
@@ -58,12 +68,12 @@ int main(int argc, char **argv)
 			{
 				size_t r2 = j2i2 + k*k;
 				
-				double value = DIRECT_A3D_ELEM(tom, zSize_half + k, ySize_half + j, xSize_half + i);				
+				double value = DIRECT_A3D_ELEM(volMap(), zSize_half + k, ySize_half + j, xSize_half + i);				
 
 				if (value < minRes)
 				{
 					auto radius = int(sqrt(r2));
-					radialResolution[radius] += value;
+					radialAvg[radius] += value;
 					radialCounter[radius] += 1;
 				}
 			}
@@ -74,13 +84,13 @@ int main(int argc, char **argv)
 	{
 		if (radialCounter[i] > 0)
 		{
-			radialResolution[i] /= radialCounter[i];
+			radialAvg[i] /= radialCounter[i];
 		}
 	}
 	
-	for (size_t i = 0; i < radialResolution.size(); i++)
+	for (size_t i = 0; i < radialAvg.size(); i++)
 	{
-		std::cout << radialResolution[i] << "\t" << i << std::endl;
+		std::cout << radialAvg[i] << "\t" << i << std::endl;
 	}
 
     return 0;
