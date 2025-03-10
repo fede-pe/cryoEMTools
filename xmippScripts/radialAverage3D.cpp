@@ -2,8 +2,7 @@
  *
  * Authors:     Federico P. de Isidro-Gómez
  *
- * This program reads a CTF estimation from a ctfparam file and simulates it
- * over pure-noise micrograph.
+ * This program calculate the radial 3D average of a volume.
  * 
  * To compile this standalone version run:
  * 
