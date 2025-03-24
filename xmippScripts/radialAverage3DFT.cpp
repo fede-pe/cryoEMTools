@@ -36,30 +36,25 @@ int main(int argc, char **argv)
 	int xSize = XSIZE(fftVol);
 	int ySize = YSIZE(fftVol);
 	int zSize = ZSIZE(fftVol);
-	int xSize_half = xSize/2;
-	int ySize_half = ySize/2;
-	int zSize_half = zSize/2;
-	int maxRadius = (sqrt(3) * std::max(xSize, std::max(ySize, zSize)) / 2);
+	int maxRadius = std::min(xSize, std::min(ySize, zSize));	// Restric analysis to Nyquist
 
-	std::cout << "Map dimensions: " << std::endl;  
+	std::cout << "FFT map dimensions: " << std::endl;  
 	std::cout << "xSize " << xSize << std::endl;
 	std::cout << "ySize " << ySize << std::endl;
 	std::cout << "zSize " << zSize << std::endl;
 	std::cout << "maxRadius " << maxRadius << std::endl;
 
-	// Construct frequency map
-	// Initializing the frequency vectors
+	// Construct frequency map and initialize the frequency vectors
 	MultidimArray< double > freqMap;
 	Matrix1D<double> freq_fourier_x;
 	Matrix1D<double> freq_fourier_y;
 	Matrix1D<double> freq_fourier_z;
 
-	freq_fourier_z.initZeros(zSize);
 	freq_fourier_x.initZeros(xSize);
 	freq_fourier_y.initZeros(ySize);
+	freq_fourier_z.initZeros(zSize);
 
-	// u is the frequency
-	double u;
+	double u;	// u is the frequency
 
 	// Defining frequency components. First element should be 0, it is set as the smallest number to avoid singularities
 	VEC_ELEM(freq_fourier_z,0) = std::numeric_limits<double>::min();
@@ -82,26 +77,21 @@ int main(int argc, char **argv)
 
 	//Initializing map with frequencies
 	freqMap.resizeNoCopy(fftVol);
-	freqMap.initConstant(1.9);  //Nyquist is 2, we take 1.9 greater than Nyquist
 
-	size_t xvoldim = XSIZE(volMap());
-	size_t yvoldim = YSIZE(volMap());
-	size_t zvoldim = ZSIZE(volMap());
-	MultidimArray<long> freqElems;
-	freqElems.initZeros(xvoldim/2+1);
+	size_t xvoldim = XSIZE(volMap());	// Assume volume is cubic!
+	// size_t yvoldim = YSIZE(volMap());
+	// size_t zvoldim = ZSIZE(volMap());
 
 	// Directional frequencies along each direction
 	double uz, uy, ux, uz2, uz2y2;
 	long n=0;
 	int idx = 0;
 
-	// Ncomps is the number of frequencies lesser than Nyquist
-	long Ncomps = 0;
-
 	for(size_t k=0; k<ZSIZE(fftVol); ++k)
 	{
 		uz = VEC_ELEM(freq_fourier_z, k);
 		uz2 = uz*uz;
+		
 		for(size_t i=0; i<YSIZE(fftVol); ++i)
 		{
 			uy = VEC_ELEM(freq_fourier_y, i);
@@ -112,12 +102,9 @@ int main(int argc, char **argv)
 				ux = VEC_ELEM(freq_fourier_x, j);
 				ux = sqrt(uz2y2 + ux*ux);
 
+				idx = (int) round(ux * xvoldim);
+				DIRECT_MULTIDIM_ELEM(freqMap,n) = idx;
 
-					idx = (int) round(ux * xvoldim);
-					++Ncomps;
-
-					DIRECT_MULTIDIM_ELEM(freqMap,n) = idx;
-								
 				++n;
 			}
 		}
@@ -136,30 +123,34 @@ int main(int argc, char **argv)
 	FOR_ALL_DIRECT_ELEMENTS_IN_MULTIDIMARRAY(fftVol)
 	{
 		double value_real = DIRECT_MULTIDIM_ELEM(fftVol,n).real();
-		double value_mod  = (DIRECT_MULTIDIM_ELEM(fftVol,n) * std::conj(DIRECT_MULTIDIM_ELEM(fftVol,n))).real();
-		DIRECT_MULTIDIM_ELEM(fftVol_real,n) += value_real;
-		DIRECT_MULTIDIM_ELEM(fftVol_mod,n) += (DIRECT_MULTIDIM_ELEM(fftVol,n) * std::conj(DIRECT_MULTIDIM_ELEM(fftVol,n))).real();
+		double value_mod  = sqrt((DIRECT_MULTIDIM_ELEM(fftVol,n) * std::conj(DIRECT_MULTIDIM_ELEM(fftVol,n))).real());
 
-		radialAvg_real[(int)(DIRECT_MULTIDIM_ELEM(freqMap,n))] += value_real;
-		radialAvg_mod[(int)(DIRECT_MULTIDIM_ELEM(freqMap,n))]  += value_mod;
-		radialCounter[(int)(DIRECT_MULTIDIM_ELEM(freqMap,n))]  += 1;
+		DIRECT_MULTIDIM_ELEM(fftVol_real,n) = value_real;
+		DIRECT_MULTIDIM_ELEM(fftVol_mod,n)  = value_mod;
+		
+		if(DIRECT_MULTIDIM_ELEM(freqMap,n) < maxRadius)
+		{
+			radialAvg_real[(int)(DIRECT_MULTIDIM_ELEM(freqMap,n))] += value_real;
+			radialAvg_mod[(int)(DIRECT_MULTIDIM_ELEM(freqMap,n))]  += value_mod;
+			radialCounter[(int)(DIRECT_MULTIDIM_ELEM(freqMap,n))]  += 1;
+		}
 	}
 
 	// Save FT maps
 	size_t lastindex = fnVol.find_last_of(".");
 	std::string rawname = fnVol.substr(0, lastindex);
 	Image<double> saveImage;
+	
+	std::string debugFileFn = rawname + "_freqMap.mrc";
+	saveImage() = freqMap;
+	saveImage.write(debugFileFn);
 
-	std::string debugFileFn = rawname + "_FT_real.mrc";
+	debugFileFn = rawname + "_FT_real.mrc";
 	saveImage() = fftVol_real;
 	saveImage.write(debugFileFn);
 
 	debugFileFn = rawname + "_FT_mod.mrc";
 	saveImage() = fftVol_mod;
-	saveImage.write(debugFileFn);
-
-	debugFileFn = rawname + "_freqMap.mrc";
-	saveImage() = freqMap;
 	saveImage.write(debugFileFn);
 
 	// Save output metadata
@@ -169,8 +160,8 @@ int main(int argc, char **argv)
 	for(size_t i = 0; i < radialCounter.size(); i++)
 	{
 		id = md.addObject();
-		md.setValue(MDL_X, radialAvg_real[i], id);
-		md.setValue(MDL_Y, radialAvg_mod[i],  id);
+		md.setValue(MDL_X, radialAvg_real[i] / radialCounter[i], id);
+		md.setValue(MDL_Y, radialAvg_mod[i] / radialCounter[i],  id);
 		md.setValue(MDL_Z, radialCounter[i],  id);
 	}
 
