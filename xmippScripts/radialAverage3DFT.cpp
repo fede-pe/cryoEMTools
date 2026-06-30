@@ -36,10 +36,6 @@ int main(int argc, char **argv)
 	int xSize = XSIZE(fftVol);
 	int ySize = YSIZE(fftVol);
 	int zSize = ZSIZE(fftVol);
-<<<<<<< HEAD
-	int maxRadius = std::min(xSize, std::min(ySize, zSize));	// Restric analysis to Nyquist
-
-=======
 	int nSize = NSIZE(fftVol);
 
 	if (zSize == 1)
@@ -49,7 +45,6 @@ int main(int argc, char **argv)
 
 	int maxRadius = std::min(xSize, std::min(ySize, zSize));	// Restric analysis to Nyquist
 
->>>>>>> devel
 	std::cout << "FFT map dimensions: " << std::endl;  
 	std::cout << "xSize " << xSize << std::endl;
 	std::cout << "ySize " << ySize << std::endl;
