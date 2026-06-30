@@ -2,8 +2,8 @@
  *
  * Authors:     Federico P. de Isidro-Gómez
  *
- * This program calculate the radial 3D average of the Fourier transfrom of 
- * a volume.
+ * This program calculate the radial 2D average of the Fourier transfrom of 
+ * a particle/micropgraph.
  * 
  * To compile this standalone version run:
  * 
@@ -22,125 +22,101 @@
 int main(int argc, char **argv)
 {
 	// Generate side info
-    FileName fnVol=argv[1];
+    FileName fnImg=argv[1];
 
-	Image<double> volMap;
-	volMap.read(fnVol);
+	Image<double> img;
+	img.read(fnImg);
 
 	// Calculate FT
 	FourierTransformer ft;
-	MultidimArray< std::complex<double> > fftVol;
-	ft.FourierTransform(volMap(), fftVol, false);
+	MultidimArray< std::complex<double> > fftImg;
+	ft.FourierTransform(img(), fftImg, false);
 
 	// FT dimensions
-	int xSize = XSIZE(fftVol);
-	int ySize = YSIZE(fftVol);
-	int zSize = ZSIZE(fftVol);
-<<<<<<< HEAD
-	int maxRadius = std::min(xSize, std::min(ySize, zSize));	// Restric analysis to Nyquist
+	int xSize = XSIZE(fftImg);
+	int ySize = YSIZE(fftImg);
+	int nSize = NSIZE(fftImg);
 
-=======
-	int nSize = NSIZE(fftVol);
-
-	if (zSize == 1)
+	if (nSize == 1)
 	{
-		zSize = nSize;
+		nSize = ZSIZE(fftImg);
 	}
 
-	int maxRadius = std::min(xSize, std::min(ySize, zSize));	// Restric analysis to Nyquist
+	int maxRadius = std::min(xSize, ySize);	// Restric analysis to Nyquist
 
->>>>>>> devel
 	std::cout << "FFT map dimensions: " << std::endl;  
 	std::cout << "xSize " << xSize << std::endl;
 	std::cout << "ySize " << ySize << std::endl;
-	std::cout << "zSize " << zSize << std::endl;
 	std::cout << "nSize " << nSize << std::endl;
-	std::cout << "Final size: (" << xSize << ", " << ySize << ", " << zSize << ")" << std::endl;
+	std::cout << "Final size: (" << xSize << ", " << ySize << ", " << nSize << ")" << std::endl;
 	std::cout << "maxRadius " << maxRadius << std::endl;
 
 	// Construct frequency map and initialize the frequency vectors
 	MultidimArray< double > freqMap;
 	Matrix1D<double> freq_fourier_x;
 	Matrix1D<double> freq_fourier_y;
-	Matrix1D<double> freq_fourier_z;
 
 	freq_fourier_x.initZeros(xSize);
 	freq_fourier_y.initZeros(ySize);
-	freq_fourier_z.initZeros(zSize);
 
 	double u;	// u is the frequency
 
 	// Defining frequency components. First element should be 0, it is set as the smallest number to avoid singularities
-	VEC_ELEM(freq_fourier_z,0) = std::numeric_limits<double>::min();
-	for(size_t k=1; k<zSize; ++k){
-		FFT_IDX2DIGFREQ(k,ZSIZE(volMap()), u);
-		VEC_ELEM(freq_fourier_z, k) = u;
-	}
-
 	VEC_ELEM(freq_fourier_y,0) = std::numeric_limits<double>::min();
 	for(size_t k=1; k<ySize; ++k){
-		FFT_IDX2DIGFREQ(k,YSIZE(volMap()), u);
+		FFT_IDX2DIGFREQ(k,YSIZE(img()), u);
 		VEC_ELEM(freq_fourier_y, k) = u;
 	}
 
 	VEC_ELEM(freq_fourier_x,0) = std::numeric_limits<double>::min();
 	for(size_t k=1; k<xSize; ++k){
-		FFT_IDX2DIGFREQ(k,XSIZE(volMap()), u);
+		FFT_IDX2DIGFREQ(k,XSIZE(img()), u);
 		VEC_ELEM(freq_fourier_x, k) = u;
 	}
 
 	//Initializing map with frequencies
-	freqMap.resizeNoCopy(fftVol);
-
-	size_t xvoldim = XSIZE(volMap());	// Assume volume is cubic!
-	// size_t yvoldim = YSIZE(volMap());
-	// size_t zvoldim = ZSIZE(volMap());
+	freqMap.resizeNoCopy(fftImg);
 
 	// Directional frequencies along each direction
-	double uz, uy, ux, uz2, uz2y2;
+	double uy, ux, uy2;
 	long n=0;
 	int idx = 0;
 
-	for(size_t k=0; k<ZSIZE(fftVol); ++k)
+	for(size_t i=0; i<YSIZE(fftImg); ++i)
 	{
-		uz = VEC_ELEM(freq_fourier_z, k);
-		uz2 = uz*uz;
-		
-		for(size_t i=0; i<YSIZE(fftVol); ++i)
+		uy = VEC_ELEM(freq_fourier_y, i);
+		uy2 = uy*uy;
+
+		for(size_t j=0; j<XSIZE(fftImg); ++j)
 		{
-			uy = VEC_ELEM(freq_fourier_y, i);
-			uz2y2 = uz2 + uy*uy;
+			ux = VEC_ELEM(freq_fourier_x, j);
+			ux = sqrt(uy2 + ux*ux);
 
-			for(size_t j=0; j<XSIZE(fftVol); ++j)
-			{
-				ux = VEC_ELEM(freq_fourier_x, j);
-				ux = sqrt(uz2y2 + ux*ux);
+			idx = (int) round(ux * XSIZE(img()));
+			DIRECT_MULTIDIM_ELEM(freqMap,n) = idx;
 
-				idx = (int) round(ux * xvoldim);
-				DIRECT_MULTIDIM_ELEM(freqMap,n) = idx;
-
-				++n;
-			}
+			++n;
 		}
 	}
+	
 
 	// Compute real and magnitude FT maps, and calculate radial average
-	MultidimArray<double> fftVol_real;
-	fftVol_real.initZeros(zSize, ySize, xSize);
-	MultidimArray<double> fftVol_mod;
-	fftVol_mod.initZeros(zSize, ySize, xSize);
+	MultidimArray<double> fftImg_real;
+	fftImg_real.initZeros(ySize, xSize);
+	MultidimArray<double> fftImg_mod;
+	fftImg_mod.initZeros(ySize, xSize);
 
 	std::vector<double> radialAvg_real(maxRadius, 0);
 	std::vector<double> radialAvg_mod(maxRadius, 0);
 	std::vector<double> radialCounter(maxRadius, 0);
 
-	FOR_ALL_DIRECT_ELEMENTS_IN_MULTIDIMARRAY(fftVol)
+	FOR_ALL_DIRECT_ELEMENTS_IN_MULTIDIMARRAY(fftImg)
 	{
-		double value_real = DIRECT_MULTIDIM_ELEM(fftVol,n).real();
-		double value_mod  = sqrt((DIRECT_MULTIDIM_ELEM(fftVol,n) * std::conj(DIRECT_MULTIDIM_ELEM(fftVol,n))).real());
+		double value_real = DIRECT_MULTIDIM_ELEM(fftImg,n).real();
+		double value_mod  = sqrt((DIRECT_MULTIDIM_ELEM(fftImg,n) * std::conj(DIRECT_MULTIDIM_ELEM(fftImg,n))).real());
 
-		DIRECT_MULTIDIM_ELEM(fftVol_real,n) = value_real;
-		DIRECT_MULTIDIM_ELEM(fftVol_mod,n)  = value_mod;
+		DIRECT_MULTIDIM_ELEM(fftImg_real,n) = value_real;
+		DIRECT_MULTIDIM_ELEM(fftImg_mod,n)  = value_mod;
 		
 		if(DIRECT_MULTIDIM_ELEM(freqMap,n) < maxRadius)
 		{
@@ -151,8 +127,14 @@ int main(int argc, char **argv)
 	}
 
 	// Save FT maps
-	size_t lastindex = fnVol.find_last_of(".");
-	std::string rawname = fnVol.substr(0, lastindex);
+	size_t lastindex = fnImg.find_last_of(".");
+	std::string rawname = fnImg.substr(0, lastindex);
+	
+	size_t atIndex = rawname.find("@");
+	if (atIndex != std::string::npos) {
+		rawname = rawname.substr(atIndex + 1);
+	}
+
 	Image<double> saveImage;
 	
 	std::string debugFileFn = rawname + "_freqMap.mrc";
@@ -160,11 +142,11 @@ int main(int argc, char **argv)
 	saveImage.write(debugFileFn);
 
 	debugFileFn = rawname + "_FT_real.mrc";
-	saveImage() = fftVol_real;
+	saveImage() = fftImg_real;
 	saveImage.write(debugFileFn);
 
 	debugFileFn = rawname + "_FT_mod.mrc";
-	saveImage() = fftVol_mod;
+	saveImage() = fftImg_mod;
 	saveImage.write(debugFileFn);
 
 	// Save output metadata
